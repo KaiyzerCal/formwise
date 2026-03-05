@@ -55,18 +55,23 @@ export default function MovementLibrary({ onSelect, selectedId }) {
 
         {/* Tabs */}
         <div className="max-w-lg mx-auto px-4 pb-0 flex gap-0">
-          {["strength", "sports"].map((tab) => (
+          {["strength", "sports", "blueprints"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
-              className="flex-1 py-3 relative text-xs font-bold tracking-[0.15em] uppercase transition-colors"
+              onClick={() => {
+                if (tab === "blueprints") setShowBlueprints(true);
+                else { setShowBlueprints(false); setActiveTab(tab); }
+              }}
+              className="flex-1 py-3 relative text-xs font-bold tracking-[0.1em] uppercase transition-colors flex items-center justify-center gap-1"
               style={{
                 fontFamily: "'DM Mono', monospace",
-                color: activeTab === tab ? "#C9A84C" : "rgba(255,255,255,0.3)",
+                color: (tab === "blueprints" ? showBlueprints : (!showBlueprints && activeTab === tab)) ? "#C9A84C" : "rgba(255,255,255,0.3)",
+                fontSize: "9px",
               }}
             >
-              {tab === "strength" ? "Strength Training" : "Sports Performance"}
-              {activeTab === tab && (
+              {tab === "blueprints" && <Bookmark className="w-3 h-3" />}
+              {tab === "strength" ? "Strength" : tab === "sports" ? "Sports" : "Blueprints"}
+              {(tab === "blueprints" ? showBlueprints : (!showBlueprints && activeTab === tab)) && (
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#C9A84C]" />
               )}
             </button>
