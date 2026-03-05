@@ -25,7 +25,7 @@ export default function FormCheck() {
     const params = new URLSearchParams(window.location.search);
     const exId = params.get("exercise");
     if (exId) {
-      const ex = getExerciseById(exId);
+      const ex = getExerciseById(exId) || getSportsMovementById(exId);
       if (ex) setSelectedExercise(ex);
     }
   }, []);
