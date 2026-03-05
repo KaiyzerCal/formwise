@@ -50,16 +50,35 @@ export default function FormCheck() {
 
   const handleSave = async () => {
     setSaving(true);
-    const { exercise_def, joint_data, ...saveable } = sessionData;
+    const { exercise_def, joint_data, _replay, ...saveable } = sessionData;
     await base44.entities.FormSession.create(saveable);
     setSaving(false);
     setPhase("select");
     setSessionData(null);
+    setReplayData(null);
   };
 
   const handleDiscard = () => {
     setPhase("select");
     setSessionData(null);
+    setReplayData(null);
+  };
+
+  const handleOpenReplay = () => {
+    if (sessionData?._replay) {
+      setReplayData(sessionData._replay);
+      setPhase("replay");
+    }
+  };
+
+  const handleReplaySave = async () => {
+    await handleSave();
+  };
+
+  const handleReplayDone = () => {
+    setPhase("select");
+    setSessionData(null);
+    setReplayData(null);
   };
 
   if (showDisclaimer) {
