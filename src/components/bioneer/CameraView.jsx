@@ -386,12 +386,12 @@ export default function CameraView({ exercise, onStop }) {
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) {
-      resolve();
+      // Already loaded — wait a tick to ensure module is ready
+      setTimeout(resolve, 100);
       return;
     }
     const s = document.createElement("script");
     s.src = src;
-    s.crossOrigin = "anonymous";
     s.onload = resolve;
     s.onerror = reject;
     document.head.appendChild(s);
