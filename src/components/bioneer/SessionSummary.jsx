@@ -75,7 +75,7 @@ function buildCoachingText(exerciseDef, jointData) {
   return lines.length > 0 ? lines.join(" ") : null;
 }
 
-export default function SessionSummary({ sessionData, onSave, onDiscard, saving }) {
+export default function SessionSummary({ sessionData, onSave, onDiscard, onReplay, saving }) {
   const score = sessionData.movement_score ?? sessionData.form_score_overall ?? 0;
   const exerciseDef = sessionData.exercise_def;
   const jointData = sessionData.joint_data;
