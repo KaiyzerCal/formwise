@@ -47,8 +47,14 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import FormCheck from './pages/FormCheck';
 
-export const pagesConfig = {
-	Pages: {}
+
+export const PAGES = {
+    "FormCheck": FormCheck,
 }
 
+export const pagesConfig = {
+    mainPage: "FormCheck",
+    Pages: PAGES,
+};
