@@ -75,7 +75,7 @@ function buildCoachingText(exerciseDef, jointData) {
   return lines.length > 0 ? lines.join(" ") : null;
 }
 
-export default function SessionSummary({ sessionData, onSave, onDiscard, onReplay, saving }) {
+export default function SessionSummary({ sessionData, onSave, onDiscard, saving }) {
   const score = sessionData.movement_score ?? sessionData.form_score_overall ?? 0;
   const exerciseDef = sessionData.exercise_def;
   const jointData = sessionData.joint_data;
@@ -181,24 +181,14 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, onRepla
         )}
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             variant="outline"
             onClick={onDiscard}
-            className="border-white/10 text-white/60 hover:bg-white/5 bg-transparent px-3"
+            className="flex-1 border-white/10 text-white/60 hover:bg-white/5 bg-transparent"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 mr-1.5" /> Discard
           </Button>
-          {onReplay && (
-            <Button
-              variant="outline"
-              onClick={onReplay}
-              className="border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/10 bg-transparent px-3 text-xs tracking-wider"
-              style={{ fontFamily: "'DM Mono', monospace" }}
-            >
-              ▶ REPLAY
-            </Button>
-          )}
           <Button
             onClick={onSave}
             disabled={saving}

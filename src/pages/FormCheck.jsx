@@ -5,16 +5,15 @@ import { getSportsMovementById } from "../components/bioneer/sportsLibrary";
 import MovementLibrary from "../components/bioneer/MovementLibrary";
 import CameraView from "../components/bioneer/CameraView";
 import SessionSummary from "../components/bioneer/SessionSummary";
-import GhostReplay from "../components/bioneer/GhostReplay";
 import Disclaimer from "../components/bioneer/Disclaimer";
+import { createPageUrl } from "@/utils";
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
 export default function FormCheck() {
-  const [phase, setPhase] = useState("select"); // select | camera | summary | replay
+  const [phase, setPhase] = useState("select"); // select | camera | summary
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [sessionData, setSessionData] = useState(null);
-  const [replayData, setReplayData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
@@ -50,35 +49,16 @@ export default function FormCheck() {
 
   const handleSave = async () => {
     setSaving(true);
-    const { exercise_def, joint_data, _replay, ...saveable } = sessionData;
+    const { exercise_def, joint_data, ...saveable } = sessionData;
     await base44.entities.FormSession.create(saveable);
     setSaving(false);
     setPhase("select");
     setSessionData(null);
-    setReplayData(null);
   };
 
   const handleDiscard = () => {
     setPhase("select");
     setSessionData(null);
-    setReplayData(null);
-  };
-
-  const handleOpenReplay = () => {
-    if (sessionData?._replay) {
-      setReplayData(sessionData._replay);
-      setPhase("replay");
-    }
-  };
-
-  const handleReplaySave = async () => {
-    await handleSave();
-  };
-
-  const handleReplayDone = () => {
-    setPhase("select");
-    setSessionData(null);
-    setReplayData(null);
   };
 
   if (showDisclaimer) {
@@ -95,18 +75,6 @@ export default function FormCheck() {
         sessionData={sessionData}
         onSave={handleSave}
         onDiscard={handleDiscard}
-        onReplay={sessionData._replay ? handleOpenReplay : null}
-        saving={saving}
-      />
-    );
-  }
-
-  if (phase === "replay" && replayData) {
-    return (
-      <GhostReplay
-        replayData={replayData}
-        onSave={handleReplaySave}
-        onDone={handleReplayDone}
         saving={saving}
       />
     );
