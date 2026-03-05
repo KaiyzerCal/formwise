@@ -14,6 +14,9 @@ import {
 import { initAudio, beep, destroyAudio } from "./audioEngine";
 import { createRepCounter } from "./repCounter";
 import { detectPhase } from "./phaseDetector";
+import { PathRecorder, getTrackedJoints } from "./pathRecorder";
+import { drawPathTrail, drawIdealPath } from "./pathRenderer";
+import { getIdealPaths } from "./idealPaths";
 
 const DANGER_FRAME_THRESHOLD = 8;
 
