@@ -79,26 +79,45 @@ export default function MovementLibrary({ onSelect, selectedId }) {
         </div>
       </div>
 
-      {/* Movement Grid */}
+      {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 gap-3">
-          {movements.map((movement) => (
-            <ExerciseCard
-              key={movement.id}
-              exercise={movement}
-              selected={selectedId === movement.id}
-              onClick={() => onSelect(movement)}
-            />
-          ))}
-        </div>
-
-        {/* Privacy note */}
-        <p
-          className="text-center text-[9px] text-white/15 mt-6 tracking-wider"
-          style={{ fontFamily: "'DM Mono', monospace" }}
-        >
-          Camera data is processed locally. Nothing is recorded or uploaded.
-        </p>
+        {showBlueprints ? (
+          <MyBlueprints
+            onSelectBlueprint={(bp) => {
+              // Convert blueprint to a movement-like object and start training
+              const movementLike = {
+                id: bp.exerciseId,
+                name: bp.label,
+                category: "strength",
+                blueprint: bp,
+                ...require("./exerciseLibrary").EXERCISES.concat(require("./sportsLibrary").SPORTS_MOVEMENTS)
+                  .find(m => m.id === bp.exerciseId) || {},
+                name: bp.label,
+              };
+              onSelect(movementLike);
+            }}
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {movements.map((movement) => (
+                <ExerciseCard
+                  key={movement.id}
+                  exercise={movement}
+                  selected={selectedId === movement.id}
+                  onClick={() => onSelect(movement)}
+                />
+              ))}
+            </div>
+            {/* Privacy note */}
+            <p
+              className="text-center text-[9px] text-white/15 mt-6 tracking-wider"
+              style={{ fontFamily: "'DM Mono', monospace" }}
+            >
+              Camera data is processed locally. Nothing is recorded or uploaded.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
