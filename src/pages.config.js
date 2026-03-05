@@ -47,13 +47,15 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import FormCheck from './pages/FormCheck';
 import FormHistory from './pages/FormHistory';
+import FormCheck from './pages/FormCheck';
+import UploadAnalysis from './pages/UploadAnalysis';
 
 
 export const PAGES = {
-    "FormCheck": FormCheck,
     "FormHistory": FormHistory,
+    "FormCheck": FormCheck,
+    "UploadAnalysis": UploadAnalysis,
 }
 
 export const pagesConfig = {
