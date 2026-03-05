@@ -79,12 +79,12 @@ export default function CameraView({ exercise, onStop }) {
 
       // Load MediaPipe via CDN scripts
       try {
-        await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js");
+        await loadScript("https://unpkg.com/@mediapipe/pose@0.5.1675469404/pose.js");
         if (cancelled) return;
 
         const pose = new window.Pose({
           locateFile: (file) =>
-            `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`,
+            `https://unpkg.com/@mediapipe/pose@0.5.1675469404/${file}`,
         });
 
         pose.setOptions({
