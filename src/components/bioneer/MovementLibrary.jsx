@@ -8,6 +8,7 @@ import { createPageUrl } from "@/utils";
 
 export default function MovementLibrary({ onSelect, selectedId }) {
   const [activeTab, setActiveTab] = useState("strength");
+  const [showBlueprints, setShowBlueprints] = useState(false);
 
   const movements = activeTab === "strength" ? EXERCISES : SPORTS_MOVEMENTS;
 
