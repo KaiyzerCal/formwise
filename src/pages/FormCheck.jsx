@@ -5,8 +5,8 @@ import { getSportsMovementById } from "../components/bioneer/sportsLibrary";
 import MovementLibrary from "../components/bioneer/MovementLibrary";
 import CameraView from "../components/bioneer/CameraView";
 import SessionSummary from "../components/bioneer/SessionSummary";
+import GhostReplay from "../components/bioneer/GhostReplay";
 import Disclaimer from "../components/bioneer/Disclaimer";
-import { createPageUrl } from "@/utils";
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
