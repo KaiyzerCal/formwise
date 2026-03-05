@@ -13,6 +13,7 @@ import {
 } from "./canvasRenderer";
 import { initAudio, beep, destroyAudio } from "./audioEngine";
 import { createRepCounter } from "./repCounter";
+import { detectPhase } from "./phaseDetector";
 
 const DANGER_FRAME_THRESHOLD = 8;
 
