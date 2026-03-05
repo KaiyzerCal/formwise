@@ -2,13 +2,10 @@ import React, { useState } from "react";
 import { EXERCISES } from "./exerciseLibrary";
 import { SPORTS_MOVEMENTS } from "./sportsLibrary";
 import ExerciseCard from "./ExerciseCard";
-import MyBlueprints from "./MyBlueprints";
-import { ArrowLeft, Scan, Video, Bookmark } from "lucide-react";
-import { createPageUrl } from "@/utils";
+import { ArrowLeft, Scan } from "lucide-react";
 
 export default function MovementLibrary({ onSelect, selectedId }) {
   const [activeTab, setActiveTab] = useState("strength");
-  const [showBlueprints, setShowBlueprints] = useState(false);
 
   const movements = activeTab === "strength" ? EXERCISES : SPORTS_MOVEMENTS;
 
@@ -42,36 +39,25 @@ export default function MovementLibrary({ onSelect, selectedId }) {
               Select movement to analyze
             </p>
           </div>
-          <a
-            href={createPageUrl("VideoAnalysis")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 hover:bg-[#C9A84C]/15 transition-colors"
-          >
-            <Video className="w-3.5 h-3.5 text-[#C9A84C]" />
-            <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-wider hidden sm:inline" style={{ fontFamily: "'DM Mono', monospace" }}>
-              Analyze Video
-            </span>
-          </a>
+          <div className="w-9 h-9 rounded-full bg-[#C9A84C]/10 flex items-center justify-center">
+            <Scan className="w-4 h-4 text-[#C9A84C]" />
+          </div>
         </div>
 
         {/* Tabs */}
         <div className="max-w-lg mx-auto px-4 pb-0 flex gap-0">
-          {["strength", "sports", "blueprints"].map((tab) => (
+          {["strength", "sports"].map((tab) => (
             <button
               key={tab}
-              onClick={() => {
-                if (tab === "blueprints") setShowBlueprints(true);
-                else { setShowBlueprints(false); setActiveTab(tab); }
-              }}
-              className="flex-1 py-3 relative text-xs font-bold tracking-[0.1em] uppercase transition-colors flex items-center justify-center gap-1"
+              onClick={() => setActiveTab(tab)}
+              className="flex-1 py-3 relative text-xs font-bold tracking-[0.15em] uppercase transition-colors"
               style={{
                 fontFamily: "'DM Mono', monospace",
-                color: (tab === "blueprints" ? showBlueprints : (!showBlueprints && activeTab === tab)) ? "#C9A84C" : "rgba(255,255,255,0.3)",
-                fontSize: "9px",
+                color: activeTab === tab ? "#C9A84C" : "rgba(255,255,255,0.3)",
               }}
             >
-              {tab === "blueprints" && <Bookmark className="w-3 h-3" />}
-              {tab === "strength" ? "Strength" : tab === "sports" ? "Sports" : "Blueprints"}
-              {(tab === "blueprints" ? showBlueprints : (!showBlueprints && activeTab === tab)) && (
+              {tab === "strength" ? "Strength Training" : "Sports Performance"}
+              {activeTab === tab && (
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#C9A84C]" />
               )}
             </button>
@@ -79,37 +65,26 @@ export default function MovementLibrary({ onSelect, selectedId }) {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Movement Grid */}
       <div className="max-w-lg mx-auto px-4 py-6">
-        {showBlueprints ? (
-          <MyBlueprints
-            onSelectBlueprint={(bp) => {
-              const allMovements = [...EXERCISES, ...SPORTS_MOVEMENTS];
-              const base = allMovements.find(m => m.id === bp.exerciseId) || {};
-              onSelect({ ...base, name: bp.label, blueprint: bp });
-            }}
-          />
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              {movements.map((movement) => (
-                <ExerciseCard
-                  key={movement.id}
-                  exercise={movement}
-                  selected={selectedId === movement.id}
-                  onClick={() => onSelect(movement)}
-                />
-              ))}
-            </div>
-            {/* Privacy note */}
-            <p
-              className="text-center text-[9px] text-white/15 mt-6 tracking-wider"
-              style={{ fontFamily: "'DM Mono', monospace" }}
-            >
-              Camera data is processed locally. Nothing is recorded or uploaded.
-            </p>
-          </>
-        )}
+        <div className="grid grid-cols-2 gap-3">
+          {movements.map((movement) => (
+            <ExerciseCard
+              key={movement.id}
+              exercise={movement}
+              selected={selectedId === movement.id}
+              onClick={() => onSelect(movement)}
+            />
+          ))}
+        </div>
+
+        {/* Privacy note */}
+        <p
+          className="text-center text-[9px] text-white/15 mt-6 tracking-wider"
+          style={{ fontFamily: "'DM Mono', monospace" }}
+        >
+          Camera data is processed locally. Nothing is recorded or uploaded.
+        </p>
       </div>
     </div>
   );
