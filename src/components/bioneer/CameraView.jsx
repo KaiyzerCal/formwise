@@ -191,6 +191,28 @@ export default function CameraView({ exercise, onStop }) {
       const smoothed = smoothLandmarks(raw, prevLandmarksRef.current);
       prevLandmarksRef.current = smoothed;
 
+      // Record path data (passive observer — no effect on pipeline)
+      if (pathRecorderRef.current) {
+        pathRecorderRef.current.record(smoothed, performance.now());
+      }
+
+      // Draw ideal paths (gold dashed arcs) — before skeleton
+      const idealPaths = idealPathsRef.current;
+      const trackedJoints = trackedJointsRef.current;
+      for (const id of trackedJoints) {
+        if (idealPaths[id]) {
+          drawIdealPath(ctx, idealPaths[id], canvas.width, canvas.height);
+        }
+      }
+
+      // Draw user path trails (white fading) — before skeleton
+      if (pathRecorderRef.current) {
+        for (const id of trackedJoints) {
+          const path = pathRecorderRef.current.getPath(id);
+          drawPathTrail(ctx, path, "rgba(255,255,255,1)", canvas.width, canvas.height);
+        }
+      }
+
       // Draw ghost pose
       const ghost = generateGhostPose(smoothed);
       if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
