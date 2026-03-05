@@ -48,10 +48,12 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import FormCheck from './pages/FormCheck';
+import FormHistory from './pages/FormHistory';
 
 
 export const PAGES = {
     "FormCheck": FormCheck,
+    "FormHistory": FormHistory,
 }
 
 export const pagesConfig = {
