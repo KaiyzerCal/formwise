@@ -84,16 +84,10 @@ export default function MovementLibrary({ onSelect, selectedId }) {
         {showBlueprints ? (
           <MyBlueprints
             onSelectBlueprint={(bp) => {
-              console.log("TRAIN_BUTTON_PRESSED blueprintId=", bp.id);
               const allMovements = [...EXERCISES, ...SPORTS_MOVEMENTS];
               const base = allMovements.find(m => m.id === bp.exerciseId);
-              if (!base) {
-                console.error("TRAIN_ERROR: no base exercise found for", bp.exerciseId);
-                return;
-              }
-              console.log("TRAIN_NAV_ATTEMPT exercise=", base.id, "blueprintId=", bp.id);
+              if (!base) return; // can't train without a valid exercise definition
               onSelect({ ...base, name: bp.label, blueprint: bp });
-              console.log("TRAIN_NAV_SUCCESS");
             }}
           />
         ) : (
