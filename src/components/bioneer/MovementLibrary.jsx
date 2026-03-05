@@ -40,9 +40,15 @@ export default function MovementLibrary({ onSelect, selectedId }) {
               Select movement to analyze
             </p>
           </div>
-          <div className="w-9 h-9 rounded-full bg-[#C9A84C]/10 flex items-center justify-center">
-            <Scan className="w-4 h-4 text-[#C9A84C]" />
-          </div>
+          <a
+            href={createPageUrl("UploadAnalysis")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5 text-[#C9A84C]" />
+            <span className="text-[10px] font-bold text-[#C9A84C] tracking-widest uppercase hidden sm:block" style={{ fontFamily: "'DM Mono', monospace" }}>
+              Upload
+            </span>
+          </a>
         </div>
 
         {/* Tabs */}
