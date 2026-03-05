@@ -35,8 +35,10 @@ export default function FormCheck() {
     setShowDisclaimer(false);
   };
 
-  const handleStartAnalysis = () => {
-    if (!selectedExercise) return;
+  const handleStartAnalysis = (movement) => {
+    const ex = movement || selectedExercise;
+    if (!ex) return;
+    setSelectedExercise(ex);
     setPhase("camera");
   };
 
