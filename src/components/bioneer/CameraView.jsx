@@ -376,6 +376,41 @@ export default function CameraView({ exercise, onStop }) {
       phases[phase] = { frames: data.frames, avgScore: avg };
     }
 
+    // Build worst joint info for ghost replay
+    let worstJoint = null;
+    if (exercise.joints) {
+      let worstScore = Infinity;
+      for (const [label, data] of Object.entries(jd)) {
+        if (data.totalFrames === 0) continue;
+        const optFrac = data.optimalFrames / data.totalFrames;
+        if (optFrac < worstScore) {
+          worstScore = optFrac;
+          const jointDef = exercise.joints.find((j) => j.label === label);
+          const avgAngle = data.angles.length > 0
+            ? Math.round(data.angles.reduce((a, b) => a + b, 0) / data.angles.length)
+            : null;
+          worstJoint = {
+            id: label,
+            label: jointDef?.name || label,
+            avgAngle,
+            optimalRange: jointDef?.optimal || null,
+          };
+        }
+      }
+    }
+
+    // Coaching text for worst joint
+    let coachingText = null;
+    if (worstJoint && exercise.coaching) {
+      const stateKey = worstJoint.id in jd
+        ? (jd[worstJoint.id].optimalFrames / jd[worstJoint.id].totalFrames < 0.3 ? "DANGER" : "WARNING")
+        : "WARNING";
+      coachingText = exercise.coaching[`${worstJoint.label}_${stateKey}`] || null;
+    }
+
+    // Path snapshot for ghost replay
+    const pathSnapshot = pathRecorderRef.current ? pathRecorderRef.current.getSnapshot() : {};
+
     onStop({
       exercise_id: exercise.id,
       category: exercise.category || "strength",
@@ -389,7 +424,17 @@ export default function CameraView({ exercise, onStop }) {
       form_timeline: scores.filter((_, i) => i % 10 === 0),
       phases,
       joint_data: jd,
-      exercise_def: exercise, // pass along for coaching
+      exercise_def: exercise,
+      // Ghost replay data
+      _replay: {
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        score: movementScore,
+        worstJoint,
+        coachingText,
+        userFrames: pathSnapshot,
+        idealFrames: idealPathsRef.current,
+      },
     });
   };
 
