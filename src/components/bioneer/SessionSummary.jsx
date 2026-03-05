@@ -181,14 +181,24 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, onRepla
         )}
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={onDiscard}
-            className="flex-1 border-white/10 text-white/60 hover:bg-white/5 bg-transparent"
+            className="border-white/10 text-white/60 hover:bg-white/5 bg-transparent px-3"
           >
-            <X className="w-4 h-4 mr-1.5" /> Discard
+            <X className="w-4 h-4" />
           </Button>
+          {onReplay && (
+            <Button
+              variant="outline"
+              onClick={onReplay}
+              className="border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/10 bg-transparent px-3 text-xs tracking-wider"
+              style={{ fontFamily: "'DM Mono', monospace" }}
+            >
+              ▶ REPLAY
+            </Button>
+          )}
           <Button
             onClick={onSave}
             disabled={saving}
