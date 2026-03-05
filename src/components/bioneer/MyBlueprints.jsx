@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Bookmark, Trash2, Play } from "lucide-react";
+import { Bookmark, Trash2, Play, ChevronRight } from "lucide-react";
 import { getBlueprints, deleteBlueprint } from "./blueprintStore";
+import BlueprintDetailScreen from "./BlueprintDetailScreen";
 
 export default function MyBlueprints({ onSelectBlueprint }) {
   const [blueprints, setBlueprints] = useState([]);
+  const [detailId, setDetailId] = useState(null);
 
   useEffect(() => {
     setBlueprints(getBlueprints());
