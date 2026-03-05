@@ -5,6 +5,7 @@ export const EXERCISES = [
     id: "squat",
     name: "Squat",
     icon: "🏋️",
+    category: "strength",
     muscleGroup: "Legs / Glutes",
     camera: "side",
     joints: [
