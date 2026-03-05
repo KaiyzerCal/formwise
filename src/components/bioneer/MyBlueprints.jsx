@@ -44,11 +44,13 @@ export default function MyBlueprints({ onSelectBlueprint }) {
   }
 
   return (
-    <div className="px-4 pb-4 space-y-2">
+    <div className="pb-4 space-y-2">
       {blueprints.map((bp) => (
-        <div
+        <button
           key={bp.id}
-          className="flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/5 p-3"
+          onClick={() => { console.log("BLUEPRINT_TAP blueprintId=", bp.id); setDetailId(bp.id); }}
+          className="w-full flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/5 p-3 hover:bg-white/[0.05] active:scale-[0.99] transition-all text-left"
+          style={{ cursor: "pointer" }}
         >
           <div className="w-9 h-9 rounded-xl bg-[#C9A84C]/10 flex items-center justify-center flex-shrink-0">
             <Bookmark className="w-4 h-4 text-[#C9A84C]" />
@@ -61,22 +63,8 @@ export default function MyBlueprints({ onSelectBlueprint }) {
               {bp.exerciseId?.replace(/_/g, " ")} · {bp.frameCount} frames
             </p>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onSelectBlueprint(bp)}
-              className="p-2 rounded-lg bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 transition-colors"
-              title="Train with this blueprint"
-            >
-              <Play className="w-3.5 h-3.5 text-[#C9A84C]" />
-            </button>
-            <button
-              onClick={() => handleDelete(bp.id)}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-white/25 hover:text-[#EF4444]" />
-            </button>
-          </div>
-        </div>
+          <ChevronRight className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
+        </button>
       ))}
     </div>
   );
