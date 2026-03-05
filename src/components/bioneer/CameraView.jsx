@@ -79,12 +79,16 @@ export default function CameraView({ exercise, onStop }) {
 
       // Load MediaPipe via CDN scripts
       try {
-        await loadScript("https://unpkg.com/@mediapipe/pose@0.5.1675469404/pose.js");
+        const BASE = "https://unpkg.com/@mediapipe/pose@0.5.1675469404";
+
+        // Preload the assets loader so locateFile override takes effect first
+        await loadScript(`${BASE}/pose_solution_packed_assets_loader.js`);
+        await loadScript(`${BASE}/pose_solution_simd_wasm_bin.js`);
+        await loadScript(`${BASE}/pose.js`);
         if (cancelled) return;
 
         const pose = new window.Pose({
-          locateFile: (file) =>
-            `https://unpkg.com/@mediapipe/pose@0.5.1675469404/${file}`,
+          locateFile: (file) => `${BASE}/${file}`,
         });
 
         pose.setOptions({
@@ -100,11 +104,15 @@ export default function CameraView({ exercise, onStop }) {
           processResults(results);
         });
 
+        // Initialize the pose model (loads WASM + assets)
+        await pose.initialize();
+        if (cancelled) return;
+
         poseRef.current = pose;
         setPoseReady(true);
         setStatusMsg("FORM LOCKED IN");
 
-        // Init audio on first gesture
+        // Init audio
         initAudio();
 
         // Start detection loop
@@ -117,7 +125,8 @@ export default function CameraView({ exercise, onStop }) {
         }
         detect();
       } catch (err) {
-        setStatusMsg("Failed to load pose detection");
+        console.error("Pose init error:", err);
+        setStatusMsg("Failed to load pose detection: " + err.message);
       }
     }
 
