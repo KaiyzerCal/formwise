@@ -29,6 +29,9 @@ export default function CameraView({ exercise, onStop }) {
   const animFrameRef = useRef(null);
   const startTimeRef = useRef(Date.now());
   const repCounterRef = useRef(null);
+  const pathRecorderRef = useRef(null);
+  const trackedJointsRef = useRef([]);
+  const idealPathsRef = useRef({});
   const sessionDataRef = useRef({
     alerts: [],
     scores: [],
