@@ -81,7 +81,6 @@ export function areLandmarksVisible(landmarks, indices) {
 
 export function computeJointAngles(landmarks, exercise) {
   const results = [];
-  if (!exercise?.joints?.length) return results;
 
   for (const joint of exercise.joints) {
     if (joint.landmarks === "spine_lean") {
