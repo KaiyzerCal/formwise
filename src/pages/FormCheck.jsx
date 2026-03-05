@@ -49,7 +49,8 @@ export default function FormCheck() {
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.entities.FormSession.create(sessionData);
+    const { exercise_def, joint_data, ...saveable } = sessionData;
+    await base44.entities.FormSession.create(saveable);
     setSaving(false);
     setPhase("select");
     setSessionData(null);
