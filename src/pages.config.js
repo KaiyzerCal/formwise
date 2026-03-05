@@ -49,11 +49,13 @@
  */
 import FormCheck from './pages/FormCheck';
 import FormHistory from './pages/FormHistory';
+import VideoAnalysis from './pages/VideoAnalysis';
 
 
 export const PAGES = {
     "FormCheck": FormCheck,
     "FormHistory": FormHistory,
+    "VideoAnalysis": VideoAnalysis,
 }
 
 export const pagesConfig = {
