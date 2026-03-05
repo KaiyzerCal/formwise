@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { EXERCISES } from "./exerciseLibrary";
 import { SPORTS_MOVEMENTS } from "./sportsLibrary";
 import ExerciseCard from "./ExerciseCard";
-import { ArrowLeft, Scan } from "lucide-react";
+import MyBlueprints from "./MyBlueprints";
+import { ArrowLeft, Scan, Video, Bookmark } from "lucide-react";
+import { createPageUrl } from "@/utils";
 
 export default function MovementLibrary({ onSelect, selectedId }) {
   const [activeTab, setActiveTab] = useState("strength");
