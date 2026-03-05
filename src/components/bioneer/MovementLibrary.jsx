@@ -85,7 +85,8 @@ export default function MovementLibrary({ onSelect, selectedId }) {
           <MyBlueprints
             onSelectBlueprint={(bp) => {
               const allMovements = [...EXERCISES, ...SPORTS_MOVEMENTS];
-              const base = allMovements.find(m => m.id === bp.exerciseId) || {};
+              const base = allMovements.find(m => m.id === bp.exerciseId);
+              if (!base) return; // can't train without a valid exercise definition
               onSelect({ ...base, name: bp.label, blueprint: bp });
             }}
           />
