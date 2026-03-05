@@ -58,11 +58,15 @@ export default function CameraView({ exercise, onStop }) {
     mutedRef.current = muted;
   }, [muted]);
 
-  // Initialize rep counter
+  // Initialize rep counter + path recorder
   useEffect(() => {
     if (exercise.repAngle) {
       repCounterRef.current = createRepCounter(exercise.repAngle);
     }
+    const joints = getTrackedJoints(exercise);
+    trackedJointsRef.current = joints;
+    pathRecorderRef.current = new PathRecorder(joints);
+    idealPathsRef.current = getIdealPaths(exercise.id);
   }, [exercise]);
 
   // Load MediaPipe and start camera
