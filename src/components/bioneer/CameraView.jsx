@@ -309,15 +309,55 @@ export default function CameraView({ exercise, onStop }) {
         ? Math.round(scores.reduce((s, v) => s + v.score, 0) / scores.length)
         : 0;
 
+    // Compute movement score
+    const jd = jointDataRef.current;
+    const jointKeys = Object.keys(jd);
+    let accuracyScore = 0;
+    let consistencyScore = 0;
+    if (jointKeys.length > 0) {
+      const avgOptimal = jointKeys.reduce((s, k) => {
+        const d = jd[k];
+        return s + (d.totalFrames > 0 ? d.optimalFrames / d.totalFrames : 0);
+      }, 0) / jointKeys.length;
+      accuracyScore = avgOptimal * 60;
+
+      const avgStd = jointKeys.reduce((s, k) => {
+        const angles = jd[k].angles;
+        if (angles.length < 2) return s;
+        const mean = angles.reduce((a, b) => a + b, 0) / angles.length;
+        const std = Math.sqrt(angles.reduce((a, b) => a + (b - mean) ** 2, 0) / angles.length);
+        return s + Math.min(std / 30, 1); // normalize std
+      }, 0) / jointKeys.length;
+      consistencyScore = (1 - avgStd) * 25;
+    }
+    const dangerPenalty = Math.min((sessionDataRef.current.alerts.length || 0) * 3, 15);
+    const safetyScore = 15 - dangerPenalty;
+    const movementScore = Math.round(Math.max(0, Math.min(100, accuracyScore + consistencyScore + safetyScore)));
+
+    // Build phase summary
+    const phases = {};
+    const pd = sessionDataRef.current.phaseData || {};
+    for (const [phase, data] of Object.entries(pd)) {
+      const avg = data.scores.length > 0
+        ? Math.round(data.scores.reduce((a, b) => a + b, 0) / data.scores.length)
+        : 0;
+      phases[phase] = { frames: data.frames, avgScore: avg };
+    }
+
     onStop({
       exercise_id: exercise.id,
+      category: exercise.category || "strength",
       duration_seconds: Math.round(elapsed),
       form_score_overall: avgScore,
       form_score_peak: sessionDataRef.current.peakScore,
       form_score_lowest: sessionDataRef.current.lowestScore,
+      movement_score: movementScore,
       reps_detected: repCounterRef.current ? repCounterRef.current.getCount() : reps,
       alerts: sessionDataRef.current.alerts,
-      form_timeline: scores.filter((_, i) => i % 10 === 0), // sample every 10th
+      form_timeline: scores.filter((_, i) => i % 10 === 0),
+      phases,
+      joint_data: jd,
+      exercise_def: exercise, // pass along for coaching
     });
   };
 
