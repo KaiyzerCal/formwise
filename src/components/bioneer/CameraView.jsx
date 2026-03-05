@@ -41,8 +41,12 @@ export default function CameraView({ exercise, onStop }) {
   const [bodyVisible, setBodyVisible] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
   const [poseReady, setPoseReady] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState(null);
+  const [showMotionPrompt, setShowMotionPrompt] = useState(exercise.cameraMode === "motion");
   const bodyLostTimerRef = useRef(null);
   const mutedRef = useRef(false);
+  const currentPhaseRef = useRef(null);
+  const jointDataRef = useRef({});
 
   useEffect(() => {
     mutedRef.current = muted;
