@@ -16,6 +16,17 @@ export default function MyBlueprints({ onSelectBlueprint }) {
     setBlueprints(getBlueprints());
   };
 
+  // Show detail screen
+  if (detailId) {
+    return (
+      <BlueprintDetailScreen
+        blueprintId={detailId}
+        onBack={() => { setDetailId(null); setBlueprints(getBlueprints()); }}
+        onTrain={(bp) => onSelectBlueprint(bp)}
+      />
+    );
+  }
+
   if (blueprints.length === 0) {
     return (
       <div className="px-4 py-6 text-center">
