@@ -95,6 +95,18 @@ export default function FormCheck() {
         sessionData={sessionData}
         onSave={handleSave}
         onDiscard={handleDiscard}
+        onReplay={sessionData._replay ? handleOpenReplay : null}
+        saving={saving}
+      />
+    );
+  }
+
+  if (phase === "replay" && replayData) {
+    return (
+      <GhostReplay
+        replayData={replayData}
+        onSave={handleReplaySave}
+        onDone={handleReplayDone}
         saving={saving}
       />
     );
