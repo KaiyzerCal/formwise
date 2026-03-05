@@ -210,6 +210,54 @@ export default function CameraView({ exercise, onStop }) {
         }
       }
 
+      // Phase detection (sports movements)
+      if (exercise.phases) {
+        const newPhase = detectPhase(exercise.id, jointResults, currentPhaseRef.current);
+        if (newPhase && newPhase !== currentPhaseRef.current) {
+          currentPhaseRef.current = newPhase;
+          setCurrentPhase(newPhase);
+          // Record phase in session
+          if (!sessionDataRef.current.phaseData) sessionDataRef.current.phaseData = {};
+          if (!sessionDataRef.current.phaseData[newPhase]) {
+            sessionDataRef.current.phaseData[newPhase] = { frames: 0, scores: [] };
+          }
+        }
+        // Track per-frame phase data
+        if (currentPhaseRef.current && sessionDataRef.current.phaseData?.[currentPhaseRef.current]) {
+          sessionDataRef.current.phaseData[currentPhaseRef.current].frames++;
+          sessionDataRef.current.phaseData[currentPhaseRef.current].scores.push(score);
+        }
+      }
+
+      // Track joint data for movement score
+      for (const jr of jointResults) {
+        if (jr.angle !== null && jr.label) {
+          if (!jointDataRef.current[jr.label]) jointDataRef.current[jr.label] = { angles: [], optimalFrames: 0, totalFrames: 0 };
+          jointDataRef.current[jr.label].angles.push(jr.angle);
+          jointDataRef.current[jr.label].totalFrames++;
+          if (jr.state === "OPTIMAL") jointDataRef.current[jr.label].optimalFrames++;
+        }
+      }
+
+      // Motion mode: draw subject tracking box
+      if (exercise.cameraMode === "motion" && results.poseLandmarks) {
+        const xs = results.poseLandmarks.map(l => l.x);
+        const ys = results.poseLandmarks.map(l => l.y);
+        const minX = Math.min(...xs), maxX = Math.max(...xs);
+        const minY = Math.min(...ys), maxY = Math.max(...ys);
+        const pad = 0.05;
+        ctx.strokeStyle = "rgba(201,168,76,0.5)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(
+          (minX - pad) * canvas.width,
+          (minY - pad) * canvas.height,
+          (maxX - minX + pad * 2) * canvas.width,
+          (maxY - minY + pad * 2) * canvas.height
+        );
+        ctx.setLineDash([]);
+      }
+
       // Status message logic
       let worstState = "OPTIMAL";
       let worstJoint = "";
