@@ -203,12 +203,31 @@ export default function BlueprintDetailScreen({ blueprintId, onBack, onTrain }) 
 
         {/* Train button */}
         <button
-          onClick={() => onTrain(blueprint)}
-          className="w-full py-4 rounded-2xl font-bold text-sm tracking-[0.2em] uppercase flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          onClick={() => {
+            console.log("TRAIN_BUTTON_PRESSED blueprintId=", blueprint?.id);
+            if (!blueprint) { console.error("TRAIN_ERROR: blueprint not loaded"); return; }
+            onTrain(blueprint);
+          }}
           style={{
+            position: "relative",
+            zIndex: 10,
+            width: "100%",
+            padding: "1rem",
+            borderRadius: "1rem",
+            fontWeight: "bold",
+            fontSize: "0.875rem",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+            cursor: "pointer",
+            pointerEvents: "auto",
             background: "linear-gradient(135deg, #C9A84C 0%, #b8943f 100%)",
             color: "#000",
             fontFamily: "'Syne', sans-serif",
+            border: "none",
           }}
         >
           <Play className="w-4 h-4" />
