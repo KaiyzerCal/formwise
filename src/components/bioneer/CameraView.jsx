@@ -435,6 +435,34 @@ export default function CameraView({ exercise, onStop }) {
         </button>
       </div>
 
+      {/* Motion mode prompt */}
+      {showMotionPrompt && (
+        <div className="absolute inset-0 z-45 flex items-center justify-center" onClick={() => setShowMotionPrompt(false)}>
+          <div className="px-6 py-4 rounded-xl bg-black/80 backdrop-blur-md border border-[#C9A84C]/30 text-center max-w-xs">
+            <p className="text-[#C9A84C] text-sm font-medium mb-1">Move Freely</p>
+            <p className="text-white/50 text-xs">Camera will track you as you move</p>
+            <p className="text-white/25 text-[10px] mt-3">Tap to dismiss</p>
+          </div>
+        </div>
+      )}
+
+      {/* Phase badge */}
+      {currentPhase && (
+        <div className="absolute top-20 left-0 right-0 z-50 flex justify-center pointer-events-none">
+          <div
+            className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-[#C9A84C]/30"
+            style={{ animation: "fadein 0.12s ease" }}
+          >
+            <span
+              className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-[0.2em]"
+              style={{ fontFamily: "'DM Mono', monospace" }}
+            >
+              {currentPhase.replace(/_/g, " ")}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Body not visible warning */}
       {!bodyVisible && (
         <div className="absolute inset-0 z-45 flex items-center justify-center">
