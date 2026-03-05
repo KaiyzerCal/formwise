@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { EXERCISES, getExerciseById } from "../components/bioneer/exerciseLibrary";
-import ExerciseCard from "../components/bioneer/ExerciseCard";
+import { getSportsMovementById } from "../components/bioneer/sportsLibrary";
+import MovementLibrary from "../components/bioneer/MovementLibrary";
 import CameraView from "../components/bioneer/CameraView";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import Disclaimer from "../components/bioneer/Disclaimer";
-import { ArrowLeft, Scan } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
