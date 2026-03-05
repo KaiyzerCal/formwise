@@ -84,17 +84,9 @@ export default function MovementLibrary({ onSelect, selectedId }) {
         {showBlueprints ? (
           <MyBlueprints
             onSelectBlueprint={(bp) => {
-              // Convert blueprint to a movement-like object and start training
-              const movementLike = {
-                id: bp.exerciseId,
-                name: bp.label,
-                category: "strength",
-                blueprint: bp,
-                ...require("./exerciseLibrary").EXERCISES.concat(require("./sportsLibrary").SPORTS_MOVEMENTS)
-                  .find(m => m.id === bp.exerciseId) || {},
-                name: bp.label,
-              };
-              onSelect(movementLike);
+              const allMovements = [...EXERCISES, ...SPORTS_MOVEMENTS];
+              const base = allMovements.find(m => m.id === bp.exerciseId) || {};
+              onSelect({ ...base, name: bp.label, blueprint: bp });
             }}
           />
         ) : (
