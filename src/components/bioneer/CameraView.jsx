@@ -1,0 +1,399 @@
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
+import {
+  smoothLandmarks,
+  computeJointAngles,
+  computeFormScore,
+} from "./poseEngine";
+import {
+  clearCanvas,
+  drawSkeleton,
+  drawGhostSkeleton,
+  generateGhostPose,
+} from "./canvasRenderer";
+import { initAudio, beep, destroyAudio } from "./audioEngine";
+import { createRepCounter } from "./repCounter";
+
+const DANGER_FRAME_THRESHOLD = 8;
+
+export default function CameraView({ exercise, onStop }) {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const poseRef = useRef(null);
+  const prevLandmarksRef = useRef(null);
+  const dangerFramesRef = useRef({});
+  const animFrameRef = useRef(null);
+  const startTimeRef = useRef(Date.now());
+  const repCounterRef = useRef(null);
+  const sessionDataRef = useRef({
+    alerts: [],
+    scores: [],
+    peakScore: 0,
+    lowestScore: 100,
+  });
+
+  const [formScore, setFormScore] = useState(100);
+  const [reps, setReps] = useState(0);
+  const [statusMsg, setStatusMsg] = useState("Initializing camera...");
+  const [statusColor, setStatusColor] = useState("#C9A84C");
+  const [muted, setMuted] = useState(false);
+  const [bodyVisible, setBodyVisible] = useState(true);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [poseReady, setPoseReady] = useState(false);
+  const bodyLostTimerRef = useRef(null);
+  const mutedRef = useRef(false);
+
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
+
+  // Initialize rep counter
+  useEffect(() => {
+    if (exercise.repAngle) {
+      repCounterRef.current = createRepCounter(exercise.repAngle);
+    }
+  }, [exercise]);
+
+  // Load MediaPipe and start camera
+  useEffect(() => {
+    let stream = null;
+    let cancelled = false;
+
+    async function init() {
+      // Start camera
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: 1280, height: 720 },
+        });
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+          setCameraReady(true);
+          setStatusMsg("Loading pose detection...");
+        }
+      } catch (err) {
+        setStatusMsg("Camera access denied. Please allow camera.");
+        return;
+      }
+
+      // Load MediaPipe via CDN scripts
+      try {
+        await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js");
+        if (cancelled) return;
+
+        const pose = new window.Pose({
+          locateFile: (file) =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`,
+        });
+
+        pose.setOptions({
+          modelComplexity: 1,
+          smoothLandmarks: true,
+          enableSegmentation: false,
+          minDetectionConfidence: 0.6,
+          minTrackingConfidence: 0.5,
+        });
+
+        pose.onResults((results) => {
+          if (cancelled) return;
+          processResults(results);
+        });
+
+        poseRef.current = pose;
+        setPoseReady(true);
+        setStatusMsg("FORM LOCKED IN");
+
+        // Init audio on first gesture
+        initAudio();
+
+        // Start detection loop
+        function detect() {
+          if (cancelled) return;
+          if (videoRef.current && poseRef.current && videoRef.current.readyState >= 2) {
+            poseRef.current.send({ image: videoRef.current });
+          }
+          animFrameRef.current = requestAnimationFrame(detect);
+        }
+        detect();
+      } catch (err) {
+        setStatusMsg("Failed to load pose detection");
+      }
+    }
+
+    init();
+
+    return () => {
+      cancelled = true;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      if (poseRef.current) { poseRef.current.close(); poseRef.current = null; }
+      destroyAudio();
+      if (bodyLostTimerRef.current) clearTimeout(bodyLostTimerRef.current);
+    };
+  }, []);
+
+  const processResults = useCallback(
+    (results) => {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      if (!canvas || !video) return;
+
+      const ctx = canvas.getContext("2d");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      clearCanvas(ctx, canvas.width, canvas.height);
+
+      if (!results.poseLandmarks) {
+        // No body detected
+        if (bodyLostTimerRef.current === null) {
+          bodyLostTimerRef.current = setTimeout(() => {
+            setBodyVisible(false);
+            setStatusMsg("Step back — full body not visible");
+            setStatusColor("#EF4444");
+          }, 2000);
+        }
+        return;
+      }
+
+      // Body found
+      if (bodyLostTimerRef.current) {
+        clearTimeout(bodyLostTimerRef.current);
+        bodyLostTimerRef.current = null;
+      }
+      setBodyVisible(true);
+
+      const raw = results.poseLandmarks;
+      const smoothed = smoothLandmarks(raw, prevLandmarksRef.current);
+      prevLandmarksRef.current = smoothed;
+
+      // Draw ghost pose
+      const ghost = generateGhostPose(smoothed);
+      if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
+
+      // Compute angles
+      const jointResults = computeJointAngles(smoothed, exercise);
+
+      // Draw live skeleton
+      drawSkeleton(ctx, smoothed, jointResults, canvas.width, canvas.height);
+
+      // Compute form score
+      const score = computeFormScore(jointResults);
+      setFormScore(score);
+
+      // Track session data
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      sessionDataRef.current.scores.push({ time: elapsed, score });
+      if (score > sessionDataRef.current.peakScore) sessionDataRef.current.peakScore = score;
+      if (score < sessionDataRef.current.lowestScore) sessionDataRef.current.lowestScore = score;
+
+      // Rep counting
+      if (repCounterRef.current && exercise.repAngle) {
+        const primaryJoint = jointResults[exercise.repAngle.jointIndex];
+        if (primaryJoint && primaryJoint.angle !== null) {
+          const count = repCounterRef.current.update(primaryJoint.angle);
+          setReps(count);
+        }
+      }
+
+      // Status message logic
+      let worstState = "OPTIMAL";
+      let worstJoint = "";
+      const stateOrder = ["OPTIMAL", "ACCEPTABLE", "WARNING", "DANGER"];
+      for (const jr of jointResults) {
+        if (jr.state && stateOrder.indexOf(jr.state) > stateOrder.indexOf(worstState)) {
+          worstState = jr.state;
+          worstJoint = jr.name;
+        }
+      }
+
+      // Danger frame tracking & audio
+      for (const jr of jointResults) {
+        const key = jr.label;
+        if (jr.state === "DANGER") {
+          dangerFramesRef.current[key] = (dangerFramesRef.current[key] || 0) + 1;
+          if (dangerFramesRef.current[key] >= DANGER_FRAME_THRESHOLD) {
+            beep(mutedRef.current);
+            sessionDataRef.current.alerts.push({
+              timestamp: parseFloat(elapsed.toFixed(1)),
+              joint: jr.name.toLowerCase().replace(/\s/g, "_"),
+              angle: jr.angle,
+            });
+            dangerFramesRef.current[key] = 0;
+          }
+        } else {
+          dangerFramesRef.current[key] = 0;
+        }
+      }
+
+      const msgMap = {
+        OPTIMAL: { msg: "FORM LOCKED IN", color: "#22C55E" },
+        ACCEPTABLE: { msg: "MINOR ADJUSTMENT", color: "#EAB308" },
+        WARNING: { msg: `CHECK YOUR ${worstJoint.toUpperCase()}`, color: "#F97316" },
+        DANGER: { msg: "⚠ DANGER — CORRECT NOW", color: "#EF4444" },
+      };
+      const status = msgMap[worstState];
+      setStatusMsg(status.msg);
+      setStatusColor(status.color);
+    },
+    [exercise]
+  );
+
+  const handleStop = () => {
+    const elapsed = (Date.now() - startTimeRef.current) / 1000;
+    const scores = sessionDataRef.current.scores;
+    const avgScore =
+      scores.length > 0
+        ? Math.round(scores.reduce((s, v) => s + v.score, 0) / scores.length)
+        : 0;
+
+    onStop({
+      exercise_id: exercise.id,
+      duration_seconds: Math.round(elapsed),
+      form_score_overall: avgScore,
+      form_score_peak: sessionDataRef.current.peakScore,
+      form_score_lowest: sessionDataRef.current.lowestScore,
+      reps_detected: repCounterRef.current ? repCounterRef.current.getCount() : reps,
+      alerts: sessionDataRef.current.alerts,
+      form_timeline: scores.filter((_, i) => i % 10 === 0), // sample every 10th
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-40 bg-black">
+      {/* Video feed */}
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+
+      {/* Canvas overlay */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+
+      {/* Top bar */}
+      <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/60 to-transparent">
+        <button onClick={handleStop} className="p-2 rounded-full bg-white/10 backdrop-blur-md">
+          <ArrowLeft className="w-5 h-5 text-white" />
+        </button>
+
+        <span
+          className="text-[#C9A84C] text-sm font-bold tracking-[0.2em] uppercase"
+          style={{ fontFamily: "'DM Mono', monospace" }}
+        >
+          {exercise.name}
+        </span>
+
+        <div
+          className="px-3 py-1.5 rounded-full backdrop-blur-md border"
+          style={{
+            backgroundColor: "rgba(0,0,0,0.5)",
+            borderColor: formScore >= 80 ? "#22C55E" : formScore >= 65 ? "#EAB308" : "#EF4444",
+          }}
+        >
+          <span
+            className="text-sm font-bold"
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              color: formScore >= 80 ? "#22C55E" : formScore >= 65 ? "#EAB308" : "#EF4444",
+            }}
+          >
+            {formScore}%
+          </span>
+        </div>
+      </div>
+
+      {/* Rep counter */}
+      <div className="absolute top-16 left-4 z-50">
+        <div className="px-3 py-2 rounded-xl bg-black/50 backdrop-blur-md border border-white/10">
+          <span className="text-[10px] text-white/40 uppercase tracking-widest block" style={{ fontFamily: "'DM Mono', monospace" }}>
+            REPS
+          </span>
+          <span className="text-2xl font-bold text-white" style={{ fontFamily: "'DM Mono', monospace" }}>
+            {reps}
+          </span>
+        </div>
+      </div>
+
+      {/* Mute button */}
+      <div className="absolute top-16 right-4 z-50">
+        <button
+          onClick={() => { initAudio(); setMuted(!muted); }}
+          className="p-2.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10"
+        >
+          {muted ? (
+            <VolumeX className="w-4 h-4 text-white/50" />
+          ) : (
+            <Volume2 className="w-4 h-4 text-white" />
+          )}
+        </button>
+      </div>
+
+      {/* Body not visible warning */}
+      {!bodyVisible && (
+        <div className="absolute inset-0 z-45 flex items-center justify-center">
+          <div className="px-6 py-4 rounded-xl bg-black/70 backdrop-blur-md border border-[#EF4444]/30">
+            <p className="text-[#EF4444] text-sm font-medium text-center">
+              Step back — full body not visible
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {!poseReady && cameraReady && (
+        <div className="absolute inset-0 z-45 flex items-center justify-center">
+          <div className="px-6 py-4 rounded-xl bg-black/70 backdrop-blur-md border border-[#C9A84C]/30">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 border-2 border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+              <p className="text-[#C9A84C] text-sm">Loading pose detection...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom panel */}
+      <div className="absolute bottom-0 left-0 right-0 z-50">
+        <div className="bg-white/[0.05] backdrop-blur-xl border-t border-white/10 px-4 py-5 pb-8">
+          {/* Status message */}
+          <div className="text-center mb-4">
+            <span
+              className="text-xs font-bold tracking-[0.25em] uppercase"
+              style={{ fontFamily: "'DM Mono', monospace", color: statusColor }}
+            >
+              {statusMsg}
+            </span>
+          </div>
+
+          {/* Stop button */}
+          <button
+            onClick={handleStop}
+            className="w-full py-3.5 rounded-xl bg-white/10 border border-white/10 text-white font-bold text-sm tracking-wider hover:bg-white/15 transition-colors"
+            style={{ fontFamily: "'Syne', sans-serif" }}
+          >
+            STOP SESSION
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve();
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = src;
+    s.crossOrigin = "anonymous";
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
