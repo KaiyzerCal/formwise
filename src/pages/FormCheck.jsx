@@ -11,9 +11,10 @@ import Disclaimer from "../components/bioneer/Disclaimer";
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
 export default function FormCheck() {
-  const [phase, setPhase] = useState("select"); // select | camera | summary
+  const [phase, setPhase] = useState("select"); // select | camera | summary | replay
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [sessionData, setSessionData] = useState(null);
+  const [replayData, setReplayData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
