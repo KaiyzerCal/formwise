@@ -185,8 +185,8 @@ export default function CameraView({ exercise, onStop }) {
       const ghost = generateGhostPose(smoothed);
       if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
 
-      // Compute angles
-      const jointResults = computeJointAngles(smoothed, exercise);
+      // Compute angles — guard against blueprint-mode exercises with no joints
+      const jointResults = exercise?.joints?.length ? computeJointAngles(smoothed, exercise) : [];
 
       // Draw live skeleton
       drawSkeleton(ctx, smoothed, jointResults, canvas.width, canvas.height);
