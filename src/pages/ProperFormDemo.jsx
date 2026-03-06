@@ -67,11 +67,9 @@ export default function ProperFormDemo() {
     );
   }
 
-  // Derive current frame
-  const baseFrame = getInterpolatedFrame(motionData.frames, currentTimeMs, motionData.frameIntervalMs);
-  const currentFrame = baseFrame && activeFault
-    ? applyFaultOffsets(baseFrame, activeFault.keypointOffsets)
-    : baseFrame;
+  // Derive current frame — resolveFrame handles precomputed fault frames + offset fallback
+  const baseFrame    = getInterpolatedFrame(motionData.frames, currentTimeMs, motionData.frameIntervalMs);
+  const currentFrame = resolveFrame(motionData, currentTimeMs, activeFault);
 
   // Derive current phase config
   const currentPhaseId  = baseFrame?.phase;
