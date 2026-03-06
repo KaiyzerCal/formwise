@@ -156,30 +156,50 @@ export function renderPathOverlay(ctx, pathPoints, style) {
 }
 
 // ─── Motion Frame Data ────────────────────────────────────────────────────────
-// Squat — 9 frames across 5 phases
 
-const SQUAT_STAND = {
-  head:{x:.50,y:.08}, neck:{x:.50,y:.14}, chest:{x:.50,y:.26},
-  l_shoulder:{x:.42,y:.24}, r_shoulder:{x:.58,y:.24},
-  l_elbow:{x:.38,y:.36}, r_elbow:{x:.62,y:.36},
-  l_wrist:{x:.36,y:.46}, r_wrist:{x:.64,y:.46},
-  pelvis:{x:.50,y:.46},
-  l_hip:{x:.44,y:.48}, r_hip:{x:.56,y:.48},
-  l_knee:{x:.43,y:.68}, r_knee:{x:.57,y:.68},
-  l_ankle:{x:.43,y:.88}, r_ankle:{x:.57,y:.88},
-  l_toe:{x:.40,y:.93}, r_toe:{x:.60,y:.93},
-};
+// Seeded keyframes — interpolated into full frame arrays below
 
-const SQUAT_BOTTOM = {
-  head:{x:.50,y:.22}, neck:{x:.50,y:.28}, chest:{x:.50,y:.38},
-  l_shoulder:{x:.42,y:.36}, r_shoulder:{x:.58,y:.36},
-  l_elbow:{x:.36,y:.46}, r_elbow:{x:.64,y:.46},
-  l_wrist:{x:.34,y:.54}, r_wrist:{x:.66,y:.54},
-  pelvis:{x:.50,y:.56},
-  l_hip:{x:.43,y:.58}, r_hip:{x:.57,y:.58},
-  l_knee:{x:.38,y:.70}, r_knee:{x:.62,y:.70},
-  l_ankle:{x:.43,y:.88}, r_ankle:{x:.57,y:.88},
-  l_toe:{x:.40,y:.93}, r_toe:{x:.60,y:.93},
+const KF = {
+  // ── Squat ──
+  squat_setup:   { head:{x:.50,y:.07}, neck:{x:.50,y:.13}, chest:{x:.50,y:.25}, l_shoulder:{x:.42,y:.23}, r_shoulder:{x:.58,y:.23}, l_elbow:{x:.37,y:.34}, r_elbow:{x:.63,y:.34}, l_wrist:{x:.35,y:.44}, r_wrist:{x:.65,y:.44}, pelvis:{x:.50,y:.45}, l_hip:{x:.44,y:.47}, r_hip:{x:.56,y:.47}, l_knee:{x:.43,y:.67}, r_knee:{x:.57,y:.67}, l_ankle:{x:.43,y:.87}, r_ankle:{x:.57,y:.87}, l_toe:{x:.40,y:.92}, r_toe:{x:.60,y:.92} },
+  squat_earlyD:  { head:{x:.50,y:.10}, neck:{x:.50,y:.16}, chest:{x:.49,y:.28}, l_shoulder:{x:.41,y:.26}, r_shoulder:{x:.57,y:.26}, l_elbow:{x:.36,y:.37}, r_elbow:{x:.62,y:.37}, l_wrist:{x:.34,y:.47}, r_wrist:{x:.64,y:.47}, pelvis:{x:.49,y:.50}, l_hip:{x:.43,y:.52}, r_hip:{x:.55,y:.52}, l_knee:{x:.41,y:.70}, r_knee:{x:.55,y:.70}, l_ankle:{x:.42,y:.88}, r_ankle:{x:.56,y:.88}, l_toe:{x:.38,y:.93}, r_toe:{x:.59,y:.93} },
+  squat_midD:    { head:{x:.50,y:.14}, neck:{x:.50,y:.20}, chest:{x:.48,y:.33}, l_shoulder:{x:.40,y:.31}, r_shoulder:{x:.56,y:.31}, l_elbow:{x:.35,y:.42}, r_elbow:{x:.61,y:.42}, l_wrist:{x:.33,y:.52}, r_wrist:{x:.63,y:.52}, pelvis:{x:.48,y:.56}, l_hip:{x:.42,y:.58}, r_hip:{x:.54,y:.58}, l_knee:{x:.39,y:.73}, r_knee:{x:.53,y:.73}, l_ankle:{x:.41,y:.89}, r_ankle:{x:.55,y:.89}, l_toe:{x:.37,y:.94}, r_toe:{x:.58,y:.94} },
+  squat_bottom:  { head:{x:.50,y:.18}, neck:{x:.50,y:.24}, chest:{x:.47,y:.38}, l_shoulder:{x:.39,y:.36}, r_shoulder:{x:.55,y:.36}, l_elbow:{x:.34,y:.47}, r_elbow:{x:.60,y:.47}, l_wrist:{x:.32,y:.57}, r_wrist:{x:.62,y:.57}, pelvis:{x:.47,y:.63}, l_hip:{x:.41,y:.65}, r_hip:{x:.53,y:.65}, l_knee:{x:.37,y:.76}, r_knee:{x:.51,y:.76}, l_ankle:{x:.41,y:.89}, r_ankle:{x:.55,y:.89}, l_toe:{x:.37,y:.94}, r_toe:{x:.58,y:.94} },
+  squat_ascentM: { head:{x:.50,y:.12}, neck:{x:.50,y:.18}, chest:{x:.49,y:.31}, l_shoulder:{x:.41,y:.29}, r_shoulder:{x:.57,y:.29}, l_elbow:{x:.36,y:.40}, r_elbow:{x:.62,y:.40}, l_wrist:{x:.34,y:.50}, r_wrist:{x:.64,y:.50}, pelvis:{x:.49,y:.52}, l_hip:{x:.43,y:.54}, r_hip:{x:.55,y:.54}, l_knee:{x:.41,y:.71}, r_knee:{x:.55,y:.71}, l_ankle:{x:.42,y:.88}, r_ankle:{x:.56,y:.88}, l_toe:{x:.38,y:.93}, r_toe:{x:.59,y:.93} },
+
+  // ── Deadlift ──
+  dl_setup:   { head:{x:.50,y:.10}, neck:{x:.50,y:.16}, chest:{x:.47,y:.30}, l_shoulder:{x:.38,y:.28}, r_shoulder:{x:.54,y:.28}, l_elbow:{x:.34,y:.42}, r_elbow:{x:.50,y:.42}, l_wrist:{x:.32,y:.55}, r_wrist:{x:.48,y:.55}, pelvis:{x:.48,y:.55}, l_hip:{x:.42,y:.57}, r_hip:{x:.54,y:.57}, l_knee:{x:.42,y:.72}, r_knee:{x:.54,y:.72}, l_ankle:{x:.43,y:.87}, r_ankle:{x:.55,y:.87}, l_toe:{x:.40,y:.92}, r_toe:{x:.57,y:.92} },
+  dl_offFloor:{ head:{x:.50,y:.12}, neck:{x:.50,y:.18}, chest:{x:.47,y:.32}, l_shoulder:{x:.38,y:.30}, r_shoulder:{x:.54,y:.30}, l_elbow:{x:.33,y:.44}, r_elbow:{x:.49,y:.44}, l_wrist:{x:.31,y:.57}, r_wrist:{x:.47,y:.57}, pelvis:{x:.48,y:.52}, l_hip:{x:.42,y:.54}, r_hip:{x:.54,y:.54}, l_knee:{x:.43,y:.68}, r_knee:{x:.55,y:.68}, l_ankle:{x:.43,y:.87}, r_ankle:{x:.55,y:.87}, l_toe:{x:.40,y:.92}, r_toe:{x:.57,y:.92} },
+  dl_midPull: { head:{x:.50,y:.10}, neck:{x:.50,y:.16}, chest:{x:.48,y:.28}, l_shoulder:{x:.39,y:.26}, r_shoulder:{x:.55,y:.26}, l_elbow:{x:.34,y:.40}, r_elbow:{x:.50,y:.40}, l_wrist:{x:.32,y:.52}, r_wrist:{x:.48,y:.52}, pelvis:{x:.49,y:.47}, l_hip:{x:.43,y:.49}, r_hip:{x:.55,y:.49}, l_knee:{x:.44,y:.65}, r_knee:{x:.56,y:.65}, l_ankle:{x:.43,y:.87}, r_ankle:{x:.55,y:.87}, l_toe:{x:.40,y:.92}, r_toe:{x:.57,y:.92} },
+  dl_lockout: { head:{x:.50,y:.07}, neck:{x:.50,y:.13}, chest:{x:.50,y:.24}, l_shoulder:{x:.41,y:.22}, r_shoulder:{x:.57,y:.22}, l_elbow:{x:.36,y:.35}, r_elbow:{x:.52,y:.35}, l_wrist:{x:.34,y:.48}, r_wrist:{x:.50,y:.48}, pelvis:{x:.50,y:.44}, l_hip:{x:.44,y:.46}, r_hip:{x:.56,y:.46}, l_knee:{x:.44,y:.65}, r_knee:{x:.56,y:.65}, l_ankle:{x:.43,y:.87}, r_ankle:{x:.55,y:.87}, l_toe:{x:.40,y:.92}, r_toe:{x:.57,y:.92} },
+
+  // ── Push-up ──
+  pu_top: { head:{x:.20,y:.28}, neck:{x:.25,y:.30}, chest:{x:.40,y:.35}, l_shoulder:{x:.38,y:.33}, r_shoulder:{x:.42,y:.33}, l_elbow:{x:.52,y:.35}, r_elbow:{x:.56,y:.35}, l_wrist:{x:.62,y:.40}, r_wrist:{x:.66,y:.40}, pelvis:{x:.58,y:.40}, l_hip:{x:.56,y:.40}, r_hip:{x:.60,y:.40}, l_knee:{x:.72,y:.44}, r_knee:{x:.74,y:.44}, l_ankle:{x:.85,y:.50}, r_ankle:{x:.87,y:.50}, l_toe:{x:.90,y:.53}, r_toe:{x:.92,y:.53} },
+  pu_midD:{ head:{x:.20,y:.35}, neck:{x:.25,y:.37}, chest:{x:.40,y:.42}, l_shoulder:{x:.38,y:.40}, r_shoulder:{x:.42,y:.40}, l_elbow:{x:.48,y:.36}, r_elbow:{x:.52,y:.36}, l_wrist:{x:.62,y:.40}, r_wrist:{x:.66,y:.40}, pelvis:{x:.58,y:.43}, l_hip:{x:.56,y:.43}, r_hip:{x:.60,y:.43}, l_knee:{x:.72,y:.46}, r_knee:{x:.74,y:.46}, l_ankle:{x:.85,y:.51}, r_ankle:{x:.87,y:.51}, l_toe:{x:.90,y:.54}, r_toe:{x:.92,y:.54} },
+  pu_bot: { head:{x:.20,y:.42}, neck:{x:.25,y:.44}, chest:{x:.40,y:.50}, l_shoulder:{x:.38,y:.48}, r_shoulder:{x:.42,y:.48}, l_elbow:{x:.44,y:.38}, r_elbow:{x:.48,y:.38}, l_wrist:{x:.62,y:.40}, r_wrist:{x:.66,y:.40}, pelvis:{x:.58,y:.46}, l_hip:{x:.56,y:.46}, r_hip:{x:.60,y:.46}, l_knee:{x:.72,y:.48}, r_knee:{x:.74,y:.48}, l_ankle:{x:.85,y:.52}, r_ankle:{x:.87,y:.52}, l_toe:{x:.90,y:.55}, r_toe:{x:.92,y:.55} },
+
+  // ── Pull-up ──
+  pl_hang:   { head:{x:.50,y:.30}, neck:{x:.50,y:.36}, chest:{x:.50,y:.48}, l_shoulder:{x:.42,y:.46}, r_shoulder:{x:.58,y:.46}, l_elbow:{x:.35,y:.28}, r_elbow:{x:.65,y:.28}, l_wrist:{x:.32,y:.12}, r_wrist:{x:.68,y:.12}, pelvis:{x:.50,y:.65}, l_hip:{x:.46,y:.67}, r_hip:{x:.54,y:.67}, l_knee:{x:.46,y:.80}, r_knee:{x:.54,y:.80}, l_ankle:{x:.46,y:.93}, r_ankle:{x:.54,y:.93}, l_toe:{x:.45,y:.97}, r_toe:{x:.55,y:.97} },
+  pl_init:   { head:{x:.50,y:.28}, neck:{x:.50,y:.34}, chest:{x:.50,y:.46}, l_shoulder:{x:.41,y:.42}, r_shoulder:{x:.59,y:.42}, l_elbow:{x:.35,y:.27}, r_elbow:{x:.65,y:.27}, l_wrist:{x:.32,y:.12}, r_wrist:{x:.68,y:.12}, pelvis:{x:.50,y:.63}, l_hip:{x:.46,y:.65}, r_hip:{x:.54,y:.65}, l_knee:{x:.46,y:.78}, r_knee:{x:.54,y:.78}, l_ankle:{x:.46,y:.91}, r_ankle:{x:.54,y:.91}, l_toe:{x:.45,y:.95}, r_toe:{x:.55,y:.95} },
+  pl_mid:    { head:{x:.50,y:.22}, neck:{x:.50,y:.28}, chest:{x:.50,y:.38}, l_shoulder:{x:.40,y:.34}, r_shoulder:{x:.60,y:.34}, l_elbow:{x:.36,y:.30}, r_elbow:{x:.64,y:.30}, l_wrist:{x:.32,y:.12}, r_wrist:{x:.68,y:.12}, pelvis:{x:.50,y:.56}, l_hip:{x:.46,y:.58}, r_hip:{x:.54,y:.58}, l_knee:{x:.46,y:.72}, r_knee:{x:.54,y:.72}, l_ankle:{x:.46,y:.85}, r_ankle:{x:.54,y:.85}, l_toe:{x:.45,y:.89}, r_toe:{x:.55,y:.89} },
+  pl_top:    { head:{x:.50,y:.09}, neck:{x:.50,y:.15}, chest:{x:.50,y:.26}, l_shoulder:{x:.41,y:.22}, r_shoulder:{x:.59,y:.22}, l_elbow:{x:.38,y:.16}, r_elbow:{x:.62,y:.16}, l_wrist:{x:.32,y:.12}, r_wrist:{x:.68,y:.12}, pelvis:{x:.50,y:.44}, l_hip:{x:.46,y:.46}, r_hip:{x:.54,y:.46}, l_knee:{x:.46,y:.60}, r_knee:{x:.54,y:.60}, l_ankle:{x:.46,y:.74}, r_ankle:{x:.54,y:.74}, l_toe:{x:.45,y:.78}, r_toe:{x:.55,y:.78} },
+
+  // ── Bench Press ──
+  bp_lock:{ head:{x:.50,y:.10}, neck:{x:.50,y:.16}, chest:{x:.50,y:.30}, l_shoulder:{x:.40,y:.28}, r_shoulder:{x:.60,y:.28}, l_elbow:{x:.35,y:.18}, r_elbow:{x:.65,y:.18}, l_wrist:{x:.33,y:.10}, r_wrist:{x:.67,y:.10}, pelvis:{x:.50,y:.60}, l_hip:{x:.44,y:.62}, r_hip:{x:.56,y:.62}, l_knee:{x:.40,y:.78}, r_knee:{x:.60,y:.78}, l_ankle:{x:.38,y:.90}, r_ankle:{x:.62,y:.90}, l_toe:{x:.35,y:.95}, r_toe:{x:.65,y:.95} },
+  bp_midD:{ head:{x:.50,y:.10}, neck:{x:.50,y:.16}, chest:{x:.50,y:.30}, l_shoulder:{x:.40,y:.28}, r_shoulder:{x:.60,y:.28}, l_elbow:{x:.36,y:.28}, r_elbow:{x:.64,y:.28}, l_wrist:{x:.36,y:.20}, r_wrist:{x:.64,y:.20}, pelvis:{x:.50,y:.60}, l_hip:{x:.44,y:.62}, r_hip:{x:.56,y:.62}, l_knee:{x:.40,y:.78}, r_knee:{x:.60,y:.78}, l_ankle:{x:.38,y:.90}, r_ankle:{x:.62,y:.90}, l_toe:{x:.35,y:.95}, r_toe:{x:.65,y:.95} },
+  bp_touch:{ head:{x:.50,y:.10}, neck:{x:.50,y:.16}, chest:{x:.50,y:.30}, l_shoulder:{x:.40,y:.28}, r_shoulder:{x:.60,y:.28}, l_elbow:{x:.37,y:.34}, r_elbow:{x:.63,y:.34}, l_wrist:{x:.40,y:.29}, r_wrist:{x:.60,y:.29}, pelvis:{x:.50,y:.60}, l_hip:{x:.44,y:.62}, r_hip:{x:.56,y:.62}, l_knee:{x:.40,y:.78}, r_knee:{x:.60,y:.78}, l_ankle:{x:.38,y:.90}, r_ankle:{x:.62,y:.90}, l_toe:{x:.35,y:.95}, r_toe:{x:.65,y:.95} },
+
+  // ── Lunge ──
+  lu_stand: { head:{x:.50,y:.07}, neck:{x:.50,y:.13}, chest:{x:.50,y:.26}, l_shoulder:{x:.43,y:.24}, r_shoulder:{x:.57,y:.24}, l_elbow:{x:.40,y:.36}, r_elbow:{x:.60,y:.36}, l_wrist:{x:.41,y:.47}, r_wrist:{x:.59,y:.47}, pelvis:{x:.50,y:.46}, l_hip:{x:.46,y:.48}, r_hip:{x:.54,y:.48}, l_knee:{x:.46,y:.68}, r_knee:{x:.54,y:.68}, l_ankle:{x:.46,y:.87}, r_ankle:{x:.54,y:.87}, l_toe:{x:.43,y:.92}, r_toe:{x:.57,y:.92} },
+  lu_bot:   { head:{x:.52,y:.10}, neck:{x:.52,y:.16}, chest:{x:.52,y:.30}, l_shoulder:{x:.45,y:.28}, r_shoulder:{x:.59,y:.28}, l_elbow:{x:.42,y:.40}, r_elbow:{x:.62,y:.40}, l_wrist:{x:.43,y:.51}, r_wrist:{x:.63,y:.51}, pelvis:{x:.52,y:.50}, l_hip:{x:.46,y:.52}, r_hip:{x:.58,y:.52}, l_knee:{x:.38,y:.70}, r_knee:{x:.62,y:.72}, l_ankle:{x:.32,y:.88}, r_ankle:{x:.65,y:.88}, l_toe:{x:.28,y:.92}, r_toe:{x:.70,y:.88} },
+
+  // ── Baseball ──
+  bb_stance: { head:{x:.50,y:.08}, neck:{x:.50,y:.14}, chest:{x:.50,y:.27}, l_shoulder:{x:.42,y:.25}, r_shoulder:{x:.58,y:.25}, l_elbow:{x:.38,y:.36}, r_elbow:{x:.62,y:.32}, l_wrist:{x:.36,y:.28}, r_wrist:{x:.64,y:.22}, pelvis:{x:.50,y:.47}, l_hip:{x:.44,y:.49}, r_hip:{x:.56,y:.49}, l_knee:{x:.42,y:.67}, r_knee:{x:.58,y:.67}, l_ankle:{x:.41,y:.87}, r_ankle:{x:.59,y:.87}, l_toe:{x:.38,y:.92}, r_toe:{x:.62,y:.92} },
+  bb_load:   { head:{x:.50,y:.09}, neck:{x:.50,y:.15}, chest:{x:.51,y:.28}, l_shoulder:{x:.43,y:.26}, r_shoulder:{x:.59,y:.26}, l_elbow:{x:.39,y:.37}, r_elbow:{x:.64,y:.31}, l_wrist:{x:.38,y:.27}, r_wrist:{x:.68,y:.21}, pelvis:{x:.51,y:.48}, l_hip:{x:.45,y:.50}, r_hip:{x:.57,y:.50}, l_knee:{x:.43,y:.68}, r_knee:{x:.60,y:.66}, l_ankle:{x:.41,y:.87}, r_ankle:{x:.60,y:.88}, l_toe:{x:.38,y:.92}, r_toe:{x:.63,y:.93} },
+  bb_stride: { head:{x:.49,y:.09}, neck:{x:.49,y:.15}, chest:{x:.49,y:.28}, l_shoulder:{x:.41,y:.26}, r_shoulder:{x:.57,y:.26}, l_elbow:{x:.37,y:.37}, r_elbow:{x:.63,y:.31}, l_wrist:{x:.36,y:.27}, r_wrist:{x:.67,y:.21}, pelvis:{x:.49,y:.48}, l_hip:{x:.43,y:.50}, r_hip:{x:.55,y:.50}, l_knee:{x:.38,y:.67}, r_knee:{x:.59,y:.66}, l_ankle:{x:.34,y:.86}, r_ankle:{x:.59,y:.88}, l_toe:{x:.31,y:.91}, r_toe:{x:.62,y:.93} },
+  bb_rotate: { head:{x:.48,y:.09}, neck:{x:.48,y:.15}, chest:{x:.47,y:.28}, l_shoulder:{x:.38,y:.27}, r_shoulder:{x:.54,y:.26}, l_elbow:{x:.33,y:.37}, r_elbow:{x:.60,y:.30}, l_wrist:{x:.32,y:.27}, r_wrist:{x:.65,y:.20}, pelvis:{x:.46,y:.48}, l_hip:{x:.40,y:.50}, r_hip:{x:.52,y:.50}, l_knee:{x:.36,y:.67}, r_knee:{x:.57,y:.66}, l_ankle:{x:.33,y:.86}, r_ankle:{x:.59,y:.88}, l_toe:{x:.30,y:.91}, r_toe:{x:.62,y:.93} },
+  bb_contact:{ head:{x:.47,y:.09}, neck:{x:.47,y:.15}, chest:{x:.44,y:.29}, l_shoulder:{x:.33,y:.28}, r_shoulder:{x:.50,y:.26}, l_elbow:{x:.28,y:.38}, r_elbow:{x:.52,y:.32}, l_wrist:{x:.26,y:.40}, r_wrist:{x:.52,y:.38}, pelvis:{x:.42,y:.48}, l_hip:{x:.36,y:.50}, r_hip:{x:.48,y:.50}, l_knee:{x:.34,y:.67}, r_knee:{x:.56,y:.66}, l_ankle:{x:.32,y:.86}, r_ankle:{x:.59,y:.88}, l_toe:{x:.29,y:.91}, r_toe:{x:.62,y:.93} },
+  bb_finish: { head:{x:.46,y:.08}, neck:{x:.46,y:.14}, chest:{x:.42,y:.27}, l_shoulder:{x:.30,y:.25}, r_shoulder:{x:.48,y:.22}, l_elbow:{x:.26,y:.18}, r_elbow:{x:.48,y:.15}, l_wrist:{x:.30,y:.12}, r_wrist:{x:.52,y:.10}, pelvis:{x:.40,y:.48}, l_hip:{x:.34,y:.50}, r_hip:{x:.46,y:.50}, l_knee:{x:.33,y:.67}, r_knee:{x:.55,y:.68}, l_ankle:{x:.32,y:.87}, r_ankle:{x:.59,y:.88}, l_toe:{x:.29,y:.91}, r_toe:{x:.62,y:.93} },
 };
 
 export const MOTION_FRAMES = {
