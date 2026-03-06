@@ -296,7 +296,7 @@ export const MOTION_FRAMES = {
       { id:'follow_through',label:'FOLLOW THROUGH',keyJoints:['chest','l_shoulder','r_shoulder'],      cue:'Finish tall. Full shoulder rotation. Balance on lead foot.' },
     ],
     faults: [
-      { id:'early_extension', label:'EARLY EXTENSION', description:'Hips thrust toward ball through impact.', explanation:'Maintain spine angle through impact. Rotate, don't thrust.', affectedJoints:['pelvis','l_hip','r_hip'], keypointOffsets:{'pelvis':{x:+.04,y:0},'l_hip':{x:+.04,y:0},'r_hip':{x:+.04,y:0}} },
+      { id:'early_extension', label:'EARLY EXTENSION', description:'Hips thrust toward ball through impact.', explanation:"Maintain spine angle through impact. Rotate, don't thrust.", affectedJoints:['pelvis','l_hip','r_hip'], keypointOffsets:{'pelvis':{x:+.04,y:0},'l_hip':{x:+.04,y:0},'r_hip':{x:+.04,y:0}} },
       { id:'over_the_top',   label:'OVER THE TOP',    description:'Club path from outside-in — causes slicing.', explanation:'Drop right elbow into slot on downswing. Feel the path going right.', affectedJoints:['r_elbow','r_shoulder'], keypointOffsets:{'r_elbow':{x:-.05,y:-.03}} },
     ],
     pathOverlays: [
