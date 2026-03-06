@@ -275,7 +275,7 @@ export const MOTION_FRAMES = {
   },
 
   lunge: {
-    frameIntervalMs: 500,
+    frameIntervalMs: 300,
     frames: buildLungeFrames(),
     phases: [
       { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest'],              cue:'Stand tall. Core engaged. Weight centered.' },
