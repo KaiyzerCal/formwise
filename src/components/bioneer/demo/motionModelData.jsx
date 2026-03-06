@@ -258,7 +258,7 @@ export const MOTION_FRAMES = {
   },
 
   pushup: {
-    frameIntervalMs: 500,
+    frameIntervalMs: 300,
     frames: buildPushupFrames(),
     phases: [
       { id:'setup',   label:'SETUP',   keyJoints:['chest','pelvis','l_ankle','r_ankle'], cue:'Hands shoulder-width. Body in one line. Core braced.' },
