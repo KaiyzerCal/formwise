@@ -238,7 +238,7 @@ export const MOTION_FRAMES = {
   },
 
   deadlift: {
-    frameIntervalMs: 500,
+    frameIntervalMs: 300,
     frames: buildDeadliftFrames(),
     phases: [
       { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest'],              cue:'Bar over mid-foot. Hinge at hips. Neutral spine. Lats tight.' },
