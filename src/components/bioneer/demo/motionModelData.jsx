@@ -88,19 +88,20 @@ export function renderMotionModelFrame(ctx, frame, style, highlightJoints = [], 
   const W = ctx.canvas.width, H = ctx.canvas.height;
   const px = (lm) => ({ x: lm.x * W, y: lm.y * H });
 
-  // 1. Segments
+  // 1. Segments — torso segments drawn thicker
   ctx.save();
   for (const [a, b] of SEGMENTS) {
     if (!frame[a] || !frame[b]) continue;
     const A = px(frame[a]), B = px(frame[b]);
-    const isFault = faultJoints.includes(a) || faultJoints.includes(b);
+    const isFault  = faultJoints.includes(a) || faultJoints.includes(b);
+    const isTorso  = TORSO_SEGMENT_KEYS.has(`${a}-${b}`) || TORSO_SEGMENT_KEYS.has(`${b}-${a}`);
     ctx.beginPath();
     ctx.moveTo(A.x, A.y);
     ctx.lineTo(B.x, B.y);
     ctx.strokeStyle = isFault ? style.faultSegmentColor : style.segmentColor;
-    ctx.lineWidth   = style.segmentWidth;
+    ctx.lineWidth   = isTorso ? 4.5 : 2.5;
     ctx.globalAlpha = style.segmentOpacity;
-    ctx.shadowBlur  = style.glowBlur;
+    ctx.shadowBlur  = isFault ? 10 : style.glowBlur;
     ctx.shadowColor = isFault ? style.faultSegmentColor : style.glowColor;
     ctx.lineCap     = 'round';
     ctx.stroke();
@@ -115,15 +116,15 @@ export function renderMotionModelFrame(ctx, frame, style, highlightJoints = [], 
     const isHighlight = highlightJoints.includes(id);
     const isFault     = faultJoints.includes(id);
 
-    // Pulse scale for highlighted joints
-    const pulse = isHighlight ? 1 + 0.25 * Math.sin(pulseT * Math.PI * 2) : 1;
+    // Pulse scale for highlighted joints — 1.0 → 1.20, 1200ms loop
+    const pulse = isHighlight ? 1 + 0.20 * Math.sin(pulseT * Math.PI * 2) : 1;
     const r     = (isHighlight ? style.highlightRadius : style.jointRadius) * pulse;
 
     ctx.beginPath();
     ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
     ctx.fillStyle   = isFault ? style.faultJointColor : style.jointColor;
     ctx.globalAlpha = 1.0;
-    ctx.shadowBlur  = isHighlight ? 12 : style.glowBlur;
+    ctx.shadowBlur  = isHighlight ? 14 : style.glowBlur;
     ctx.shadowColor = isFault ? style.faultJointColor : style.glowColor;
     ctx.fill();
 
