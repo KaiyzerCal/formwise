@@ -144,9 +144,10 @@ export function renderPathOverlay(ctx, pathPoints, style) {
   const W = ctx.canvas.width, H = ctx.canvas.height;
   ctx.save();
   ctx.beginPath();
-  ctx.setLineDash(style.pathDash);
+  ctx.setLineDash([8, 5]);
   ctx.strokeStyle = style.pathColor;
   ctx.lineWidth   = style.pathWidth;
+  ctx.globalAlpha = 0.45;
   ctx.moveTo(pathPoints[0].x * W, pathPoints[0].y * H);
   for (let i = 1; i < pathPoints.length; i++) {
     ctx.lineTo(pathPoints[i].x * W, pathPoints[i].y * H);
