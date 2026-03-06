@@ -478,36 +478,30 @@ function interp(a, b, t) {
   return result;
 }
 
-function buildDeadliftFrames() {
-  const setup = { head:{x:.50,y:.26}, neck:{x:.50,y:.32}, chest:{x:.48,y:.44}, l_shoulder:{x:.41,y:.42}, r_shoulder:{x:.57,y:.42}, l_elbow:{x:.40,y:.54}, r_elbow:{x:.58,y:.54}, l_wrist:{x:.42,y:.64}, r_wrist:{x:.56,y:.64}, pelvis:{x:.50,y:.52}, l_hip:{x:.44,y:.54}, r_hip:{x:.56,y:.54}, l_knee:{x:.43,y:.72}, r_knee:{x:.57,y:.72}, l_ankle:{x:.43,y:.88}, r_ankle:{x:.57,y:.88}, l_toe:{x:.40,y:.93}, r_toe:{x:.60,y:.93} };
-  const stand = { head:{x:.50,y:.08}, neck:{x:.50,y:.14}, chest:{x:.50,y:.26}, l_shoulder:{x:.42,y:.24}, r_shoulder:{x:.58,y:.24}, l_elbow:{x:.40,y:.36}, r_elbow:{x:.60,y:.36}, l_wrist:{x:.42,y:.48}, r_wrist:{x:.58,y:.48}, pelvis:{x:.50,y:.46}, l_hip:{x:.44,y:.48}, r_hip:{x:.56,y:.48}, l_knee:{x:.43,y:.68}, r_knee:{x:.57,y:.68}, l_ankle:{x:.43,y:.88}, r_ankle:{x:.57,y:.88}, l_toe:{x:.40,y:.93}, r_toe:{x:.60,y:.93} };
-  const mid   = interp(setup, stand, 0.5);
-  return [
-    {phase:'setup',...setup}, {phase:'setup',...setup},
-    {phase:'hinge',...setup}, {phase:'hinge',...interp(setup,mid,.4)},
-    {phase:'pull', ...interp(setup,mid,.7)}, {phase:'pull', ...mid},
-    {phase:'lockout',...interp(mid,stand,.6)}, {phase:'lockout',...stand},
-    {phase:'lower',...interp(stand,setup,.5)}, {phase:'lower',...setup},
-  ];
-}
-
 function buildPushupFrames() {
-  const top = { head:{x:.14,y:.34}, neck:{x:.20,y:.36}, chest:{x:.34,y:.40}, l_shoulder:{x:.30,y:.38}, r_shoulder:{x:.38,y:.38}, l_elbow:{x:.22,y:.44}, r_elbow:{x:.46,y:.44}, l_wrist:{x:.14,y:.46}, r_wrist:{x:.54,y:.46}, pelvis:{x:.56,y:.46}, l_hip:{x:.52,y:.46}, r_hip:{x:.60,y:.46}, l_knee:{x:.68,y:.50}, r_knee:{x:.68,y:.50}, l_ankle:{x:.82,y:.52}, r_ankle:{x:.82,y:.52}, l_toe:{x:.88,y:.54}, r_toe:{x:.88,y:.54} };
-  const bot = { head:{x:.14,y:.40}, neck:{x:.20,y:.43}, chest:{x:.34,y:.50}, l_shoulder:{x:.30,y:.48}, r_shoulder:{x:.38,y:.48}, l_elbow:{x:.20,y:.52}, r_elbow:{x:.48,y:.52}, l_wrist:{x:.14,y:.46}, r_wrist:{x:.54,y:.46}, pelvis:{x:.56,y:.52}, l_hip:{x:.52,y:.52}, r_hip:{x:.60,y:.52}, l_knee:{x:.68,y:.54}, r_knee:{x:.68,y:.54}, l_ankle:{x:.82,y:.56}, r_ankle:{x:.82,y:.56}, l_toe:{x:.88,y:.58}, r_toe:{x:.88,y:.58} };
+  const top = { head:{x:.20,y:.28}, neck:{x:.25,y:.30}, chest:{x:.40,y:.35}, l_shoulder:{x:.38,y:.33}, r_shoulder:{x:.42,y:.33}, l_elbow:{x:.52,y:.35}, r_elbow:{x:.56,y:.35}, l_wrist:{x:.62,y:.40}, r_wrist:{x:.66,y:.40}, pelvis:{x:.58,y:.40}, l_hip:{x:.56,y:.40}, r_hip:{x:.60,y:.40}, l_knee:{x:.72,y:.44}, r_knee:{x:.74,y:.44}, l_ankle:{x:.85,y:.50}, r_ankle:{x:.87,y:.50}, l_toe:{x:.90,y:.53}, r_toe:{x:.92,y:.53} };
+  const bot = { head:{x:.20,y:.42}, neck:{x:.25,y:.44}, chest:{x:.40,y:.50}, l_shoulder:{x:.38,y:.48}, r_shoulder:{x:.42,y:.48}, l_elbow:{x:.44,y:.38}, r_elbow:{x:.48,y:.38}, l_wrist:{x:.62,y:.40}, r_wrist:{x:.66,y:.40}, pelvis:{x:.58,y:.46}, l_hip:{x:.56,y:.46}, r_hip:{x:.60,y:.46}, l_knee:{x:.72,y:.48}, r_knee:{x:.74,y:.48}, l_ankle:{x:.85,y:.52}, r_ankle:{x:.87,y:.52}, l_toe:{x:.90,y:.55}, r_toe:{x:.92,y:.55} };
   return [
-    {phase:'setup',...top}, {phase:'descent',...interp(top,bot,.5)},
+    {phase:'setup',...top},
+    {phase:'descent',...interp(top,bot,.35)},
+    {phase:'descent',...interp(top,bot,.70)},
     {phase:'bottom',...bot}, {phase:'bottom',...bot},
-    {phase:'ascent',...interp(bot,top,.5)}, {phase:'lockout',...top},
+    {phase:'ascent',...interp(bot,top,.40)},
+    {phase:'ascent',...interp(bot,top,.75)},
+    {phase:'lockout',...top},
   ];
 }
 
 function buildLungeFrames() {
-  const stand = { head:{x:.50,y:.08}, neck:{x:.50,y:.14}, chest:{x:.50,y:.26}, l_shoulder:{x:.42,y:.24}, r_shoulder:{x:.58,y:.24}, l_elbow:{x:.40,y:.36}, r_elbow:{x:.60,y:.36}, l_wrist:{x:.38,y:.46}, r_wrist:{x:.62,y:.46}, pelvis:{x:.50,y:.46}, l_hip:{x:.44,y:.48}, r_hip:{x:.56,y:.48}, l_knee:{x:.44,y:.68}, r_knee:{x:.56,y:.68}, l_ankle:{x:.44,y:.88}, r_ankle:{x:.56,y:.88}, l_toe:{x:.41,y:.93}, r_toe:{x:.59,y:.93} };
-  const bot   = { head:{x:.44,y:.14}, neck:{x:.44,y:.20}, chest:{x:.44,y:.32}, l_shoulder:{x:.36,y:.30}, r_shoulder:{x:.52,y:.30}, l_elbow:{x:.34,y:.42}, r_elbow:{x:.54,y:.42}, l_wrist:{x:.32,y:.52}, r_wrist:{x:.56,y:.52}, pelvis:{x:.44,y:.52}, l_hip:{x:.38,y:.54}, r_hip:{x:.50,y:.54}, l_knee:{x:.30,y:.68}, r_knee:{x:.58,y:.80}, l_ankle:{x:.28,y:.88}, r_ankle:{x:.58,y:.88}, l_toe:{x:.24,y:.93}, r_toe:{x:.62,y:.93} };
+  const stand = { head:{x:.50,y:.07}, neck:{x:.50,y:.13}, chest:{x:.50,y:.26}, l_shoulder:{x:.43,y:.24}, r_shoulder:{x:.57,y:.24}, l_elbow:{x:.40,y:.36}, r_elbow:{x:.60,y:.36}, l_wrist:{x:.41,y:.47}, r_wrist:{x:.59,y:.47}, pelvis:{x:.50,y:.46}, l_hip:{x:.46,y:.48}, r_hip:{x:.54,y:.48}, l_knee:{x:.46,y:.68}, r_knee:{x:.54,y:.68}, l_ankle:{x:.46,y:.87}, r_ankle:{x:.54,y:.87}, l_toe:{x:.43,y:.92}, r_toe:{x:.57,y:.92} };
+  const bot   = { head:{x:.52,y:.10}, neck:{x:.52,y:.16}, chest:{x:.52,y:.30}, l_shoulder:{x:.45,y:.28}, r_shoulder:{x:.59,y:.28}, l_elbow:{x:.42,y:.40}, r_elbow:{x:.62,y:.40}, l_wrist:{x:.43,y:.51}, r_wrist:{x:.63,y:.51}, pelvis:{x:.52,y:.50}, l_hip:{x:.46,y:.52}, r_hip:{x:.58,y:.52}, l_knee:{x:.38,y:.70}, r_knee:{x:.62,y:.72}, l_ankle:{x:.32,y:.88}, r_ankle:{x:.65,y:.88}, l_toe:{x:.28,y:.92}, r_toe:{x:.70,y:.88} };
   return [
-    {phase:'setup',...stand}, {phase:'step',...interp(stand,bot,.4)},
+    {phase:'setup',...stand},
+    {phase:'step',...interp(stand,bot,.35)},
+    {phase:'step',...interp(stand,bot,.70)},
     {phase:'bottom',...bot}, {phase:'bottom',...bot},
-    {phase:'ascent',...interp(bot,stand,.6)}, {phase:'lockout',...stand},
+    {phase:'ascent',...interp(bot,stand,.45)},
+    {phase:'lockout',...stand},
   ];
 }
 
@@ -516,8 +510,10 @@ function buildOHPFrames() {
   const lock = { ...rack, l_elbow:{x:.42,y:.18}, r_elbow:{x:.58,y:.18}, l_wrist:{x:.44,y:.06}, r_wrist:{x:.56,y:.06} };
   return [
     {phase:'start',...rack}, {phase:'start',...rack},
-    {phase:'press',...interp(rack,lock,.5)}, {phase:'lockout',...lock},
-    {phase:'lockout',...lock}, {phase:'descent',...interp(lock,rack,.5)},
+    {phase:'press',...interp(rack,lock,.4)},
+    {phase:'press',...interp(rack,lock,.75)},
+    {phase:'lockout',...lock}, {phase:'lockout',...lock},
+    {phase:'descent',...interp(lock,rack,.45)},
     {phase:'start',...rack},
   ];
 }
@@ -529,22 +525,13 @@ function buildGolfFrames() {
   const finish   = { head:{x:.50,y:.12}, neck:{x:.50,y:.18}, chest:{x:.52,y:.28}, l_shoulder:{x:.58,y:.24}, r_shoulder:{x:.44,y:.30}, l_elbow:{x:.62,y:.16}, r_elbow:{x:.44,y:.40}, l_wrist:{x:.58,y:.10}, r_wrist:{x:.46,y:.50}, pelvis:{x:.50,y:.46}, l_hip:{x:.44,y:.48}, r_hip:{x:.56,y:.48}, l_knee:{x:.44,y:.66}, r_knee:{x:.56,y:.70}, l_ankle:{x:.44,y:.86}, r_ankle:{x:.56,y:.88}, l_toe:{x:.41,y:.91}, r_toe:{x:.60,y:.93} };
   return [
     {phase:'address',...address}, {phase:'address',...address},
-    {phase:'backswing',...interp(address,backswing,.5)}, {phase:'backswing',...backswing},
+    {phase:'backswing',...interp(address,backswing,.4)},
+    {phase:'backswing',...interp(address,backswing,.80)},
+    {phase:'backswing',...backswing},
     {phase:'transition',...interp(backswing,impact,.3)},
+    {phase:'transition',...interp(backswing,impact,.60)},
     {phase:'impact',...impact},
-    {phase:'follow_through',...interp(impact,finish,.5)}, {phase:'follow_through',...finish},
-  ];
-}
-
-function buildBasketballFrames() {
-  const load    = { head:{x:.50,y:.16}, neck:{x:.50,y:.22}, chest:{x:.50,y:.34}, l_shoulder:{x:.42,y:.32}, r_shoulder:{x:.58,y:.32}, l_elbow:{x:.38,y:.44}, r_elbow:{x:.62,y:.40}, l_wrist:{x:.36,y:.54}, r_wrist:{x:.60,y:.50}, pelvis:{x:.50,y:.52}, l_hip:{x:.44,y:.54}, r_hip:{x:.56,y:.54}, l_knee:{x:.43,y:.72}, r_knee:{x:.57,y:.72}, l_ankle:{x:.43,y:.88}, r_ankle:{x:.57,y:.88}, l_toe:{x:.40,y:.93}, r_toe:{x:.60,y:.93} };
-  const peak    = { head:{x:.50,y:.06}, neck:{x:.50,y:.12}, chest:{x:.50,y:.24}, l_shoulder:{x:.42,y:.22}, r_shoulder:{x:.58,y:.22}, l_elbow:{x:.40,y:.30}, r_elbow:{x:.60,y:.22}, l_wrist:{x:.38,y:.38}, r_wrist:{x:.56,y:.12}, pelvis:{x:.50,y:.40}, l_hip:{x:.44,y:.42}, r_hip:{x:.56,y:.42}, l_knee:{x:.44,y:.60}, r_knee:{x:.56,y:.60}, l_ankle:{x:.44,y:.78}, r_ankle:{x:.56,y:.78}, l_toe:{x:.41,y:.84}, r_toe:{x:.60,y:.84} };
-  return [
-    {phase:'load',...load}, {phase:'load',...load},
-    {phase:'jump',...interp(load,peak,.5)},
-    {phase:'set',...interp(load,peak,.8)},
-    {phase:'release',...peak},
-    {phase:'follow',...interp(peak,load,.4)},
-    {phase:'follow',...load},
+    {phase:'follow_through',...interp(impact,finish,.45)},
+    {phase:'follow_through',...finish},
   ];
 }
