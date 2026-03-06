@@ -204,17 +204,21 @@ const KF = {
 
 export const MOTION_FRAMES = {
   squat: {
-    frameIntervalMs: 500,
+    frameIntervalMs: 250,
     frames: [
-      { phase:'setup',   ...SQUAT_STAND },
-      { phase:'descent', ...interp(SQUAT_STAND, SQUAT_BOTTOM, 0.35) },
-      { phase:'descent', ...interp(SQUAT_STAND, SQUAT_BOTTOM, 0.70) },
-      { phase:'bottom',  ...SQUAT_BOTTOM },
-      { phase:'bottom',  ...SQUAT_BOTTOM },
-      { phase:'ascent',  ...interp(SQUAT_BOTTOM, SQUAT_STAND, 0.40) },
-      { phase:'ascent',  ...interp(SQUAT_BOTTOM, SQUAT_STAND, 0.75) },
-      { phase:'lockout', ...SQUAT_STAND },
-      { phase:'lockout', ...SQUAT_STAND },
+      { phase:'setup',   ...KF.squat_setup   },
+      { phase:'setup',   ...KF.squat_setup   },
+      { phase:'descent', ...KF.squat_earlyD  },
+      { phase:'descent', ...interp(KF.squat_earlyD, KF.squat_midD, .5) },
+      { phase:'descent', ...KF.squat_midD    },
+      { phase:'descent', ...interp(KF.squat_midD, KF.squat_bottom, .5) },
+      { phase:'bottom',  ...KF.squat_bottom  },
+      { phase:'bottom',  ...KF.squat_bottom  },
+      { phase:'ascent',  ...interp(KF.squat_bottom, KF.squat_ascentM, .5) },
+      { phase:'ascent',  ...KF.squat_ascentM },
+      { phase:'ascent',  ...interp(KF.squat_ascentM, KF.squat_setup, .5) },
+      { phase:'lockout', ...KF.squat_setup   },
+      { phase:'lockout', ...KF.squat_setup   },
     ],
     phases: [
       { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest'],             cue:'Feet shoulder-width, toes out 15–30°. Bar over mid-foot.' },
