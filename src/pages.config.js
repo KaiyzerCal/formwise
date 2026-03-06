@@ -49,11 +49,13 @@
  */
 import FormCheck from './pages/FormCheck';
 import FormHistory from './pages/FormHistory';
+import ProperFormDemo from './pages/ProperFormDemo';
 
 
 export const PAGES = {
     "FormCheck": FormCheck,
     "FormHistory": FormHistory,
+    "ProperFormDemo": ProperFormDemo,
 }
 
 export const pagesConfig = {
