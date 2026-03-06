@@ -1,7 +1,17 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Eye } from "lucide-react";
+import { createPageUrl } from "@/utils";
+import { DEMO_ASSETS } from "./demoAssets";
 
 export default function ExerciseCard({ exercise, selected, onClick }) {
+  const hasDemo = !!DEMO_ASSETS[exercise.id];
+
+  const handleWatchForm = (e) => {
+    e.stopPropagation();
+    window.location.href = createPageUrl(`ProperFormDemo?exercise=${exercise.id}`);
+  };
+
   return (
     <button
       onClick={onClick}
@@ -34,6 +44,20 @@ export default function ExerciseCard({ exercise, selected, onClick }) {
           {exercise.camera} view
         </span>
       </div>
+
+      {/* Watch Proper Form button */}
+      {hasDemo && (
+        <div
+          onClick={handleWatchForm}
+          className="mt-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A84C]/10 border border-[#C9A84C]/20 hover:bg-[#C9A84C]/20 transition-colors cursor-pointer"
+        >
+          <Eye className="w-3 h-3 text-[#C9A84C]" />
+          <span className="text-[9px] font-bold text-[#C9A84C] tracking-widest uppercase"
+                style={{ fontFamily: "'DM Mono', monospace" }}>
+            Watch Proper Form
+          </span>
+        </div>
+      )}
     </button>
   );
 }
