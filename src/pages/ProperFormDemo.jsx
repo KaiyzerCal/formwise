@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ArrowLeft, Play, Pause } from "lucide-react";
-import { MOTION_FRAMES, getInterpolatedFrame, applyFaultOffsets } from "../components/bioneer/demo/motionModelData";
+import { MOTION_FRAMES, getInterpolatedFrame, resolveFrame } from "../components/bioneer/demo/motionModelData";
 import MotionModelCanvas from "../components/bioneer/demo/MotionModelCanvas";
 import PhaseCuePanel from "../components/bioneer/demo/PhaseCuePanel";
 import FaultSimToggle from "../components/bioneer/demo/FaultSimToggle";
