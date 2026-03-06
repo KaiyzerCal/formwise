@@ -202,61 +202,110 @@ const KF = {
   bb_finish: { head:{x:.46,y:.08}, neck:{x:.46,y:.14}, chest:{x:.42,y:.27}, l_shoulder:{x:.30,y:.25}, r_shoulder:{x:.48,y:.22}, l_elbow:{x:.26,y:.18}, r_elbow:{x:.48,y:.15}, l_wrist:{x:.30,y:.12}, r_wrist:{x:.52,y:.10}, pelvis:{x:.40,y:.48}, l_hip:{x:.34,y:.50}, r_hip:{x:.46,y:.50}, l_knee:{x:.33,y:.67}, r_knee:{x:.55,y:.68}, l_ankle:{x:.32,y:.87}, r_ankle:{x:.59,y:.88}, l_toe:{x:.29,y:.91}, r_toe:{x:.62,y:.93} },
 };
 
+// ─── Torso segment set for thicker rendering ──────────────────────────────────
+export const TORSO_SEGMENT_KEYS = new Set([
+  'neck-chest','chest-pelvis','pelvis-l_hip','pelvis-r_hip',
+]);
+
+// ─── Resolve frame with optional fault (precomputed > offset fallback) ─────────
+export function resolveFrame(motionData, currentTimeMs, activeFault) {
+  if (!activeFault) {
+    return getInterpolatedFrame(motionData.frames, currentTimeMs, motionData.frameIntervalMs);
+  }
+  const faultDef = (motionData.faults ?? []).find(f => f.id === activeFault.id);
+  if (!faultDef) return getInterpolatedFrame(motionData.frames, currentTimeMs, motionData.frameIntervalMs);
+  // Precomputed fault frames take priority
+  if (faultDef.faultFrames && faultDef.faultFrames.length > 0) {
+    return getInterpolatedFrame(faultDef.faultFrames, currentTimeMs, motionData.frameIntervalMs);
+  }
+  // Offset fallback
+  const base = getInterpolatedFrame(motionData.frames, currentTimeMs, motionData.frameIntervalMs);
+  return applyFaultOffsets(base, faultDef.keypointOffsets ?? {});
+}
+
 export const MOTION_FRAMES = {
+  // ── SQUAT — 16 seeded frames, 133ms interval ─────────────────────────────────
   squat: {
-    frameIntervalMs: 250,
+    frameIntervalMs: 133,
     frames: [
-      { phase:'setup',   ...KF.squat_setup   },
-      { phase:'setup',   ...KF.squat_setup   },
-      { phase:'descent', ...KF.squat_earlyD  },
-      { phase:'descent', ...interp(KF.squat_earlyD, KF.squat_midD, .5) },
-      { phase:'descent', ...KF.squat_midD    },
-      { phase:'descent', ...interp(KF.squat_midD, KF.squat_bottom, .5) },
-      { phase:'bottom',  ...KF.squat_bottom  },
-      { phase:'bottom',  ...KF.squat_bottom  },
-      { phase:'ascent',  ...interp(KF.squat_bottom, KF.squat_ascentM, .5) },
-      { phase:'ascent',  ...KF.squat_ascentM },
-      { phase:'ascent',  ...interp(KF.squat_ascentM, KF.squat_setup, .5) },
-      { phase:'lockout', ...KF.squat_setup   },
-      { phase:'lockout', ...KF.squat_setup   },
+      { phase:'setup',   head:{x:0.50,y:0.07},neck:{x:0.50,y:0.13},chest:{x:0.50,y:0.25},l_shoulder:{x:0.42,y:0.23},r_shoulder:{x:0.58,y:0.23},l_elbow:{x:0.37,y:0.34},r_elbow:{x:0.63,y:0.34},l_wrist:{x:0.35,y:0.44},r_wrist:{x:0.65,y:0.44},pelvis:{x:0.50,y:0.45},l_hip:{x:0.44,y:0.47},r_hip:{x:0.56,y:0.47},l_knee:{x:0.43,y:0.67},r_knee:{x:0.57,y:0.67},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.57,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.60,y:0.92} },
+      { phase:'descent', head:{x:0.50,y:0.08},neck:{x:0.50,y:0.14},chest:{x:0.50,y:0.26},l_shoulder:{x:0.42,y:0.24},r_shoulder:{x:0.58,y:0.24},l_elbow:{x:0.37,y:0.35},r_elbow:{x:0.63,y:0.35},l_wrist:{x:0.35,y:0.45},r_wrist:{x:0.65,y:0.45},pelvis:{x:0.50,y:0.46},l_hip:{x:0.44,y:0.48},r_hip:{x:0.56,y:0.48},l_knee:{x:0.43,y:0.68},r_knee:{x:0.57,y:0.68},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.57,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.60,y:0.92} },
+      { phase:'descent', head:{x:0.50,y:0.10},neck:{x:0.50,y:0.16},chest:{x:0.49,y:0.28},l_shoulder:{x:0.41,y:0.26},r_shoulder:{x:0.57,y:0.26},l_elbow:{x:0.36,y:0.37},r_elbow:{x:0.62,y:0.37},l_wrist:{x:0.34,y:0.47},r_wrist:{x:0.64,y:0.47},pelvis:{x:0.49,y:0.49},l_hip:{x:0.43,y:0.51},r_hip:{x:0.55,y:0.51},l_knee:{x:0.42,y:0.69},r_knee:{x:0.56,y:0.69},l_ankle:{x:0.42,y:0.88},r_ankle:{x:0.56,y:0.88},l_toe:{x:0.39,y:0.93},r_toe:{x:0.59,y:0.93} },
+      { phase:'descent', head:{x:0.50,y:0.12},neck:{x:0.50,y:0.18},chest:{x:0.49,y:0.30},l_shoulder:{x:0.41,y:0.28},r_shoulder:{x:0.57,y:0.28},l_elbow:{x:0.36,y:0.39},r_elbow:{x:0.62,y:0.39},l_wrist:{x:0.34,y:0.49},r_wrist:{x:0.64,y:0.49},pelvis:{x:0.49,y:0.51},l_hip:{x:0.43,y:0.53},r_hip:{x:0.55,y:0.53},l_knee:{x:0.41,y:0.70},r_knee:{x:0.55,y:0.70},l_ankle:{x:0.42,y:0.88},r_ankle:{x:0.56,y:0.88},l_toe:{x:0.38,y:0.93},r_toe:{x:0.58,y:0.93} },
+      { phase:'descent', head:{x:0.50,y:0.13},neck:{x:0.50,y:0.19},chest:{x:0.48,y:0.32},l_shoulder:{x:0.40,y:0.30},r_shoulder:{x:0.56,y:0.30},l_elbow:{x:0.35,y:0.41},r_elbow:{x:0.61,y:0.41},l_wrist:{x:0.33,y:0.51},r_wrist:{x:0.63,y:0.51},pelvis:{x:0.48,y:0.54},l_hip:{x:0.42,y:0.56},r_hip:{x:0.54,y:0.56},l_knee:{x:0.40,y:0.72},r_knee:{x:0.54,y:0.72},l_ankle:{x:0.41,y:0.88},r_ankle:{x:0.55,y:0.88},l_toe:{x:0.38,y:0.93},r_toe:{x:0.58,y:0.93} },
+      { phase:'descent', head:{x:0.50,y:0.15},neck:{x:0.50,y:0.21},chest:{x:0.48,y:0.34},l_shoulder:{x:0.40,y:0.32},r_shoulder:{x:0.56,y:0.32},l_elbow:{x:0.35,y:0.43},r_elbow:{x:0.61,y:0.43},l_wrist:{x:0.33,y:0.53},r_wrist:{x:0.63,y:0.53},pelvis:{x:0.47,y:0.57},l_hip:{x:0.41,y:0.59},r_hip:{x:0.53,y:0.59},l_knee:{x:0.39,y:0.74},r_knee:{x:0.53,y:0.74},l_ankle:{x:0.41,y:0.89},r_ankle:{x:0.55,y:0.89},l_toe:{x:0.37,y:0.94},r_toe:{x:0.57,y:0.94} },
+      { phase:'descent', head:{x:0.50,y:0.16},neck:{x:0.50,y:0.22},chest:{x:0.48,y:0.36},l_shoulder:{x:0.40,y:0.34},r_shoulder:{x:0.56,y:0.34},l_elbow:{x:0.35,y:0.45},r_elbow:{x:0.61,y:0.45},l_wrist:{x:0.33,y:0.55},r_wrist:{x:0.63,y:0.55},pelvis:{x:0.47,y:0.60},l_hip:{x:0.41,y:0.62},r_hip:{x:0.53,y:0.62},l_knee:{x:0.38,y:0.75},r_knee:{x:0.52,y:0.75},l_ankle:{x:0.41,y:0.89},r_ankle:{x:0.55,y:0.89},l_toe:{x:0.37,y:0.94},r_toe:{x:0.57,y:0.94} },
+      { phase:'descent', head:{x:0.50,y:0.17},neck:{x:0.50,y:0.23},chest:{x:0.47,y:0.37},l_shoulder:{x:0.39,y:0.35},r_shoulder:{x:0.55,y:0.35},l_elbow:{x:0.34,y:0.46},r_elbow:{x:0.60,y:0.46},l_wrist:{x:0.32,y:0.56},r_wrist:{x:0.62,y:0.56},pelvis:{x:0.47,y:0.62},l_hip:{x:0.41,y:0.64},r_hip:{x:0.53,y:0.64},l_knee:{x:0.38,y:0.76},r_knee:{x:0.52,y:0.76},l_ankle:{x:0.41,y:0.89},r_ankle:{x:0.55,y:0.89},l_toe:{x:0.37,y:0.94},r_toe:{x:0.57,y:0.94} },
+      { phase:'bottom',  head:{x:0.50,y:0.18},neck:{x:0.50,y:0.24},chest:{x:0.47,y:0.38},l_shoulder:{x:0.39,y:0.36},r_shoulder:{x:0.55,y:0.36},l_elbow:{x:0.34,y:0.47},r_elbow:{x:0.60,y:0.47},l_wrist:{x:0.32,y:0.57},r_wrist:{x:0.62,y:0.57},pelvis:{x:0.47,y:0.63},l_hip:{x:0.41,y:0.65},r_hip:{x:0.53,y:0.65},l_knee:{x:0.37,y:0.76},r_knee:{x:0.51,y:0.76},l_ankle:{x:0.41,y:0.89},r_ankle:{x:0.55,y:0.89},l_toe:{x:0.37,y:0.94},r_toe:{x:0.57,y:0.94} },
+      { phase:'ascent',  head:{x:0.50,y:0.17},neck:{x:0.50,y:0.23},chest:{x:0.47,y:0.37},l_shoulder:{x:0.39,y:0.35},r_shoulder:{x:0.55,y:0.35},l_elbow:{x:0.34,y:0.46},r_elbow:{x:0.60,y:0.46},l_wrist:{x:0.32,y:0.56},r_wrist:{x:0.62,y:0.56},pelvis:{x:0.47,y:0.61},l_hip:{x:0.41,y:0.63},r_hip:{x:0.53,y:0.63},l_knee:{x:0.38,y:0.75},r_knee:{x:0.52,y:0.75},l_ankle:{x:0.41,y:0.89},r_ankle:{x:0.55,y:0.89},l_toe:{x:0.37,y:0.94},r_toe:{x:0.57,y:0.94} },
+      { phase:'ascent',  head:{x:0.50,y:0.14},neck:{x:0.50,y:0.20},chest:{x:0.48,y:0.33},l_shoulder:{x:0.40,y:0.31},r_shoulder:{x:0.56,y:0.31},l_elbow:{x:0.35,y:0.42},r_elbow:{x:0.61,y:0.42},l_wrist:{x:0.33,y:0.52},r_wrist:{x:0.63,y:0.52},pelvis:{x:0.49,y:0.53},l_hip:{x:0.43,y:0.55},r_hip:{x:0.55,y:0.55},l_knee:{x:0.41,y:0.71},r_knee:{x:0.55,y:0.71},l_ankle:{x:0.42,y:0.88},r_ankle:{x:0.56,y:0.88},l_toe:{x:0.38,y:0.93},r_toe:{x:0.58,y:0.93} },
+      { phase:'ascent',  head:{x:0.50,y:0.11},neck:{x:0.50,y:0.17},chest:{x:0.49,y:0.29},l_shoulder:{x:0.41,y:0.27},r_shoulder:{x:0.57,y:0.27},l_elbow:{x:0.36,y:0.38},r_elbow:{x:0.62,y:0.38},l_wrist:{x:0.34,y:0.48},r_wrist:{x:0.64,y:0.48},pelvis:{x:0.50,y:0.48},l_hip:{x:0.44,y:0.50},r_hip:{x:0.56,y:0.50},l_knee:{x:0.43,y:0.69},r_knee:{x:0.57,y:0.69},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.57,y:0.87},l_toe:{x:0.39,y:0.92},r_toe:{x:0.59,y:0.92} },
+      { phase:'lockout', head:{x:0.50,y:0.07},neck:{x:0.50,y:0.13},chest:{x:0.50,y:0.25},l_shoulder:{x:0.42,y:0.23},r_shoulder:{x:0.58,y:0.23},l_elbow:{x:0.37,y:0.34},r_elbow:{x:0.63,y:0.34},l_wrist:{x:0.35,y:0.44},r_wrist:{x:0.65,y:0.44},pelvis:{x:0.50,y:0.45},l_hip:{x:0.44,y:0.47},r_hip:{x:0.56,y:0.47},l_knee:{x:0.43,y:0.67},r_knee:{x:0.57,y:0.67},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.57,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.60,y:0.92} },
     ],
     phases: [
-      { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest'],             cue:'Feet shoulder-width, toes out 15–30°. Bar over mid-foot.' },
-      { id:'descent', label:'DESCENT', keyJoints:['l_knee','r_knee','chest'],            cue:'Push knees out. Chest tall. Controlled descent.' },
-      { id:'bottom',  label:'BOTTOM',  keyJoints:['l_knee','r_knee','l_hip','r_hip'],    cue:'Hip crease below knee. Heels planted. Spine neutral.' },
-      { id:'ascent',  label:'ASCENT',  keyJoints:['l_hip','r_hip','chest'],              cue:'Drive floor away. Hips and chest rise together.' },
-      { id:'lockout', label:'LOCKOUT', keyJoints:['l_knee','r_knee','pelvis'],           cue:'Full extension. Hips through. Squeeze at top.' },
+      { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest','l_ankle','r_ankle'],   cue:'Brace your core before the bar moves. Feet shoulder-width, toes out 20°.' },
+      { id:'descent', label:'DESCENT', keyJoints:['l_knee','r_knee','l_hip','r_hip'],             cue:'Push knees out. Chest stays tall. Controlled — own every inch.' },
+      { id:'bottom',  label:'BOTTOM',  keyJoints:['l_knee','r_knee','l_hip','r_hip','l_ankle','r_ankle'], cue:'Hip crease below knee. Heels planted. Spine neutral. Brief pause.' },
+      { id:'ascent',  label:'ASCENT',  keyJoints:['l_hip','r_hip','chest'],                       cue:'Drive the floor away. Hips and chest rise together. Knees stay out.' },
+      { id:'lockout', label:'LOCKOUT', keyJoints:['l_knee','r_knee','pelvis','l_hip','r_hip'],    cue:'Full extension. Squeeze glutes. Stand tall — complete the rep.' },
     ],
     faults: [
-      { id:'knee_valgus', label:'KNEE VALGUS', description:'Knees collapsing inward — ACL/MCL stress.', explanation:'Drive knees outward to maintain alignment over toes.', affectedJoints:['l_knee','r_knee'], keypointOffsets:{'l_knee':{x:+.06,y:0},'r_knee':{x:-.06,y:0}} },
-      { id:'spine_collapse', label:'SPINE COLLAPSE', description:'Excessive forward lean — loads lumbar spine.', explanation:'Brace core and keep chest lifted through descent.', affectedJoints:['chest','neck','head'], keypointOffsets:{'chest':{x:0,y:+.04},'neck':{x:0,y:+.05},'head':{x:0,y:+.06}} },
-      { id:'heel_lift', label:'HEEL LIFT', description:'Heels rise at depth — limited ankle dorsiflexion.', explanation:'Keep heels planted. Consider heel elevation or mobility work.', affectedJoints:['l_ankle','r_ankle','l_toe','r_toe'], keypointOffsets:{'l_ankle':{x:0,y:-.03},'r_ankle':{x:0,y:-.03},'l_toe':{x:0,y:-.04},'r_toe':{x:0,y:-.04}} },
+      {
+        id:'knee_valgus', label:'KNEE VALGUS', description:'Knees collapsing inward — ACL, MCL, and patellofemoral stress.',
+        explanation:"Drive knees outward actively. Cue: 'push the floor apart with your feet.'",
+        affectedJoints:['l_knee','r_knee'],
+        keypointOffsets:{'l_knee':{x:+.07,y:0},'r_knee':{x:-.07,y:0}},
+        faultFrames: [
+          { phase:'bottom', head:{x:0.50,y:0.18},neck:{x:0.50,y:0.24},chest:{x:0.47,y:0.38},l_shoulder:{x:0.39,y:0.36},r_shoulder:{x:0.55,y:0.36},l_elbow:{x:0.34,y:0.47},r_elbow:{x:0.60,y:0.47},l_wrist:{x:0.32,y:0.57},r_wrist:{x:0.62,y:0.57},pelvis:{x:0.47,y:0.63},l_hip:{x:0.41,y:0.65},r_hip:{x:0.53,y:0.65},l_knee:{x:0.46,y:0.76},r_knee:{x:0.48,y:0.76},l_ankle:{x:0.41,y:0.89},r_ankle:{x:0.55,y:0.89},l_toe:{x:0.37,y:0.94},r_toe:{x:0.57,y:0.94} },
+        ],
+      },
+      { id:'spine_collapse', label:'TORSO COLLAPSE', description:'Excessive forward lean — shifts load from quads to lower back.', explanation:'Brace core before descent. Keep chest tall. Think: ribs down, not chest puffed.', affectedJoints:['chest','neck','head'], keypointOffsets:{'chest':{x:-.04,y:+.05},'neck':{x:-.05,y:+.06},'head':{x:-.06,y:+.07}} },
+      { id:'heel_lift', label:'HEEL RISE', description:'Heels leave the floor at depth — limited ankle dorsiflexion.', explanation:'Improve ankle mobility or use heel elevation temporarily.', affectedJoints:['l_ankle','r_ankle','l_toe','r_toe'], keypointOffsets:{'l_ankle':{x:0,y:-.04},'r_ankle':{x:0,y:-.04},'l_toe':{x:0,y:-.05},'r_toe':{x:0,y:-.05}} },
     ],
     pathOverlays: [
-      { id:'knee_track', label:'Knee Path', points:[{x:.43,y:.68},{x:.41,y:.73},{x:.40,y:.79},{x:.40,y:.84}] },
+      { id:'knee_track_left', label:'Knee Path', points:[{x:0.43,y:0.67},{x:0.41,y:0.70},{x:0.39,y:0.73},{x:0.38,y:0.76},{x:0.39,y:0.73},{x:0.41,y:0.70},{x:0.43,y:0.67}] },
+      { id:'hip_path', label:'Hip Path', points:[{x:0.44,y:0.47},{x:0.43,y:0.52},{x:0.42,y:0.58},{x:0.41,y:0.65},{x:0.42,y:0.58},{x:0.43,y:0.52},{x:0.44,y:0.47}] },
     ],
   },
 
+  // ── DEADLIFT — 8 seeded frames, 150ms interval ──────────────────────────────
   deadlift: {
-    frameIntervalMs: 300,
-    frames: buildDeadliftFrames(),
+    frameIntervalMs: 150,
+    frames: [
+      { phase:'setup',   head:{x:0.50,y:0.10},neck:{x:0.50,y:0.16},chest:{x:0.47,y:0.30},l_shoulder:{x:0.38,y:0.28},r_shoulder:{x:0.54,y:0.28},l_elbow:{x:0.34,y:0.42},r_elbow:{x:0.50,y:0.42},l_wrist:{x:0.40,y:0.56},r_wrist:{x:0.40,y:0.56},pelvis:{x:0.48,y:0.55},l_hip:{x:0.42,y:0.57},r_hip:{x:0.54,y:0.57},l_knee:{x:0.42,y:0.72},r_knee:{x:0.54,y:0.72},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+      { phase:'pull',    head:{x:0.50,y:0.11},neck:{x:0.50,y:0.17},chest:{x:0.47,y:0.31},l_shoulder:{x:0.38,y:0.29},r_shoulder:{x:0.54,y:0.29},l_elbow:{x:0.34,y:0.43},r_elbow:{x:0.50,y:0.43},l_wrist:{x:0.40,y:0.56},r_wrist:{x:0.40,y:0.56},pelvis:{x:0.48,y:0.53},l_hip:{x:0.42,y:0.55},r_hip:{x:0.54,y:0.55},l_knee:{x:0.43,y:0.70},r_knee:{x:0.55,y:0.70},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+      { phase:'pull',    head:{x:0.50,y:0.11},neck:{x:0.50,y:0.17},chest:{x:0.47,y:0.31},l_shoulder:{x:0.38,y:0.29},r_shoulder:{x:0.54,y:0.29},l_elbow:{x:0.34,y:0.43},r_elbow:{x:0.50,y:0.43},l_wrist:{x:0.40,y:0.50},r_wrist:{x:0.40,y:0.50},pelvis:{x:0.48,y:0.50},l_hip:{x:0.42,y:0.52},r_hip:{x:0.54,y:0.52},l_knee:{x:0.43,y:0.67},r_knee:{x:0.55,y:0.67},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+      { phase:'pull',    head:{x:0.50,y:0.10},neck:{x:0.50,y:0.16},chest:{x:0.48,y:0.29},l_shoulder:{x:0.39,y:0.27},r_shoulder:{x:0.55,y:0.27},l_elbow:{x:0.35,y:0.40},r_elbow:{x:0.51,y:0.40},l_wrist:{x:0.40,y:0.44},r_wrist:{x:0.40,y:0.44},pelvis:{x:0.49,y:0.46},l_hip:{x:0.43,y:0.48},r_hip:{x:0.55,y:0.48},l_knee:{x:0.44,y:0.64},r_knee:{x:0.56,y:0.64},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+      { phase:'pull',    head:{x:0.50,y:0.08},neck:{x:0.50,y:0.14},chest:{x:0.49,y:0.27},l_shoulder:{x:0.40,y:0.25},r_shoulder:{x:0.56,y:0.25},l_elbow:{x:0.36,y:0.37},r_elbow:{x:0.52,y:0.37},l_wrist:{x:0.40,y:0.40},r_wrist:{x:0.40,y:0.40},pelvis:{x:0.50,y:0.43},l_hip:{x:0.44,y:0.45},r_hip:{x:0.56,y:0.45},l_knee:{x:0.44,y:0.63},r_knee:{x:0.56,y:0.63},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+      { phase:'lockout', head:{x:0.50,y:0.07},neck:{x:0.50,y:0.13},chest:{x:0.50,y:0.24},l_shoulder:{x:0.41,y:0.22},r_shoulder:{x:0.57,y:0.22},l_elbow:{x:0.37,y:0.34},r_elbow:{x:0.53,y:0.34},l_wrist:{x:0.40,y:0.46},r_wrist:{x:0.40,y:0.46},pelvis:{x:0.50,y:0.44},l_hip:{x:0.44,y:0.46},r_hip:{x:0.56,y:0.46},l_knee:{x:0.44,y:0.65},r_knee:{x:0.56,y:0.65},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+      { phase:'lower',   head:{x:0.50,y:0.09},neck:{x:0.50,y:0.15},chest:{x:0.48,y:0.28},l_shoulder:{x:0.39,y:0.26},r_shoulder:{x:0.55,y:0.26},l_elbow:{x:0.35,y:0.39},r_elbow:{x:0.51,y:0.39},l_wrist:{x:0.40,y:0.50},r_wrist:{x:0.40,y:0.50},pelvis:{x:0.48,y:0.50},l_hip:{x:0.42,y:0.52},r_hip:{x:0.54,y:0.52},l_knee:{x:0.42,y:0.68},r_knee:{x:0.54,y:0.68},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+      { phase:'lower',   head:{x:0.50,y:0.10},neck:{x:0.50,y:0.16},chest:{x:0.47,y:0.30},l_shoulder:{x:0.38,y:0.28},r_shoulder:{x:0.54,y:0.28},l_elbow:{x:0.34,y:0.42},r_elbow:{x:0.50,y:0.42},l_wrist:{x:0.40,y:0.56},r_wrist:{x:0.40,y:0.56},pelvis:{x:0.48,y:0.55},l_hip:{x:0.42,y:0.57},r_hip:{x:0.54,y:0.57},l_knee:{x:0.42,y:0.72},r_knee:{x:0.54,y:0.72},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+    ],
     phases: [
-      { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest'],              cue:'Bar over mid-foot. Hinge at hips. Neutral spine. Lats tight.' },
-      { id:'hinge',   label:'HINGE',   keyJoints:['l_hip','r_hip','chest','pelvis'],     cue:'Push hips back. Shoulders slightly ahead of bar.' },
-      { id:'pull',    label:'PULL',    keyJoints:['chest','l_knee','r_knee'],             cue:'Push the floor away. Bar stays close. Hips and shoulders rise together.' },
-      { id:'lockout', label:'LOCKOUT', keyJoints:['pelvis','l_hip','r_hip'],             cue:'Full extension. Hips through. Shoulders back.' },
-      { id:'lower',   label:'LOWER',   keyJoints:['l_hip','r_hip','chest'],              cue:'Control the descent. Same path down as up.' },
+      { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest','l_wrist','r_wrist'], cue:'Bar over mid-foot. Hinge back. Set lats. Build tension before any movement.' },
+      { id:'pull',    label:'PULL',    keyJoints:['l_hip','r_hip','chest','l_knee','r_knee'],   cue:'Push the floor away. Bar stays close. Knees and hips extend together.' },
+      { id:'lockout', label:'LOCKOUT', keyJoints:['l_hip','r_hip','pelvis','chest'],            cue:'Stand tall. Hips drive fully through. Squeeze glutes — no hyperextension.' },
+      { id:'lower',   label:'LOWER',   keyJoints:['l_hip','r_hip','l_knee','r_knee'],          cue:'Hinge back first. Bar close. Controlled descent — earn the setup position.' },
     ],
     faults: [
-      { id:'rounded_back', label:'ROUNDED BACK', description:'Spine rounds under load — disc injury risk.', explanation:'Brace hard and stay long through the spine before pulling.', affectedJoints:['chest','neck'], keypointOffsets:{'chest':{x:0,y:+.05},'neck':{x:0,y:+.04}} },
-      { id:'bar_drift', label:'BAR DRIFT', description:'Bar drifts away from body — increases moment arm.', explanation:'Keep bar dragging close — shins to thighs.', affectedJoints:['l_wrist','r_wrist'], keypointOffsets:{'l_wrist':{x:-.05,y:0},'r_wrist':{x:+.05,y:0}} },
-      { id:'hips_shoot', label:'HIPS SHOOT UP', description:'Hips rise faster than shoulders — stiff-leg pattern.', explanation:'Push the floor away — hips and bar rise at the same rate.', affectedJoints:['l_hip','r_hip','pelvis'], keypointOffsets:{'pelvis':{x:0,y:-.04},'l_hip':{x:0,y:-.04},'r_hip':{x:0,y:-.04}} },
+      {
+        id:'rounded_spine', label:'ROUNDED SPINE', description:'Thoracic or lumbar rounding — compresses discs, risks herniation.',
+        explanation:"Brace before the pull. Stay long through the spine. 'Proud chest' cue.",
+        affectedJoints:['chest','neck','head'],
+        keypointOffsets:{},
+        faultFrames: [
+          { phase:'pull', head:{x:0.47,y:0.16},neck:{x:0.47,y:0.22},chest:{x:0.43,y:0.36},l_shoulder:{x:0.34,y:0.34},r_shoulder:{x:0.50,y:0.34},l_elbow:{x:0.30,y:0.47},r_elbow:{x:0.46,y:0.47},l_wrist:{x:0.40,y:0.50},r_wrist:{x:0.40,y:0.50},pelvis:{x:0.48,y:0.50},l_hip:{x:0.42,y:0.52},r_hip:{x:0.54,y:0.52},l_knee:{x:0.43,y:0.67},r_knee:{x:0.55,y:0.67},l_ankle:{x:0.43,y:0.87},r_ankle:{x:0.55,y:0.87},l_toe:{x:0.40,y:0.92},r_toe:{x:0.57,y:0.92} },
+        ],
+      },
+      { id:'bar_drift',  label:'BAR DRIFT',  description:'Bar swings forward from the body — increases moment arm, reduces efficiency.', explanation:'Keep bar dragging against shins on the way up. Lats engaged.', affectedJoints:['l_wrist','r_wrist','l_elbow','r_elbow'], keypointOffsets:{'l_wrist':{x:-.06,y:0},'r_wrist':{x:+.06,y:0}} },
+      { id:'hip_shoot',  label:'HIP SHOOT',  description:'Hips rise faster than shoulders off the floor — turns deadlift into a stiff-leg.', explanation:'Push floor away with feet. Knees and hips extend together off the floor.', affectedJoints:['l_hip','r_hip','chest'], keypointOffsets:{'pelvis':{x:0,y:-.05},'l_hip':{x:0,y:-.05},'r_hip':{x:0,y:-.05}} },
     ],
     pathOverlays: [
-      { id:'bar_path', label:'Bar Path', points:[{x:.50,y:.82},{x:.50,y:.64},{x:.50,y:.46},{x:.50,y:.32}] },
+      { id:'bar_path', label:'Bar Path', points:[{x:0.40,y:0.88},{x:0.40,y:0.72},{x:0.40,y:0.56},{x:0.40,y:0.42},{x:0.40,y:0.30},{x:0.40,y:0.50},{x:0.40,y:0.88}] },
     ],
   },
 
+  // ── PUSH-UP ─────────────────────────────────────────────────────────────────
   pushup: {
     frameIntervalMs: 300,
     frames: buildPushupFrames(),
@@ -268,60 +317,63 @@ export const MOTION_FRAMES = {
       { id:'lockout', label:'LOCKOUT', keyJoints:['l_elbow','r_elbow','pelvis'],         cue:'Full extension. Body line maintained.' },
     ],
     faults: [
-      { id:'hip_sag',  label:'HIP SAG',  description:"Hips drop below body line — lower back strain.", explanation:"Squeeze glutes and abs hard. Imagine your body is a steel plank.", affectedJoints:['pelvis','l_hip','r_hip'], keypointOffsets:{'pelvis':{x:0,y:+.06},'l_hip':{x:0,y:+.06},'r_hip':{x:0,y:+.06}} },
-      { id:'elbow_flare', label:'ELBOW FLARE', description:"Elbows flare wide — shoulder impingement risk.", explanation:"Tuck elbows 45° to body. Think 'arrows, not Ts'.", affectedJoints:['l_elbow','r_elbow'], keypointOffsets:{'l_elbow':{x:-.06,y:0},'r_elbow':{x:+.06,y:0}} },
+      { id:'hip_sag',     label:'HIP SAG',     description:'Hips drop below body line — lower back strain.', explanation:'Squeeze glutes and abs hard. Imagine your body is a steel plank.', affectedJoints:['pelvis','l_hip','r_hip'], keypointOffsets:{'pelvis':{x:0,y:+.07},'l_hip':{x:0,y:+.07},'r_hip':{x:0,y:+.07}} },
+      { id:'elbow_flare', label:'ELBOW FLARE', description:'Elbows flare wide — shoulder impingement risk.', explanation:"Tuck elbows 45° to body. Think 'arrows, not Ts'.", affectedJoints:['l_elbow','r_elbow'], keypointOffsets:{'l_elbow':{x:-.07,y:0},'r_elbow':{x:+.07,y:0}} },
     ],
     pathOverlays: [],
   },
 
+  // ── LUNGE ───────────────────────────────────────────────────────────────────
   lunge: {
     frameIntervalMs: 300,
     frames: buildLungeFrames(),
     phases: [
-      { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest'],              cue:'Stand tall. Core engaged. Weight centered.' },
-      { id:'step',    label:'STEP',    keyJoints:['l_knee','l_ankle'],                   cue:'Step forward. Land heel first. Keep torso upright.' },
-      { id:'bottom',  label:'BOTTOM',  keyJoints:['l_knee','l_hip','r_knee'],            cue:'Front shin vertical. Back knee near floor. Chest tall.' },
-      { id:'ascent',  label:'ASCENT',  keyJoints:['l_hip','l_knee'],                    cue:'Drive front heel. Push hips tall.' },
-      { id:'lockout', label:'LOCKOUT', keyJoints:['l_hip','r_hip','chest'],              cue:'Stand fully. Hips extended. Reset.' },
+      { id:'setup',   label:'SETUP',   keyJoints:['l_hip','r_hip','chest'],    cue:'Stand tall. Core engaged. Weight centered.' },
+      { id:'step',    label:'STEP',    keyJoints:['l_knee','l_ankle'],          cue:'Step forward. Land heel first. Keep torso upright.' },
+      { id:'bottom',  label:'BOTTOM',  keyJoints:['l_knee','l_hip','r_knee'],  cue:'Front shin vertical. Back knee near floor. Chest tall.' },
+      { id:'ascent',  label:'ASCENT',  keyJoints:['l_hip','l_knee'],           cue:'Drive front heel. Push hips tall.' },
+      { id:'lockout', label:'LOCKOUT', keyJoints:['l_hip','r_hip','chest'],    cue:'Stand fully. Hips extended. Reset.' },
     ],
     faults: [
-      { id:'knee_past_toe', label:'KNEE PAST TOE', description:'Front knee shoots far past toes — patellar stress.', explanation:'Step longer or lean back slightly. Keep shin vertical.', affectedJoints:['l_knee'], keypointOffsets:{'l_knee':{x:-.04,y:-.03}} },
-      { id:'trunk_lean',    label:'TRUNK LEAN',    description:'Excessive forward lean — reduces glute engagement.', explanation:'Keep torso tall. Drive front heel into floor.', affectedJoints:['chest','neck','head'], keypointOffsets:{'chest':{x:0,y:+.04},'neck':{x:0,y:+.04},'head':{x:0,y:+.04}} },
+      { id:'knee_past_toe', label:'KNEE PAST TOE', description:'Front knee shoots far past toes — patellar stress.', explanation:'Step longer or lean back slightly. Keep shin vertical.', affectedJoints:['l_knee'], keypointOffsets:{'l_knee':{x:-.05,y:-.04}} },
+      { id:'trunk_lean',    label:'TRUNK LEAN',    description:'Excessive forward lean — reduces glute engagement.', explanation:'Keep torso tall. Drive front heel into floor.', affectedJoints:['chest','neck','head'], keypointOffsets:{'chest':{x:0,y:+.05},'neck':{x:0,y:+.05},'head':{x:0,y:+.05}} },
     ],
     pathOverlays: [],
   },
 
+  // ── OVERHEAD PRESS ───────────────────────────────────────────────────────────
   overhead_press: {
-    frameIntervalMs: 500,
+    frameIntervalMs: 400,
     frames: buildOHPFrames(),
     phases: [
-      { id:'start',   label:'START',   keyJoints:['l_elbow','r_elbow','chest'],          cue:'Bar at collarbones. Core braced. Ribs down.' },
-      { id:'press',   label:'PRESS',   keyJoints:['l_elbow','r_elbow','l_wrist','r_wrist'], cue:'Press vertically. Move head back, then under.' },
-      { id:'lockout', label:'LOCKOUT', keyJoints:['l_wrist','r_wrist','chest'],          cue:'Arms fully extended. Shrug at top. Balance over midfoot.' },
-      { id:'descent', label:'DESCENT', keyJoints:['l_elbow','r_elbow'],                 cue:'Control the descent. Return to front rack.' },
+      { id:'start',   label:'START',   keyJoints:['l_elbow','r_elbow','chest'],              cue:'Bar at collarbones. Core braced. Ribs down.' },
+      { id:'press',   label:'PRESS',   keyJoints:['l_elbow','r_elbow','l_wrist','r_wrist'], cue:'Press vertically. Move head back, then under bar.' },
+      { id:'lockout', label:'LOCKOUT', keyJoints:['l_wrist','r_wrist','chest'],              cue:'Arms fully extended. Shrug at top. Balance over midfoot.' },
+      { id:'descent', label:'DESCENT', keyJoints:['l_elbow','r_elbow'],                     cue:'Control the descent. Return to front rack.' },
     ],
     faults: [
-      { id:'back_arch',  label:'BACK ARCH',    description:'Excessive lumbar arch — disc compression.', explanation:'Squeeze glutes, brace abs, tuck ribs before pressing.', affectedJoints:['pelvis','l_hip','r_hip'], keypointOffsets:{'pelvis':{x:0,y:-.03},'l_hip':{x:0,y:-.02},'r_hip':{x:0,y:-.02}} },
-      { id:'bar_forward',label:'BAR FORWARD',  description:'Bar drifts forward — inefficient path, shoulder stress.', explanation:'Press the bar in a vertical line directly overhead.', affectedJoints:['l_wrist','r_wrist'], keypointOffsets:{'l_wrist':{x:-.04,y:0},'r_wrist':{x:+.04,y:0}} },
+      { id:'back_arch',   label:'BACK ARCH',   description:'Excessive lumbar arch — disc compression.', explanation:'Squeeze glutes, brace abs, tuck ribs before pressing.', affectedJoints:['pelvis','l_hip','r_hip'], keypointOffsets:{'pelvis':{x:0,y:-.04},'l_hip':{x:0,y:-.03},'r_hip':{x:0,y:-.03}} },
+      { id:'bar_forward', label:'BAR FORWARD', description:'Bar drifts forward — inefficient path, shoulder stress.', explanation:'Press the bar in a vertical line directly overhead.', affectedJoints:['l_wrist','r_wrist'], keypointOffsets:{'l_wrist':{x:-.05,y:0},'r_wrist':{x:+.05,y:0}} },
     ],
     pathOverlays: [
       { id:'bar_path', label:'Bar Path', points:[{x:.50,y:.54},{x:.50,y:.38},{x:.50,y:.20},{x:.50,y:.08}] },
     ],
   },
 
+  // ── GOLF SWING ───────────────────────────────────────────────────────────────
   golf_swing: {
-    frameIntervalMs: 67,
+    frameIntervalMs: 80,
     frames: buildGolfFrames(),
     phases: [
-      { id:'address',      label:'ADDRESS',      keyJoints:['chest','l_hip','r_hip','l_knee','r_knee'], cue:'Athletic posture. Hip hinge. Spine neutral. Weight centered.' },
-      { id:'backswing',    label:'BACKSWING',    keyJoints:['l_shoulder','r_shoulder','l_hip','r_hip'], cue:'Coil shoulders 90°. Hips rotate 45°. Lead arm straight.' },
-      { id:'transition',   label:'TRANSITION',   keyJoints:['l_hip','r_hip','l_knee'],                 cue:'Hips lead. Shift weight to lead foot. Keep the lag.' },
-      { id:'impact',       label:'IMPACT',       keyJoints:['l_wrist','r_wrist','l_hip','chest'],       cue:'Hips open 45°. Hands ahead of ball. Spine tilted back.' },
-      { id:'follow_through',label:'FOLLOW THROUGH',keyJoints:['chest','l_shoulder','r_shoulder'],      cue:'Finish tall. Full shoulder rotation. Balance on lead foot.' },
+      { id:'address',       label:'ADDRESS',       keyJoints:['chest','l_hip','r_hip','l_knee','r_knee'], cue:'Athletic posture. Hip hinge. Spine neutral. Weight centered.' },
+      { id:'backswing',     label:'BACKSWING',     keyJoints:['l_shoulder','r_shoulder','l_hip','r_hip'], cue:'Coil shoulders 90°. Hips rotate 45°. Lead arm straight.' },
+      { id:'transition',    label:'TRANSITION',    keyJoints:['l_hip','r_hip','l_knee'],                  cue:'Hips lead. Shift weight to lead foot. Keep the lag.' },
+      { id:'impact',        label:'IMPACT',        keyJoints:['l_wrist','r_wrist','l_hip','chest'],        cue:'Hips open 45°. Hands ahead of ball. Spine tilted back.' },
+      { id:'follow_through',label:'FOLLOW THROUGH',keyJoints:['chest','l_shoulder','r_shoulder'],         cue:'Finish tall. Full shoulder rotation. Balance on lead foot.' },
     ],
     faults: [
-      { id:'early_extension', label:'EARLY EXTENSION', description:'Hips thrust toward ball through impact.', explanation:"Maintain spine angle through impact. Rotate, don't thrust.", affectedJoints:['pelvis','l_hip','r_hip'], keypointOffsets:{'pelvis':{x:+.04,y:0},'l_hip':{x:+.04,y:0},'r_hip':{x:+.04,y:0}} },
-      { id:'over_the_top',   label:'OVER THE TOP',    description:'Club path from outside-in — causes slicing.', explanation:'Drop right elbow into slot on downswing. Feel the path going right.', affectedJoints:['r_elbow','r_shoulder'], keypointOffsets:{'r_elbow':{x:-.05,y:-.03}} },
+      { id:'early_extension', label:'EARLY EXTENSION', description:'Hips thrust toward ball through impact.', explanation:"Maintain spine angle through impact. Rotate, don't thrust.", affectedJoints:['pelvis','l_hip','r_hip'], keypointOffsets:{'pelvis':{x:+.05,y:0},'l_hip':{x:+.05,y:0},'r_hip':{x:+.05,y:0}} },
+      { id:'over_the_top',    label:'OVER THE TOP',    description:'Club path from outside-in — causes slicing.', explanation:'Drop right elbow into slot on downswing. Feel the path going right.', affectedJoints:['r_elbow','r_shoulder'], keypointOffsets:{'r_elbow':{x:-.06,y:-.04}} },
     ],
     pathOverlays: [
       { id:'swing_plane', label:'Swing Plane', points:[{x:.50,y:.90},{x:.45,y:.65},{x:.35,y:.35},{x:.25,y:.15}] },
@@ -329,22 +381,86 @@ export const MOTION_FRAMES = {
     ],
   },
 
+  // ── BASKETBALL JUMP SHOT — 8 seeded frames, 100ms interval ───────────────────
   basketball_shot: {
-    frameIntervalMs: 67,
-    frames: buildBasketballFrames(),
+    frameIntervalMs: 100,
+    frames: [
+      { phase:'load',    head:{x:0.50,y:0.12},neck:{x:0.50,y:0.18},chest:{x:0.50,y:0.30},l_shoulder:{x:0.42,y:0.28},r_shoulder:{x:0.58,y:0.28},l_elbow:{x:0.38,y:0.38},r_elbow:{x:0.62,y:0.36},l_wrist:{x:0.44,y:0.48},r_wrist:{x:0.56,y:0.44},pelvis:{x:0.50,y:0.52},l_hip:{x:0.44,y:0.54},r_hip:{x:0.56,y:0.54},l_knee:{x:0.43,y:0.68},r_knee:{x:0.57,y:0.68},l_ankle:{x:0.43,y:0.85},r_ankle:{x:0.57,y:0.85},l_toe:{x:0.40,y:0.91},r_toe:{x:0.60,y:0.91} },
+      { phase:'load',    head:{x:0.50,y:0.13},neck:{x:0.50,y:0.19},chest:{x:0.50,y:0.31},l_shoulder:{x:0.42,y:0.29},r_shoulder:{x:0.58,y:0.29},l_elbow:{x:0.38,y:0.39},r_elbow:{x:0.62,y:0.37},l_wrist:{x:0.44,y:0.50},r_wrist:{x:0.56,y:0.46},pelvis:{x:0.50,y:0.54},l_hip:{x:0.44,y:0.56},r_hip:{x:0.56,y:0.56},l_knee:{x:0.43,y:0.71},r_knee:{x:0.57,y:0.71},l_ankle:{x:0.43,y:0.86},r_ankle:{x:0.57,y:0.86},l_toe:{x:0.40,y:0.92},r_toe:{x:0.60,y:0.92} },
+      { phase:'jump',    head:{x:0.50,y:0.10},neck:{x:0.50,y:0.16},chest:{x:0.50,y:0.28},l_shoulder:{x:0.42,y:0.26},r_shoulder:{x:0.58,y:0.26},l_elbow:{x:0.38,y:0.35},r_elbow:{x:0.62,y:0.33},l_wrist:{x:0.44,y:0.42},r_wrist:{x:0.56,y:0.38},pelvis:{x:0.50,y:0.48},l_hip:{x:0.44,y:0.50},r_hip:{x:0.56,y:0.50},l_knee:{x:0.43,y:0.62},r_knee:{x:0.57,y:0.62},l_ankle:{x:0.43,y:0.78},r_ankle:{x:0.57,y:0.78},l_toe:{x:0.40,y:0.84},r_toe:{x:0.60,y:0.84} },
+      { phase:'jump',    head:{x:0.50,y:0.08},neck:{x:0.50,y:0.14},chest:{x:0.50,y:0.26},l_shoulder:{x:0.42,y:0.24},r_shoulder:{x:0.58,y:0.24},l_elbow:{x:0.38,y:0.32},r_elbow:{x:0.62,y:0.28},l_wrist:{x:0.44,y:0.36},r_wrist:{x:0.56,y:0.30},pelvis:{x:0.50,y:0.44},l_hip:{x:0.44,y:0.46},r_hip:{x:0.56,y:0.46},l_knee:{x:0.44,y:0.57},r_knee:{x:0.56,y:0.57},l_ankle:{x:0.44,y:0.70},r_ankle:{x:0.56,y:0.70},l_toe:{x:0.41,y:0.76},r_toe:{x:0.59,y:0.76} },
+      { phase:'set',     head:{x:0.50,y:0.06},neck:{x:0.50,y:0.12},chest:{x:0.50,y:0.24},l_shoulder:{x:0.42,y:0.22},r_shoulder:{x:0.58,y:0.22},l_elbow:{x:0.39,y:0.28},r_elbow:{x:0.58,y:0.20},l_wrist:{x:0.44,y:0.32},r_wrist:{x:0.54,y:0.22},pelvis:{x:0.50,y:0.42},l_hip:{x:0.44,y:0.44},r_hip:{x:0.56,y:0.44},l_knee:{x:0.44,y:0.56},r_knee:{x:0.56,y:0.56},l_ankle:{x:0.44,y:0.70},r_ankle:{x:0.56,y:0.70},l_toe:{x:0.41,y:0.76},r_toe:{x:0.59,y:0.76} },
+      { phase:'release', head:{x:0.50,y:0.05},neck:{x:0.50,y:0.11},chest:{x:0.50,y:0.23},l_shoulder:{x:0.43,y:0.21},r_shoulder:{x:0.57,y:0.21},l_elbow:{x:0.40,y:0.26},r_elbow:{x:0.57,y:0.14},l_wrist:{x:0.45,y:0.30},r_wrist:{x:0.54,y:0.08},pelvis:{x:0.50,y:0.41},l_hip:{x:0.44,y:0.43},r_hip:{x:0.56,y:0.43},l_knee:{x:0.44,y:0.56},r_knee:{x:0.56,y:0.56},l_ankle:{x:0.44,y:0.72},r_ankle:{x:0.56,y:0.72},l_toe:{x:0.41,y:0.78},r_toe:{x:0.59,y:0.78} },
+      { phase:'land',    head:{x:0.50,y:0.09},neck:{x:0.50,y:0.15},chest:{x:0.50,y:0.27},l_shoulder:{x:0.42,y:0.25},r_shoulder:{x:0.58,y:0.25},l_elbow:{x:0.38,y:0.34},r_elbow:{x:0.60,y:0.22},l_wrist:{x:0.44,y:0.40},r_wrist:{x:0.55,y:0.16},pelvis:{x:0.50,y:0.46},l_hip:{x:0.44,y:0.48},r_hip:{x:0.56,y:0.48},l_knee:{x:0.43,y:0.62},r_knee:{x:0.57,y:0.62},l_ankle:{x:0.43,y:0.79},r_ankle:{x:0.57,y:0.79},l_toe:{x:0.40,y:0.85},r_toe:{x:0.60,y:0.85} },
+      { phase:'land',    head:{x:0.50,y:0.12},neck:{x:0.50,y:0.18},chest:{x:0.50,y:0.30},l_shoulder:{x:0.42,y:0.28},r_shoulder:{x:0.58,y:0.28},l_elbow:{x:0.38,y:0.38},r_elbow:{x:0.61,y:0.28},l_wrist:{x:0.44,y:0.46},r_wrist:{x:0.55,y:0.22},pelvis:{x:0.50,y:0.51},l_hip:{x:0.44,y:0.53},r_hip:{x:0.56,y:0.53},l_knee:{x:0.43,y:0.67},r_knee:{x:0.57,y:0.67},l_ankle:{x:0.43,y:0.84},r_ankle:{x:0.57,y:0.84},l_toe:{x:0.40,y:0.90},r_toe:{x:0.60,y:0.90} },
+    ],
     phases: [
-      { id:'load',    label:'LOAD',    keyJoints:['l_knee','r_knee','l_hip','r_hip'],    cue:'Athletic stance. Ball at hip. Load knees evenly.' },
-      { id:'jump',    label:'JUMP',    keyJoints:['l_ankle','r_ankle','pelvis'],         cue:'Explode through ankles. Drive hips up. Align the shot.' },
-      { id:'set',     label:'SET',     keyJoints:['r_elbow','r_wrist','chest'],          cue:'Ball at release point. Elbow under ball. Eyes on rim.' },
-      { id:'release', label:'RELEASE', keyJoints:['r_wrist','r_elbow'],                 cue:'Extend fully. Flick wrist. Backspin on release.' },
-      { id:'follow',  label:'FOLLOW',  keyJoints:['r_wrist','r_elbow','r_shoulder'],    cue:'Hold finish. Reach into the basket. Land balanced.' },
+      { id:'load',    label:'LOAD',    keyJoints:['l_knee','r_knee','l_hip','r_hip'],               cue:'Athletic base. Ball at hip. Load both knees evenly. Stay balanced.' },
+      { id:'jump',    label:'JUMP',    keyJoints:['l_ankle','r_ankle','pelvis','l_knee','r_knee'],  cue:'Explode through ankles. Drive knees up. Rise straight — don\'t drift.' },
+      { id:'set',     label:'SET',     keyJoints:['r_elbow','r_wrist','chest'],                     cue:'Ball rises to set point. Elbow directly under ball. Eyes locked on rim.' },
+      { id:'release', label:'RELEASE', keyJoints:['r_wrist','r_elbow','r_shoulder'],               cue:'Full extension. Wrist flicks through. Reach into the basket. Goose neck finish.' },
+      { id:'land',    label:'LAND',    keyJoints:['l_ankle','r_ankle','l_knee','r_knee'],           cue:'Soft landing. Absorb through ankles and knees. Balanced on both feet.' },
     ],
     faults: [
-      { id:'elbow_out', label:'ELBOW OUT', description:'Shooting elbow flares wide — pushes ball off-line.', explanation:'Keep elbow directly under the ball at set position.', affectedJoints:['r_elbow'], keypointOffsets:{'r_elbow':{x:+.06,y:0}} },
-      { id:'low_arc',   label:'LOW ARC',   description:'Flat trajectory — reduces target window.', explanation:'Increase release angle. Aim for 45–55° arc.', affectedJoints:['r_wrist'], keypointOffsets:{'r_wrist':{x:0,y:+.04}} },
+      {
+        id:'elbow_out', label:'ELBOW OUT', description:'Shooting elbow flares laterally — pushes ball offline, creates inconsistency.',
+        explanation:'Point shooting elbow at the rim. Keep it inside the ball.',
+        affectedJoints:['r_elbow'],
+        faultFrames: [
+          { phase:'set', head:{x:0.50,y:0.06},neck:{x:0.50,y:0.12},chest:{x:0.50,y:0.24},l_shoulder:{x:0.42,y:0.22},r_shoulder:{x:0.58,y:0.22},l_elbow:{x:0.39,y:0.28},r_elbow:{x:0.67,y:0.22},l_wrist:{x:0.44,y:0.32},r_wrist:{x:0.58,y:0.24},pelvis:{x:0.50,y:0.42},l_hip:{x:0.44,y:0.44},r_hip:{x:0.56,y:0.44},l_knee:{x:0.44,y:0.56},r_knee:{x:0.56,y:0.56},l_ankle:{x:0.44,y:0.70},r_ankle:{x:0.56,y:0.70},l_toe:{x:0.41,y:0.76},r_toe:{x:0.59,y:0.76} },
+        ],
+        keypointOffsets: {},
+      },
+      { id:'low_arc', label:'LOW ARC', description:'Flat trajectory reduces target window and shooting percentage.', explanation:"Aim for 45–55° release angle. 'Shoot over a defender' mental cue.", affectedJoints:['r_wrist','r_elbow'], keypointOffsets:{'r_wrist':{x:0,y:+.05},'r_elbow':{x:0,y:+.03}} },
     ],
     pathOverlays: [
-      { id:'ball_arc', label:'Ball Arc', points:[{x:.50,y:.55},{x:.55,y:.35},{x:.65,y:.20},{x:.80,y:.15},{x:.92,y:.25}] },
+      { id:'ball_arc', label:'Ball Arc', points:[{x:0.52,y:0.52},{x:0.55,y:0.40},{x:0.60,y:0.28},{x:0.68,y:0.16},{x:0.78,y:0.10},{x:0.90,y:0.22}] },
+    ],
+  },
+
+  // ── BASEBALL SWING — 14 seeded frames, 80ms interval ─────────────────────────
+  baseball_swing: {
+    frameIntervalMs: 80,
+    frames: [
+      { phase:'stance',    head:{x:0.50,y:0.08},neck:{x:0.50,y:0.14},chest:{x:0.50,y:0.27},l_shoulder:{x:0.42,y:0.25},r_shoulder:{x:0.58,y:0.25},l_elbow:{x:0.38,y:0.36},r_elbow:{x:0.62,y:0.32},l_wrist:{x:0.36,y:0.28},r_wrist:{x:0.64,y:0.22},pelvis:{x:0.50,y:0.47},l_hip:{x:0.44,y:0.49},r_hip:{x:0.56,y:0.49},l_knee:{x:0.42,y:0.67},r_knee:{x:0.58,y:0.67},l_ankle:{x:0.41,y:0.87},r_ankle:{x:0.59,y:0.87},l_toe:{x:0.38,y:0.92},r_toe:{x:0.62,y:0.92} },
+      { phase:'stance',    head:{x:0.50,y:0.08},neck:{x:0.50,y:0.14},chest:{x:0.50,y:0.27},l_shoulder:{x:0.42,y:0.25},r_shoulder:{x:0.58,y:0.25},l_elbow:{x:0.38,y:0.36},r_elbow:{x:0.63,y:0.32},l_wrist:{x:0.36,y:0.28},r_wrist:{x:0.65,y:0.22},pelvis:{x:0.50,y:0.47},l_hip:{x:0.44,y:0.49},r_hip:{x:0.56,y:0.49},l_knee:{x:0.42,y:0.67},r_knee:{x:0.58,y:0.67},l_ankle:{x:0.41,y:0.87},r_ankle:{x:0.59,y:0.87},l_toe:{x:0.38,y:0.92},r_toe:{x:0.62,y:0.92} },
+      { phase:'load',      head:{x:0.50,y:0.09},neck:{x:0.50,y:0.15},chest:{x:0.51,y:0.28},l_shoulder:{x:0.43,y:0.26},r_shoulder:{x:0.59,y:0.26},l_elbow:{x:0.39,y:0.37},r_elbow:{x:0.64,y:0.31},l_wrist:{x:0.38,y:0.27},r_wrist:{x:0.68,y:0.21},pelvis:{x:0.51,y:0.48},l_hip:{x:0.45,y:0.50},r_hip:{x:0.57,y:0.50},l_knee:{x:0.43,y:0.68},r_knee:{x:0.60,y:0.66},l_ankle:{x:0.41,y:0.87},r_ankle:{x:0.60,y:0.88},l_toe:{x:0.38,y:0.92},r_toe:{x:0.63,y:0.93} },
+      { phase:'load',      head:{x:0.50,y:0.09},neck:{x:0.50,y:0.15},chest:{x:0.51,y:0.28},l_shoulder:{x:0.43,y:0.26},r_shoulder:{x:0.59,y:0.26},l_elbow:{x:0.39,y:0.37},r_elbow:{x:0.65,y:0.31},l_wrist:{x:0.38,y:0.27},r_wrist:{x:0.69,y:0.20},pelvis:{x:0.51,y:0.48},l_hip:{x:0.45,y:0.50},r_hip:{x:0.57,y:0.50},l_knee:{x:0.43,y:0.68},r_knee:{x:0.61,y:0.67},l_ankle:{x:0.41,y:0.87},r_ankle:{x:0.61,y:0.88},l_toe:{x:0.38,y:0.92},r_toe:{x:0.64,y:0.93} },
+      { phase:'stride',    head:{x:0.49,y:0.09},neck:{x:0.49,y:0.15},chest:{x:0.49,y:0.28},l_shoulder:{x:0.41,y:0.26},r_shoulder:{x:0.57,y:0.26},l_elbow:{x:0.37,y:0.37},r_elbow:{x:0.63,y:0.31},l_wrist:{x:0.36,y:0.27},r_wrist:{x:0.67,y:0.21},pelvis:{x:0.49,y:0.48},l_hip:{x:0.43,y:0.50},r_hip:{x:0.55,y:0.50},l_knee:{x:0.38,y:0.67},r_knee:{x:0.59,y:0.66},l_ankle:{x:0.34,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.31,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'stride',    head:{x:0.49,y:0.09},neck:{x:0.49,y:0.15},chest:{x:0.49,y:0.28},l_shoulder:{x:0.41,y:0.26},r_shoulder:{x:0.57,y:0.26},l_elbow:{x:0.37,y:0.37},r_elbow:{x:0.63,y:0.31},l_wrist:{x:0.36,y:0.27},r_wrist:{x:0.67,y:0.21},pelvis:{x:0.49,y:0.48},l_hip:{x:0.43,y:0.50},r_hip:{x:0.55,y:0.50},l_knee:{x:0.37,y:0.67},r_knee:{x:0.58,y:0.66},l_ankle:{x:0.33,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.30,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'rotation',  head:{x:0.48,y:0.09},neck:{x:0.48,y:0.15},chest:{x:0.47,y:0.28},l_shoulder:{x:0.38,y:0.27},r_shoulder:{x:0.54,y:0.26},l_elbow:{x:0.33,y:0.37},r_elbow:{x:0.60,y:0.30},l_wrist:{x:0.32,y:0.27},r_wrist:{x:0.65,y:0.20},pelvis:{x:0.46,y:0.48},l_hip:{x:0.40,y:0.50},r_hip:{x:0.52,y:0.50},l_knee:{x:0.36,y:0.67},r_knee:{x:0.57,y:0.66},l_ankle:{x:0.33,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.30,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'rotation',  head:{x:0.47,y:0.09},neck:{x:0.47,y:0.15},chest:{x:0.45,y:0.28},l_shoulder:{x:0.35,y:0.27},r_shoulder:{x:0.52,y:0.26},l_elbow:{x:0.30,y:0.37},r_elbow:{x:0.56,y:0.31},l_wrist:{x:0.29,y:0.30},r_wrist:{x:0.60,y:0.22},pelvis:{x:0.44,y:0.48},l_hip:{x:0.38,y:0.50},r_hip:{x:0.50,y:0.50},l_knee:{x:0.35,y:0.67},r_knee:{x:0.56,y:0.66},l_ankle:{x:0.33,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.30,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'contact',   head:{x:0.47,y:0.09},neck:{x:0.47,y:0.15},chest:{x:0.44,y:0.29},l_shoulder:{x:0.33,y:0.28},r_shoulder:{x:0.50,y:0.26},l_elbow:{x:0.28,y:0.38},r_elbow:{x:0.52,y:0.32},l_wrist:{x:0.26,y:0.40},r_wrist:{x:0.52,y:0.38},pelvis:{x:0.42,y:0.48},l_hip:{x:0.36,y:0.50},r_hip:{x:0.48,y:0.50},l_knee:{x:0.34,y:0.67},r_knee:{x:0.56,y:0.66},l_ankle:{x:0.32,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.29,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'contact',   head:{x:0.47,y:0.09},neck:{x:0.47,y:0.15},chest:{x:0.43,y:0.29},l_shoulder:{x:0.32,y:0.28},r_shoulder:{x:0.49,y:0.26},l_elbow:{x:0.27,y:0.38},r_elbow:{x:0.51,y:0.33},l_wrist:{x:0.25,y:0.41},r_wrist:{x:0.51,y:0.39},pelvis:{x:0.41,y:0.48},l_hip:{x:0.35,y:0.50},r_hip:{x:0.47,y:0.50},l_knee:{x:0.33,y:0.67},r_knee:{x:0.55,y:0.66},l_ankle:{x:0.32,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.29,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'extension', head:{x:0.47,y:0.09},neck:{x:0.47,y:0.15},chest:{x:0.43,y:0.29},l_shoulder:{x:0.32,y:0.28},r_shoulder:{x:0.49,y:0.26},l_elbow:{x:0.24,y:0.36},r_elbow:{x:0.48,y:0.34},l_wrist:{x:0.20,y:0.38},r_wrist:{x:0.47,y:0.38},pelvis:{x:0.41,y:0.48},l_hip:{x:0.35,y:0.50},r_hip:{x:0.47,y:0.50},l_knee:{x:0.33,y:0.67},r_knee:{x:0.55,y:0.66},l_ankle:{x:0.32,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.29,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'extension', head:{x:0.47,y:0.08},neck:{x:0.47,y:0.14},chest:{x:0.43,y:0.28},l_shoulder:{x:0.32,y:0.27},r_shoulder:{x:0.49,y:0.25},l_elbow:{x:0.22,y:0.22},r_elbow:{x:0.47,y:0.22},l_wrist:{x:0.22,y:0.14},r_wrist:{x:0.47,y:0.14},pelvis:{x:0.41,y:0.48},l_hip:{x:0.35,y:0.50},r_hip:{x:0.47,y:0.50},l_knee:{x:0.33,y:0.67},r_knee:{x:0.55,y:0.66},l_ankle:{x:0.32,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.29,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'finish',    head:{x:0.46,y:0.08},neck:{x:0.46,y:0.14},chest:{x:0.42,y:0.27},l_shoulder:{x:0.30,y:0.25},r_shoulder:{x:0.48,y:0.22},l_elbow:{x:0.26,y:0.18},r_elbow:{x:0.48,y:0.15},l_wrist:{x:0.30,y:0.12},r_wrist:{x:0.52,y:0.10},pelvis:{x:0.40,y:0.48},l_hip:{x:0.34,y:0.50},r_hip:{x:0.46,y:0.50},l_knee:{x:0.33,y:0.67},r_knee:{x:0.55,y:0.68},l_ankle:{x:0.32,y:0.87},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.29,y:0.91},r_toe:{x:0.62,y:0.93} },
+      { phase:'finish',    head:{x:0.46,y:0.08},neck:{x:0.46,y:0.14},chest:{x:0.42,y:0.27},l_shoulder:{x:0.30,y:0.25},r_shoulder:{x:0.48,y:0.22},l_elbow:{x:0.26,y:0.17},r_elbow:{x:0.48,y:0.14},l_wrist:{x:0.30,y:0.11},r_wrist:{x:0.52,y:0.09},pelvis:{x:0.40,y:0.48},l_hip:{x:0.34,y:0.50},r_hip:{x:0.46,y:0.50},l_knee:{x:0.33,y:0.67},r_knee:{x:0.55,y:0.68},l_ankle:{x:0.32,y:0.87},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.29,y:0.91},r_toe:{x:0.62,y:0.93} },
+    ],
+    phases: [
+      { id:'stance',    label:'STANCE',    keyJoints:['l_knee','r_knee','l_hip','r_hip'],          cue:'Athletic base. Weight centered, slightly back. Relaxed grip. Eyes on pitcher.' },
+      { id:'load',      label:'LOAD',      keyJoints:['r_hip','r_knee','pelvis'],                  cue:'Load back hip. Slight inward turn. Hands drift back. Stay soft — don\'t over-coil.' },
+      { id:'stride',    label:'STRIDE',    keyJoints:['l_ankle','l_knee','pelvis'],                cue:'Soft stride forward. Plant front foot firmly. Hands stay back — don\'t drag early.' },
+      { id:'rotation',  label:'HIP FIRE',  keyJoints:['l_hip','r_hip','pelvis','chest'],          cue:'Hips fire first. Clear aggressively. Feel the separation — shoulders stay back.' },
+      { id:'contact',   label:'CONTACT',   keyJoints:['l_wrist','r_wrist','l_elbow','r_elbow'],   cue:'Contact out front. Extension through the ball. Head down. Hands inside the ball.' },
+      { id:'extension', label:'EXTENSION', keyJoints:['l_elbow','r_elbow','l_wrist','r_wrist'],   cue:'Full arm extension. Drive through the zone — don\'t roll over early.' },
+      { id:'finish',    label:'FINISH',    keyJoints:['l_shoulder','r_shoulder','chest','pelvis'], cue:'High balanced finish. Weight on front foot. Back toe down. Tall and complete.' },
+    ],
+    faults: [
+      {
+        id:'casting', label:'CASTING', description:'Hands push away from body on downswing — long looping path, poor contact.',
+        explanation:'Keep hands inside. Knob of bat leads to contact.',
+        affectedJoints:['l_elbow','r_elbow','l_wrist','r_wrist'],
+        faultFrames: [
+          { phase:'rotation', head:{x:0.47,y:0.09},neck:{x:0.47,y:0.15},chest:{x:0.45,y:0.28},l_shoulder:{x:0.35,y:0.27},r_shoulder:{x:0.52,y:0.26},l_elbow:{x:0.26,y:0.40},r_elbow:{x:0.48,y:0.40},l_wrist:{x:0.22,y:0.46},r_wrist:{x:0.48,y:0.44},pelvis:{x:0.44,y:0.48},l_hip:{x:0.38,y:0.50},r_hip:{x:0.50,y:0.50},l_knee:{x:0.35,y:0.67},r_knee:{x:0.56,y:0.66},l_ankle:{x:0.33,y:0.86},r_ankle:{x:0.59,y:0.88},l_toe:{x:0.30,y:0.91},r_toe:{x:0.62,y:0.93} },
+        ],
+        keypointOffsets: {},
+      },
+      { id:'upper_body_dominant', label:'UPPER DOMINANT', description:'Shoulders initiate before hips — kills separation and power.', explanation:'Fire hips first. Feel the stretch between hips and shoulders.', affectedJoints:['l_shoulder','r_shoulder','chest'], keypointOffsets:{'chest':{x:-.04,y:0},'l_shoulder':{x:-.04,y:0},'r_shoulder':{x:-.04,y:0}} },
+      { id:'head_drift', label:'HEAD DRIFT', description:'Head moves during swing — loses ball tracking.', explanation:'Keep head still through contact. Eyes stay on the ball.', affectedJoints:['head','neck'], keypointOffsets:{'head':{x:-.05,y:0},'neck':{x:-.03,y:0}} },
+    ],
+    pathOverlays: [
+      { id:'bat_path', label:'Bat Path', points:[{x:0.70,y:0.22},{x:0.62,y:0.32},{x:0.53,y:0.40},{x:0.44,y:0.43},{x:0.33,y:0.40},{x:0.22,y:0.36}] },
     ],
   },
 };
