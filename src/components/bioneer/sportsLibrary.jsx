@@ -247,6 +247,35 @@ export const SPORTS_MOVEMENTS = [
     },
     repAngle: null,
   },
+  {
+    id: "baseball_swing",
+    name: "Baseball Swing",
+    icon: "⚾",
+    category: "sports",
+    muscleGroup: "Rotational / Full Body",
+    camera: "3/4 front",
+    hasDemo: true,
+    phases: [
+      { id:"stance",   label:"STANCE",   timeStart:0,   timeEnd:320  },
+      { id:"load",     label:"LOAD",     timeStart:320, timeEnd:640  },
+      { id:"stride",   label:"STRIDE",   timeStart:640, timeEnd:960  },
+      { id:"rotation", label:"HIP FIRE", timeStart:960, timeEnd:1200 },
+      { id:"contact",  label:"CONTACT",  timeStart:1200,timeEnd:1360 },
+      { id:"extension",label:"EXTENSION",timeStart:1360,timeEnd:1600 },
+      { id:"finish",   label:"FINISH",   timeStart:1600,timeEnd:2080 },
+    ],
+    joints: [
+      { name:"Hip Rotation", label:"HIP", landmarks:[23,24,12], altLandmarks:[24,23,11], optimal:[40,60], acceptable:[30,70], danger:{below:30,above:70} },
+      { name:"Front Knee",   label:"KNEE",landmarks:[23,25,27], altLandmarks:[24,26,28], optimal:[140,170],acceptable:[130,175],danger:{below:130,above:null} },
+    ],
+    repAngle: null,
+    coachingTips: {
+      "Hip Rotation_WARNING": "Hips aren't clearing enough — you're losing rotational power.",
+      "Hip Rotation_DANGER":  "Hips initiating late — upper body is dominating.",
+      "Front Knee_WARNING":   "Front knee collapsing — plant foot isn't firm.",
+      "Front Knee_DANGER":    "Knee severely bent at contact — losing power base.",
+    },
+  },
 ];
 
 export function getSportsMovementById(id) {
