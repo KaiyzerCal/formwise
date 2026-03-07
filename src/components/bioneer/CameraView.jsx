@@ -173,7 +173,7 @@ export default function CameraView({ exercise, onStop }) {
       cancelled = true;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (stream) stream.getTracks().forEach((t) => t.stop());
-      if (poseRef.current) { poseRef.current.close(); poseRef.current = null; }
+      if (poseRef.current) { try { poseRef.current.close(); } catch(_){} poseRef.current = null; }
       destroyAudio();
       if (bodyLostTimerRef.current) clearTimeout(bodyLostTimerRef.current);
     };
