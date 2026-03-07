@@ -15,8 +15,8 @@ export class FeedbackScheduler {
     this.activeCueStart = null;
     this.recentCues     = {};     // cueId → last surfaced tMs
     this.history        = [];
-    this.LOCK_MS        = 15_000;
-    this.COOLDOWN_MS    = 60_000;
+    this.LOCK_MS        = 8_000;
+    this.COOLDOWN_MS    = 20_000;
     this.suppressUntil  = 0;
     this.uiCallback     = null;
   }
