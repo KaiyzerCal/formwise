@@ -113,49 +113,50 @@ export default function CameraView({ exercise, onStop }) {
         return;
       }
 
-      // Load MediaPipe via CDN scripts
+      // Load MediaPipe Tasks Vision (BlazePose GHUM — provides 3D world landmarks)
       try {
-        const BASE = "https://unpkg.com/@mediapipe/pose@0.5.1675469404";
-
-        // Preload the assets loader so locateFile override takes effect first
-        await loadScript(`${BASE}/pose_solution_packed_assets_loader.js`);
-        await loadScript(`${BASE}/pose_solution_simd_wasm_bin.js`);
-        await loadScript(`${BASE}/pose.js`);
+        await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js");
         if (cancelled) return;
 
-        const pose = new window.Pose({
-          locateFile: (file) => `${BASE}/${file}`,
+        const { PoseLandmarker, FilesetResolver } = window.VisionTasksVision ?? window;
+
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+        );
+
+        const landmarker = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task",
+            delegate: "GPU",
+          },
+          runningMode:                  "VIDEO",
+          numPoses:                     1,
+          minPoseDetectionConfidence:   0.65,
+          minPosePresenceConfidence:    0.60,
+          minTrackingConfidence:        0.60,
+          outputSegmentationMasks:      false,
         });
 
-        pose.setOptions({
-          modelComplexity:        1,
-          smoothLandmarks:        false,  // CRITICAL: we apply our own superior smoothing
-          enableSegmentation:     false,
-          minDetectionConfidence: 0.65,
-          minTrackingConfidence:  0.60,
-        });
+        if (cancelled) { landmarker.close(); return; }
 
-        pose.onResults((results) => {
-          if (cancelled) return;
-          processResults(results);
-        });
-
-        // Initialize the pose model (loads WASM + assets)
-        await pose.initialize();
-        if (cancelled) return;
-
-        poseRef.current = pose;
+        poseRef.current = landmarker;
         setPoseReady(true);
         setStatusMsg("FORM LOCKED IN");
-
-        // Init audio
         initAudio();
 
-        // Start detection loop
+        let lastVideoTime = -1;
         function detect() {
           if (cancelled) return;
-          if (videoRef.current && poseRef.current && videoRef.current.readyState >= 2) {
-            poseRef.current.send({ image: videoRef.current });
+          const video = videoRef.current;
+          if (video && poseRef.current && video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+            lastVideoTime = video.currentTime;
+            const result = poseRef.current.detectForVideo(video, performance.now());
+            // Normalise to legacy shape so processResults stays unchanged
+            processResults({
+              poseLandmarks:      result.landmarks?.[0]      ?? null,
+              poseWorldLandmarks: result.worldLandmarks?.[0] ?? null,
+            });
           }
           animFrameRef.current = requestAnimationFrame(detect);
         }
