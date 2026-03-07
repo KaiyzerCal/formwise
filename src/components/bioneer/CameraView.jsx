@@ -327,47 +327,23 @@ export default function CameraView({ exercise, onStop }) {
         ctx.setLineDash([]);
       }
 
-      // Worst-state status (only update if no active orchestrator cue)
-      const hasActiveCue = !!orchestratorRef.current?.scheduler?.getActiveCue();
-      if (!hasActiveCue) {
-        let worstState = "OPTIMAL";
-        let worstJoint = "";
-        const stateOrder = ["OPTIMAL", "ACCEPTABLE", "WARNING", "DANGER"];
-        for (const jr of jointResults) {
-          if (jr.state && stateOrder.indexOf(jr.state) > stateOrder.indexOf(worstState)) {
-            worstState = jr.state;
-            worstJoint = jr.name;
-          }
-        }
-
-        // Danger frame tracking & audio
-        for (const jr of jointResults) {
-          const key = jr.label;
-          if (jr.state === "DANGER") {
-            dangerFramesRef.current[key] = (dangerFramesRef.current[key] || 0) + 1;
-            if (dangerFramesRef.current[key] >= DANGER_FRAME_THRESHOLD) {
-              beep(mutedRef.current);
-              sessionDataRef.current.alerts.push({
-                timestamp: parseFloat(elapsed.toFixed(1)),
-                joint: jr.name.toLowerCase().replace(/\s/g, "_"),
-                angle: jr.angle,
-              });
-              dangerFramesRef.current[key] = 0;
-            }
-          } else {
+      // Danger frame tracking & audio (kept for beep only)
+      for (const jr of jointResults) {
+        const key = jr.label;
+        if (jr.state === "DANGER") {
+          dangerFramesRef.current[key] = (dangerFramesRef.current[key] || 0) + 1;
+          if (dangerFramesRef.current[key] >= DANGER_FRAME_THRESHOLD) {
+            beep(mutedRef.current);
+            sessionDataRef.current.alerts.push({
+              timestamp: parseFloat(elapsed.toFixed(1)),
+              joint: jr.name.toLowerCase().replace(/\s/g, "_"),
+              angle: jr.angle,
+            });
             dangerFramesRef.current[key] = 0;
           }
+        } else {
+          dangerFramesRef.current[key] = 0;
         }
-
-        const msgMap = {
-          OPTIMAL:    { msg: "FORM LOCKED IN",          color: "#22C55E" },
-          ACCEPTABLE: { msg: "MINOR ADJUSTMENT",        color: "#EAB308" },
-          WARNING:    { msg: `CHECK YOUR ${worstJoint.toUpperCase()}`, color: "#F97316" },
-          DANGER:     { msg: "⚠ DANGER — CORRECT NOW",  color: "#EF4444" },
-        };
-        const status = msgMap[worstState];
-        setStatusMsg(status.msg);
-        setStatusColor(status.color);
       }
     },
     [exercise]
