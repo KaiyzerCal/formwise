@@ -50,6 +50,7 @@
 import FormCheck from './pages/FormCheck';
 import FormHistory from './pages/FormHistory';
 import ProperFormDemo from './pages/ProperFormDemo';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -61,4 +62,5 @@ export const PAGES = {
 export const pagesConfig = {
     mainPage: "FormCheck",
     Pages: PAGES,
+    Layout: __Layout,
 };
