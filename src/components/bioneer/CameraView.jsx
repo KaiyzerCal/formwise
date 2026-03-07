@@ -56,11 +56,38 @@ export default function CameraView({ exercise, onStop }) {
     mutedRef.current = muted;
   }, [muted]);
 
-  // Initialize rep counter
+  // Initialize rep counter (legacy) + orchestrator
   useEffect(() => {
     if (exercise.repAngle) {
       repCounterRef.current = createRepCounter(exercise.repAngle);
     }
+
+    // Boot the new orchestrator
+    const orch = new LiveSessionOrchestrator(exercise.id, 'local');
+    orch.onRep = ({ repNumber }) => setReps(repNumber);
+    orch.onCue = ({ text, severity }) => {
+      setActiveCueText(text);
+      setStatusMsg(text.toUpperCase());
+      setStatusColor(severity === 'HIGH' ? '#EF4444' : severity === 'MODERATE' ? '#F97316' : '#EAB308');
+      // Auto-clear cue text display after 15s
+      clearTimeout(orch._cueTimer);
+      orch._cueTimer = setTimeout(() => setActiveCueText(null), 15000);
+    };
+    orch.onLockState = (state) => {
+      setLockState(state);
+      if (state === 'LOST') {
+        setBodyVisible(false);
+        setStatusMsg("Step into frame");
+        setStatusColor("#EF4444");
+      } else if (state === 'LOCKED') {
+        setBodyVisible(true);
+      }
+    };
+    orchestratorRef.current = orch;
+
+    return () => {
+      if (orch._cueTimer) clearTimeout(orch._cueTimer);
+    };
   }, [exercise]);
 
   // Load MediaPipe and start camera
