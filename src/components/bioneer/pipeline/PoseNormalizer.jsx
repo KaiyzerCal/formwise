@@ -2,6 +2,7 @@
  * PoseNormalizer
  * Maps MediaPipe 33-landmark array → named joint dictionary
  * Adds derived midpoints: neck, chest, pelvis
+ * Supports both 2D (normalized image) and 3D (world/GHUM metric) landmarks.
  */
 
 // MediaPipe landmark index → joint name
