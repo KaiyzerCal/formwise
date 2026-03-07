@@ -130,9 +130,9 @@ export class LiveSessionOrchestrator {
       this.baseline = { ankleY: smoothedJoints.l_ankle.y };
     }
 
-    // ── LAYER 4: Kinematics ─────────────────────────────────────────────────
+    // ── LAYER 4: Kinematics (3D world joints from GHUM when available) ─────
     const { velocities, angles, asymmetry } =
-      this.kinematics.compute(smoothedJoints, smoothedVelocities);
+      this.kinematics.compute(smoothedJoints, smoothedVelocities, worldJoints);
     const kinAngles = { ...angles, asymmetry };
 
     // ── LAYER 5a: Rep detection ─────────────────────────────────────────────
