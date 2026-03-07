@@ -13,7 +13,7 @@ const FAULT_MODULES = {
     {
       id: 'knee_valgus', label: 'Knee valgus', cue: 'Drive knees out',
       severity: 'HIGH', isRisk: true,
-      phases: ['descent','bottom','ascent'],
+      phases: ['descent','bottom','ascent'],  // squat phases
       check(j, angles) {
         if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
         const kneeW  = j.r_knee.x  - j.l_knee.x;
