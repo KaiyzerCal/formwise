@@ -78,26 +78,23 @@ export function areLandmarksVisible(landmarks, indices) {
   );
 }
 
-export function computeJointAngles(landmarks, exercise) {
+export function computeJointAngles(landmarks, exercise, phase) {
   const results = [];
 
   for (const joint of exercise.joints) {
     if (joint.landmarks === "spine_lean") {
-      // Check required landmarks for spine lean
       if (!areLandmarksVisible(landmarks, [11, 12, 23, 24])) {
         results.push({ ...joint, angle: null, state: null });
         continue;
       }
       const angle = calcSpineLean(landmarks);
-      const state = evaluateState(angle, joint);
-      // Position badge at midpoint of shoulders
+      const state = evaluateState(angle, joint, phase);
       const pos = {
         x: (landmarks[11].x + landmarks[12].x) / 2,
         y: (landmarks[11].y + landmarks[12].y) / 2,
       };
       results.push({ ...joint, angle, state, position: pos });
     } else {
-      // Try primary landmarks first, then alt
       let lms = joint.landmarks;
       let visible = areLandmarksVisible(landmarks, lms);
       if (!visible && joint.altLandmarks) {
@@ -112,7 +109,7 @@ export function computeJointAngles(landmarks, exercise) {
       const B = landmarks[lms[1]];
       const C = landmarks[lms[2]];
       const angle = calcAngle(A, B, C);
-      const state = evaluateState(angle, joint);
+      const state = evaluateState(angle, joint, phase);
       results.push({ ...joint, angle, state, position: { x: B.x, y: B.y } });
     }
   }
