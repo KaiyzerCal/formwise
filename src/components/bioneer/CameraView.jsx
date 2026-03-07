@@ -209,58 +209,50 @@ export default function CameraView({ exercise, onStop }) {
       setBodyVisible(true);
 
       const raw = results.poseLandmarks;
+
+      // ── NEW PIPELINE: Feed results to orchestrator ──────────────────────
+      orchestratorRef.current?.processFrame(results, Date.now());
+
+      // ── EXISTING: canvas rendering pipeline (unchanged) ─────────────────
       const smoothed = smoothLandmarks(raw, prevLandmarksRef.current);
       prevLandmarksRef.current = smoothed;
 
-      // Draw ghost pose
       const ghost = generateGhostPose(smoothed);
       if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
 
-      // Compute angles
       const jointResults = computeJointAngles(smoothed, exercise);
-
-      // Draw live skeleton
       drawSkeleton(ctx, smoothed, jointResults, canvas.width, canvas.height);
 
-      // Compute form score
       const score = computeFormScore(jointResults);
       setFormScore(score);
 
-      // Track session data
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       sessionDataRef.current.scores.push({ time: elapsed, score });
       if (score > sessionDataRef.current.peakScore) sessionDataRef.current.peakScore = score;
       if (score < sessionDataRef.current.lowestScore) sessionDataRef.current.lowestScore = score;
 
-      // Rep counting
+      // Legacy rep counter (fallback)
       if (repCounterRef.current && exercise.repAngle) {
         const primaryJoint = jointResults[exercise.repAngle.jointIndex];
         if (primaryJoint && primaryJoint.angle !== null) {
-          const count = repCounterRef.current.update(primaryJoint.angle);
-          setReps(count);
+          repCounterRef.current.update(primaryJoint.angle);
         }
       }
 
-      // Phase detection (sports movements)
-      if (exercise.phases) {
+      // Phase display (orchestrator-driven for supported movements, legacy fallback)
+      const orchPhase = orchestratorRef.current?.lastPhaseId;
+      if (orchPhase && orchPhase !== currentPhaseRef.current) {
+        currentPhaseRef.current = orchPhase;
+        setCurrentPhase(orchPhase);
+      } else if (exercise.phases && !orchPhase) {
         const newPhase = detectPhase(exercise.id, jointResults, currentPhaseRef.current);
         if (newPhase && newPhase !== currentPhaseRef.current) {
           currentPhaseRef.current = newPhase;
           setCurrentPhase(newPhase);
-          // Record phase in session
-          if (!sessionDataRef.current.phaseData) sessionDataRef.current.phaseData = {};
-          if (!sessionDataRef.current.phaseData[newPhase]) {
-            sessionDataRef.current.phaseData[newPhase] = { frames: 0, scores: [] };
-          }
-        }
-        // Track per-frame phase data
-        if (currentPhaseRef.current && sessionDataRef.current.phaseData?.[currentPhaseRef.current]) {
-          sessionDataRef.current.phaseData[currentPhaseRef.current].frames++;
-          sessionDataRef.current.phaseData[currentPhaseRef.current].scores.push(score);
         }
       }
 
-      // Track joint data for movement score
+      // Track joint data for session summary
       for (const jr of jointResults) {
         if (jr.angle !== null && jr.label) {
           if (!jointDataRef.current[jr.label]) jointDataRef.current[jr.label] = { angles: [], optimalFrames: 0, totalFrames: 0 };
@@ -269,11 +261,19 @@ export default function CameraView({ exercise, onStop }) {
           if (jr.state === "OPTIMAL") jointDataRef.current[jr.label].optimalFrames++;
         }
       }
+      if (exercise.phases && currentPhaseRef.current) {
+        if (!sessionDataRef.current.phaseData) sessionDataRef.current.phaseData = {};
+        if (!sessionDataRef.current.phaseData[currentPhaseRef.current]) {
+          sessionDataRef.current.phaseData[currentPhaseRef.current] = { frames: 0, scores: [] };
+        }
+        sessionDataRef.current.phaseData[currentPhaseRef.current].frames++;
+        sessionDataRef.current.phaseData[currentPhaseRef.current].scores.push(score);
+      }
 
-      // Motion mode: draw subject tracking box
-      if (exercise.cameraMode === "motion" && results.poseLandmarks) {
-        const xs = results.poseLandmarks.map(l => l.x);
-        const ys = results.poseLandmarks.map(l => l.y);
+      // Motion mode: subject tracking box
+      if (exercise.cameraMode === "motion") {
+        const xs = raw.map(l => l.x);
+        const ys = raw.map(l => l.y);
         const minX = Math.min(...xs), maxX = Math.max(...xs);
         const minY = Math.min(...ys), maxY = Math.max(...ys);
         const pad = 0.05;
@@ -289,45 +289,48 @@ export default function CameraView({ exercise, onStop }) {
         ctx.setLineDash([]);
       }
 
-      // Status message logic
-      let worstState = "OPTIMAL";
-      let worstJoint = "";
-      const stateOrder = ["OPTIMAL", "ACCEPTABLE", "WARNING", "DANGER"];
-      for (const jr of jointResults) {
-        if (jr.state && stateOrder.indexOf(jr.state) > stateOrder.indexOf(worstState)) {
-          worstState = jr.state;
-          worstJoint = jr.name;
+      // Worst-state status (only update if no active orchestrator cue)
+      const hasActiveCue = !!orchestratorRef.current?.scheduler?.getActiveCue();
+      if (!hasActiveCue) {
+        let worstState = "OPTIMAL";
+        let worstJoint = "";
+        const stateOrder = ["OPTIMAL", "ACCEPTABLE", "WARNING", "DANGER"];
+        for (const jr of jointResults) {
+          if (jr.state && stateOrder.indexOf(jr.state) > stateOrder.indexOf(worstState)) {
+            worstState = jr.state;
+            worstJoint = jr.name;
+          }
         }
-      }
 
-      // Danger frame tracking & audio
-      for (const jr of jointResults) {
-        const key = jr.label;
-        if (jr.state === "DANGER") {
-          dangerFramesRef.current[key] = (dangerFramesRef.current[key] || 0) + 1;
-          if (dangerFramesRef.current[key] >= DANGER_FRAME_THRESHOLD) {
-            beep(mutedRef.current);
-            sessionDataRef.current.alerts.push({
-              timestamp: parseFloat(elapsed.toFixed(1)),
-              joint: jr.name.toLowerCase().replace(/\s/g, "_"),
-              angle: jr.angle,
-            });
+        // Danger frame tracking & audio
+        for (const jr of jointResults) {
+          const key = jr.label;
+          if (jr.state === "DANGER") {
+            dangerFramesRef.current[key] = (dangerFramesRef.current[key] || 0) + 1;
+            if (dangerFramesRef.current[key] >= DANGER_FRAME_THRESHOLD) {
+              beep(mutedRef.current);
+              sessionDataRef.current.alerts.push({
+                timestamp: parseFloat(elapsed.toFixed(1)),
+                joint: jr.name.toLowerCase().replace(/\s/g, "_"),
+                angle: jr.angle,
+              });
+              dangerFramesRef.current[key] = 0;
+            }
+          } else {
             dangerFramesRef.current[key] = 0;
           }
-        } else {
-          dangerFramesRef.current[key] = 0;
         }
-      }
 
-      const msgMap = {
-        OPTIMAL: { msg: "FORM LOCKED IN", color: "#22C55E" },
-        ACCEPTABLE: { msg: "MINOR ADJUSTMENT", color: "#EAB308" },
-        WARNING: { msg: `CHECK YOUR ${worstJoint.toUpperCase()}`, color: "#F97316" },
-        DANGER: { msg: "⚠ DANGER — CORRECT NOW", color: "#EF4444" },
-      };
-      const status = msgMap[worstState];
-      setStatusMsg(status.msg);
-      setStatusColor(status.color);
+        const msgMap = {
+          OPTIMAL:    { msg: "FORM LOCKED IN",          color: "#22C55E" },
+          ACCEPTABLE: { msg: "MINOR ADJUSTMENT",        color: "#EAB308" },
+          WARNING:    { msg: `CHECK YOUR ${worstJoint.toUpperCase()}`, color: "#F97316" },
+          DANGER:     { msg: "⚠ DANGER — CORRECT NOW",  color: "#EF4444" },
+        };
+        const status = msgMap[worstState];
+        setStatusMsg(status.msg);
+        setStatusColor(status.color);
+      }
     },
     [exercise]
   );
