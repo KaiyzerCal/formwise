@@ -502,6 +502,18 @@ export default function CameraView({ exercise, onStop }) {
         </div>
       )}
 
+      {/* Live fault cue banner */}
+      {activeCueText && (
+        <div className="absolute top-32 left-4 right-4 z-50 flex justify-center pointer-events-none">
+          <div className="px-4 py-2.5 rounded-xl bg-black/80 backdrop-blur-md border border-[#EF4444]/40 text-center max-w-xs">
+            <p className="text-[#EF4444] text-sm font-bold tracking-wide uppercase"
+               style={{ fontFamily: "'DM Mono', monospace" }}>
+              {activeCueText}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Body not visible warning */}
       {!bodyVisible && (
         <div className="absolute inset-0 z-45 flex items-center justify-center">
