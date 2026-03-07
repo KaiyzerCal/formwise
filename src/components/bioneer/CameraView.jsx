@@ -14,6 +14,7 @@ import {
 import { initAudio, beep, destroyAudio } from "./audioEngine";
 import { createRepCounter } from "./repCounter";
 import { detectPhase } from "./phaseDetector";
+import { LiveSessionOrchestrator } from "./LiveSessionOrchestrator";
 
 const DANGER_FRAME_THRESHOLD = 8;
 
