@@ -137,7 +137,7 @@ export class LiveSessionOrchestrator {
 
     // ── LAYER 5a: Rep detection ─────────────────────────────────────────────
     const repEvent = this.repDetector.evaluate(
-      smoothedJoints, velocities, angles, tMs
+      smoothedJoints, velocities, angles, tMs, visibility
     );
 
     if (repEvent?.type === 'PHASE_DESCENT') {
