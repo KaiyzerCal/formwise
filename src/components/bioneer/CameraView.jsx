@@ -378,6 +378,11 @@ export default function CameraView({ exercise, onStop }) {
       phases[phase] = { frames: data.frames, avgScore: avg };
     }
 
+    // Prefer orchestrator rep count (more accurate) over legacy counter
+    const orchReps = orchestratorRef.current?.repDetector?.getRepCount() ?? 0;
+    const finalReps = orchReps > 0 ? orchReps
+      : repCounterRef.current ? repCounterRef.current.getCount() : reps;
+
     onStop({
       exercise_id: exercise.id,
       category: exercise.category || "strength",
@@ -386,12 +391,12 @@ export default function CameraView({ exercise, onStop }) {
       form_score_peak: sessionDataRef.current.peakScore,
       form_score_lowest: sessionDataRef.current.lowestScore,
       movement_score: movementScore,
-      reps_detected: repCounterRef.current ? repCounterRef.current.getCount() : reps,
+      reps_detected: finalReps,
       alerts: sessionDataRef.current.alerts,
       form_timeline: scores.filter((_, i) => i % 10 === 0),
       phases,
       joint_data: jd,
-      exercise_def: exercise, // pass along for coaching
+      exercise_def: exercise,
     });
   };
 
