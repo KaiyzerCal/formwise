@@ -27,6 +27,7 @@ export default function CameraView({ exercise, onStop }) {
   const animFrameRef = useRef(null);
   const startTimeRef = useRef(Date.now());
   const repCounterRef = useRef(null);
+  const orchestratorRef = useRef(null);
   const sessionDataRef = useRef({
     alerts: [],
     scores: [],
