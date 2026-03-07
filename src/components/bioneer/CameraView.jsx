@@ -378,11 +378,22 @@ export default function CameraView({ exercise, onStop }) {
 
   return (
     <div className="fixed inset-0 z-40 bg-black">
-      {/* Video feed */}
-      <video ref={videoRef} playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+      {/* Video feed — z:1 always below canvas */}
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        autoPlay
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ zIndex: 1 }}
+      />
 
-      {/* Canvas overlay — pointer-events: none so controls always respond */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" style={{ pointerEvents: 'none' }} />
+      {/* Canvas overlay — z:2, transparent background, pointer-events: none */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
+        style={{ zIndex: 2, pointerEvents: 'none', objectFit: 'cover' }}
+      />
 
       {/* Confidence bar — 3px top edge */}
       <div
