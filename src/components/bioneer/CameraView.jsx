@@ -115,12 +115,10 @@ export default function CameraView({ exercise, onStop }) {
 
       // Load MediaPipe Tasks Vision (BlazePose GHUM — provides 3D world landmarks)
       try {
-        await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js");
+        const { PoseLandmarker, FilesetResolver } = await import(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs"
+        );
         if (cancelled) return;
-
-        // tasks-vision@0.10.x exports onto window directly
-        const { PoseLandmarker, FilesetResolver } =
-          window.MediaPipeTasksVision ?? window.VisionTasksVision ?? window;
 
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
