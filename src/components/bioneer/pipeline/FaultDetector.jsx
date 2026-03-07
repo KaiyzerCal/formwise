@@ -207,7 +207,7 @@ const FAULT_MODULES = {
     {
       id: 'back_arch', label: 'Excessive back arch', cue: 'Brace your core',
       severity: 'HIGH', isRisk: true,
-      phases: ['press','lockout'],
+      phases: ['press','lockout','concentric'],
       check(j, angles) {
         if (!j.chest || !j.pelvis) return false;
         return Math.abs(j.chest.x - j.pelvis.x) > 0.10;
@@ -216,7 +216,7 @@ const FAULT_MODULES = {
     {
       id: 'forward_lean', label: 'Bar drifting forward', cue: 'Press over ears',
       severity: 'MODERATE', isRisk: false,
-      phases: ['press'],
+      phases: ['press','concentric'],
       check(j, angles) {
         if (!j.r_wrist || !j.r_shoulder) return false;
         return j.r_wrist.x > j.r_shoulder.x + 0.06;
