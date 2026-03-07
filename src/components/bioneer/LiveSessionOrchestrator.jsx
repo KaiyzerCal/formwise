@@ -75,7 +75,9 @@ export class LiveSessionOrchestrator {
     const landmarks = results?.poseLandmarks ?? null;
 
     // ── LAYER 1: Pose confidence ────────────────────────────────────────────
-    const { joints: rawJoints, visibility } = normalizeLandmarks(landmarks ?? []);
+    const worldLandmarks = results?.poseWorldLandmarks ?? null;
+    const { joints: rawJoints, visibility, world: worldJoints } =
+      normalizeLandmarks(landmarks ?? [], worldLandmarks ?? undefined);
     const poseConf = avgVisibility(visibility);
 
     // ── LAYER 2: Subject lock ───────────────────────────────────────────────
