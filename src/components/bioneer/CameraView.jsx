@@ -258,7 +258,7 @@ export default function CameraView({ exercise, onStop }) {
       const ghost = generateGhostPose(smoothed);
       if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
 
-      const jointResults = computeJointAngles(smoothed, exercise);
+      const jointResults = computeJointAngles(smoothed, exercise, currentPhaseRef.current);
       drawSkeleton(ctx, smoothed, jointResults, canvas.width, canvas.height);
 
       const score = computeFormScore(jointResults);
