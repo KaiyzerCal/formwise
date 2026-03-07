@@ -1,14 +1,17 @@
 /**
- * PhaseClassifier — maps RepDetector state → named phase from movement profile
- * For strength: state machine phases
- * For rotational/sports: angle + velocity heuristic phases
+ * PhaseClassifier — maps RepDetector state machine states → display phase id
+ *
+ * RepDetector states: START | ECCENTRIC | BOTTOM | CONCENTRIC | LOCKOUT
+ *
+ * Each movement profile defines its phase names per state in `phaseMap`.
+ * PhaseClassifier reads that map directly — no hardcoded fallback lists.
  */
 
 export class PhaseClassifier {
   constructor(profile) {
-    this.profile    = profile;
+    this.profile   = profile;
+    this.lastPhase = null;
     this.repStartMs = null;
-    this.lastPhase  = null;
   }
 
   setRepStart(tMs) {
@@ -16,74 +19,36 @@ export class PhaseClassifier {
   }
 
   classify(smoothedJoints, tMs, repState) {
-    const phase = this._map(repState, smoothedJoints, tMs);
-    if (phase !== this.lastPhase) {
-      this.lastPhase = phase;
+    const phaseId = this._map(repState);
+    if (phaseId !== this.lastPhase) {
+      this.lastPhase = phaseId;
     }
-    return phase ? { id: phase } : null;
+    return phaseId ? { id: phaseId } : null;
   }
 
-  _map(repState, j, tMs) {
-    const cat = this.profile.category;
-
-    if (cat === 'strength') {
-      return this._strengthPhase(repState, j);
-    }
-    if (cat === 'rotational') {
-      return this._rotationalPhase(repState, j);
-    }
-    if (cat === 'locomotion') {
-      return this._locomotionPhase(repState, j);
-    }
-    if (cat === 'athletic') {
-      return this._athleticPhase(repState, j);
+  _map(repState) {
+    // Use profile's phaseMap if defined (preferred)
+    if (this.profile.phaseMap && this.profile.phaseMap[repState]) {
+      return this.profile.phaseMap[repState];
     }
 
-    return this.profile.phases[0] ?? null;
-  }
-
-  _strengthPhase(repState, j) {
-    const map = {
-      LOCKOUT: this.profile.phases.find(p => ['lockout','top','plank','setup','start'].includes(p)) ?? this.profile.phases[0],
-      DESCENT: this.profile.phases.find(p => ['descent','lowering','lower','pull'].includes(p)) ?? this.profile.phases[1],
-      BOTTOM:  this.profile.phases.find(p => ['bottom'].includes(p)) ?? this.profile.phases[2],
-      ASCENT:  this.profile.phases.find(p => ['ascent','press','push'].includes(p)) ?? this.profile.phases[3],
+    // Generic fallback for movements without a phaseMap
+    const phases = this.profile.phases ?? [];
+    const fallback = {
+      START:       phases[0] ?? null,
+      ECCENTRIC:   phases[1] ?? phases[0] ?? null,
+      BOTTOM:      phases[2] ?? phases[1] ?? null,
+      CONCENTRIC:  phases[3] ?? phases[2] ?? null,
+      LOCKOUT:     phases[4] ?? phases[0] ?? null,
+      // Legacy states (RepDetector previously used these)
+      DESCENT:     phases[1] ?? phases[0] ?? null,
+      ASCENT:      phases[3] ?? phases[2] ?? null,
     };
-    return map[repState] ?? this.profile.phases[0];
-  }
-
-  _rotationalPhase(repState, j) {
-    const map = {
-      LOCKOUT: this.profile.phases[0],
-      DESCENT: this.profile.phases[1],
-      BOTTOM:  this.profile.phases[2] ?? this.profile.phases[1],
-      ASCENT:  this.profile.phases[this.profile.phases.length - 1],
-    };
-    return map[repState] ?? this.profile.phases[0];
-  }
-
-  _locomotionPhase(repState, j) {
-    const map = {
-      LOCKOUT: 'drive',
-      DESCENT: 'transition',
-      BOTTOM:  'maxvel',
-      ASCENT:  'float',
-    };
-    return map[repState] ?? 'drive';
-  }
-
-  _athleticPhase(repState, j) {
-    const map = {
-      LOCKOUT: 'flight',
-      DESCENT: 'contact',
-      BOTTOM:  'absorption',
-      ASCENT:  'stabilize',
-    };
-    return map[repState] ?? 'flight';
+    return fallback[repState] ?? phases[0] ?? null;
   }
 
   reset() {
-    this.repStartMs = null;
     this.lastPhase  = null;
+    this.repStartMs = null;
   }
 }
