@@ -93,14 +93,20 @@ export default function CameraView({ exercise, onStop }) {
           audio: false,
         });
         if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
+        const video = videoRef.current;
+        if (video) {
+          video.srcObject = stream;
+          // Wait for metadata before play() to avoid race condition
+          await new Promise((resolve) => {
+            video.onloadedmetadata = resolve;
+          });
+          await video.play().catch(err => console.warn('[CameraView] play():', err));
           setCameraReady(true);
           setStatusMsg("Loading pose detection...");
         }
-      } catch {
+      } catch (err) {
         setStatusMsg("Camera access denied. Please allow camera.");
+        console.error('[CameraView] getUserMedia:', err);
         return;
       }
 
