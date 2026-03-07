@@ -45,6 +45,8 @@ export default function CameraView({ exercise, onStop }) {
   const [poseReady, setPoseReady] = useState(false);
   const [currentPhase, setCurrentPhase] = useState(null);
   const [showMotionPrompt, setShowMotionPrompt] = useState(exercise.cameraMode === "motion");
+  const [activeCueText, setActiveCueText] = useState(null);
+  const [lockState, setLockState] = useState('SEARCHING');
   const bodyLostTimerRef = useRef(null);
   const mutedRef = useRef(false);
   const currentPhaseRef = useRef(null);
