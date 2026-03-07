@@ -1,14 +1,29 @@
 /**
  * KinematicsEngine
- * Computes joint angles from BlazePose GHUM 3D world landmarks when available,
- * falling back to 2D smoothed image coordinates.
- * 3D world coords (metric, in meters) give rotation-invariant angles — no perspective distortion.
+ * - Limits GHUM 33-joint output to 17 biomechanical joints
+ * - Applies EMA temporal smoothing on Z to suppress jitter
+ * - Computes hip hinge, knee valgus, and torso lean from 3D world coords
+ * - Falls back to 2D when world coords unavailable
  */
 
-// 3D angle between three points A-B-C (B is the vertex)
-function calcAngle3D(A, B, C) {
-  const ax = A.x - B.x, ay = A.y - B.y, az = (A.z ?? 0) - (B.z ?? 0);
-  const cx = C.x - B.x, cy = C.y - B.y, cz = (C.z ?? 0) - (B.z ?? 0);
+import { calcAngle } from '../poseEngine';
+
+// The 17 biomechanical joints we care about (subset of GHUM's 33)
+const BIO_JOINTS = new Set([
+  'nose', 'l_shoulder', 'r_shoulder',
+  'l_elbow', 'r_elbow', 'l_wrist', 'r_wrist',
+  'l_hip', 'r_hip', 'l_knee', 'r_knee',
+  'l_ankle', 'r_ankle', 'l_heel', 'r_heel',
+  // derived (added by PoseNormalizer)
+  'neck', 'chest', 'pelvis',
+]);
+
+const EMA_ALPHA = 0.35; // higher = more responsive, lower = smoother Z
+
+// 3D angle A-B-C (B is vertex), returns degrees or null
+function angle3D(A, B, C) {
+  const ax = A.x - B.x, ay = A.y - B.y, az = A.z - B.z;
+  const cx = C.x - B.x, cy = C.y - B.y, cz = C.z - B.z;
   const dot  = ax*cx + ay*cy + az*cz;
   const magA = Math.sqrt(ax*ax + ay*ay + az*az);
   const magC = Math.sqrt(cx*cx + cy*cy + cz*cz);
@@ -16,64 +31,79 @@ function calcAngle3D(A, B, C) {
   return Math.acos(Math.min(1, Math.max(-1, dot / (magA * magC)))) * (180 / Math.PI);
 }
 
-// 2D fallback (import from poseEngine)
-import { calcAngle } from '../poseEngine';
-
 export class KinematicsEngine {
   constructor() {
-    this.prevSmoothed = {};
-    this.prevVelocity = {};
+    this._zSmooth = {}; // EMA state per joint name for Z axis
+  }
+
+  /** Apply EMA smoothing to the Z coordinate of world joints */
+  _smoothWorld(worldJoints) {
+    const out = {};
+    for (const name of Object.keys(worldJoints)) {
+      if (!BIO_JOINTS.has(name)) continue; // drop non-biomechanical joints
+      const raw = worldJoints[name];
+      const prevZ = this._zSmooth[name] ?? raw.z;
+      const smoothZ = prevZ + EMA_ALPHA * (raw.z - prevZ);
+      this._zSmooth[name] = smoothZ;
+      out[name] = { x: raw.x, y: raw.y, z: smoothZ };
+    }
+    return out;
   }
 
   /**
-   * @param {Object} smoothedJoints     — 2D stabilized joints (always present)
-   * @param {Object} stabilizedVelocities — from StabilizationEngine filter 5
-   * @param {Object} [worldJoints]      — 3D GHUM world joints (optional, metric meters)
+   * @param {Object} smoothedJoints       — 2D stabilized joints
+   * @param {Object} stabilizedVelocities — from StabilizationEngine
+   * @param {Object} [worldJoints]        — 3D GHUM world joints (metric meters)
    */
   compute(smoothedJoints, stabilizedVelocities, worldJoints) {
     const velocities = stabilizedVelocities ?? {};
-    const j  = smoothedJoints;
-    const w  = worldJoints ?? {};   // 3D world — use when both endpoints available
-    const angles = {};
+    const j = smoothedJoints;
+    const w = worldJoints ? this._smoothWorld(worldJoints) : {};
 
-    // Helper: use 3D if available, else 2D
-    const angle = (nameA, nameB, nameC) => {
-      if (w[nameA] && w[nameB] && w[nameC])
-        return calcAngle3D(w[nameA], w[nameB], w[nameC]);
-      if (j[nameA] && j[nameB] && j[nameC])
-        return calcAngle(j[nameA], j[nameB], j[nameC]);
+    // Helper: 3D if available, else 2D fallback
+    const angle = (a, b, c) => {
+      if (w[a] && w[b] && w[c]) return angle3D(w[a], w[b], w[c]);
+      if (j[a] && j[b] && j[c]) return calcAngle(j[a], j[b], j[c]);
       return null;
     };
 
-    angles.kneeL    = angle('l_hip',      'l_knee',   'l_ankle');
-    angles.kneeR    = angle('r_hip',      'r_knee',   'r_ankle');
-    angles.hipL     = angle('l_shoulder', 'l_hip',    'l_knee');
-    angles.hipR     = angle('r_shoulder', 'r_hip',    'r_knee');
-    angles.elbowL   = angle('l_shoulder', 'l_elbow',  'l_wrist');
-    angles.elbowR   = angle('r_shoulder', 'r_elbow',  'r_wrist');
-    angles.trunkFwd = angle('neck',       'chest',    'pelvis');
+    const angles = {};
 
-    // Lateral trunk: use 3D if available
+    // ── Hip hinge: shoulder → hip → knee (sagittal plane flexion)
+    angles.hipHingeL = angle('l_shoulder', 'l_hip', 'l_knee');
+    angles.hipHingeR = angle('r_shoulder', 'r_hip', 'r_knee');
+
+    // ── Knee valgus/varus: hip → knee → ankle (frontal plane)
+    angles.kneeL = angle('l_hip', 'l_knee', 'l_ankle');
+    angles.kneeR = angle('r_hip', 'r_knee', 'r_ankle');
+
+    // ── Torso lean: shoulder midpoint vs hip midpoint vs vertical axis
     if (w.l_shoulder && w.r_shoulder && w.l_hip && w.r_hip) {
-      const shoulderMidX = (w.l_shoulder.x + w.r_shoulder.x) / 2;
-      const hipMidX      = (w.l_hip.x      + w.r_hip.x)      / 2;
-      const shoulderMidY = (w.l_shoulder.y + w.r_shoulder.y) / 2;
-      const hipMidY      = (w.l_hip.y      + w.r_hip.y)      / 2;
-      angles.trunkLat = Math.atan2(shoulderMidX - hipMidX, Math.abs(shoulderMidY - hipMidY)) * (180 / Math.PI);
+      const sX = (w.l_shoulder.x + w.r_shoulder.x) / 2;
+      const sY = (w.l_shoulder.y + w.r_shoulder.y) / 2;
+      const hX = (w.l_hip.x + w.r_hip.x) / 2;
+      const hY = (w.l_hip.y + w.r_hip.y) / 2;
+      // Angle between torso vector and vertical (0,1,0)
+      const tX = sX - hX, tY = sY - hY;
+      angles.torsoLean = Math.atan2(Math.abs(tX), Math.abs(tY)) * (180 / Math.PI);
     } else if (j.l_shoulder && j.r_shoulder && j.l_hip && j.r_hip) {
-      const shoulderMidX = (j.l_shoulder.x + j.r_shoulder.x) / 2;
-      const hipMidX      = (j.l_hip.x      + j.r_hip.x)      / 2;
-      angles.trunkLat = Math.atan2(shoulderMidX - hipMidX, 0.2) * (180 / Math.PI);
+      const sX = (j.l_shoulder.x + j.r_shoulder.x) / 2;
+      const hX = (j.l_hip.x + j.r_hip.x) / 2;
+      angles.torsoLean = Math.atan2(Math.abs(sX - hX), 0.2) * (180 / Math.PI);
     }
 
-    // Knee asymmetry (%)
+    // ── Elbow angles (accessory — useful for press/row detection)
+    angles.elbowL = angle('l_shoulder', 'l_elbow', 'l_wrist');
+    angles.elbowR = angle('r_shoulder', 'r_elbow', 'r_wrist');
+
+    // ── Knee asymmetry
     const asymmetry = {};
     if (angles.kneeL != null && angles.kneeR != null) {
       const avg = (angles.kneeL + angles.kneeR) / 2;
       asymmetry.knee = avg > 0 ? Math.abs(angles.kneeL - angles.kneeR) / avg * 100 : 0;
     }
 
-    // Filter out nulls
+    // Strip nulls
     for (const k of Object.keys(angles)) {
       if (angles[k] == null) delete angles[k];
     }
@@ -82,7 +112,6 @@ export class KinematicsEngine {
   }
 
   reset() {
-    this.prevSmoothed = {};
-    this.prevVelocity = {};
+    this._zSmooth = {};
   }
 }
