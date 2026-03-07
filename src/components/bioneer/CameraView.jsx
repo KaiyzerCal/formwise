@@ -128,11 +128,11 @@ export default function CameraView({ exercise, onStop }) {
         });
 
         pose.setOptions({
-          modelComplexity: 1,
-          smoothLandmarks: true,
-          enableSegmentation: false,
-          minDetectionConfidence: 0.6,
-          minTrackingConfidence: 0.5,
+          modelComplexity:        1,
+          smoothLandmarks:        false,  // CRITICAL: we apply our own superior smoothing
+          enableSegmentation:     false,
+          minDetectionConfidence: 0.65,
+          minTrackingConfidence:  0.60,
         });
 
         pose.onResults((results) => {
