@@ -35,20 +35,19 @@ export function calcSpineLean(landmarks) {
   return Math.round(angleFromVertical);
 }
 
-export function evaluateState(angle, joint) {
-  const { optimal, acceptable, danger } = joint;
+export function evaluateState(angle, joint, phase) {
+  const { danger } = joint;
 
-  // Check danger first
+  // Danger always wins regardless of phase
   if (danger.below !== null && angle < danger.below) return "DANGER";
   if (danger.above !== null && angle > danger.above) return "DANGER";
 
-  // Check optimal
+  // Use phase-specific optimal range if available
+  const optimal = (phase && joint.phaseOptimal?.[phase]) ?? joint.optimal;
+  const acceptable = joint.acceptable;
+
   if (angle >= optimal[0] && angle <= optimal[1]) return "OPTIMAL";
-
-  // Check acceptable
   if (angle >= acceptable[0] && angle <= acceptable[1]) return "ACCEPTABLE";
-
-  // In between acceptable and danger = WARNING
   return "WARNING";
 }
 
