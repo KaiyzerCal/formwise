@@ -118,7 +118,9 @@ export default function CameraView({ exercise, onStop }) {
         await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js");
         if (cancelled) return;
 
-        const { PoseLandmarker, FilesetResolver } = window.VisionTasksVision ?? window;
+        // tasks-vision@0.10.x exports onto window directly
+        const { PoseLandmarker, FilesetResolver } =
+          window.MediaPipeTasksVision ?? window.VisionTasksVision ?? window;
 
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
