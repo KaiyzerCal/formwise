@@ -93,20 +93,14 @@ export default function CameraView({ exercise, onStop }) {
           audio: false,
         });
         if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
-        const video = videoRef.current;
-        if (video) {
-          video.srcObject = stream;
-          // Wait for metadata before play() to avoid race condition
-          await new Promise((resolve) => {
-            video.onloadedmetadata = resolve;
-          });
-          await video.play().catch(err => console.warn('[CameraView] play():', err));
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
           setCameraReady(true);
           setStatusMsg("Loading pose detection...");
         }
-      } catch (err) {
+      } catch {
         setStatusMsg("Camera access denied. Please allow camera.");
-        console.error('[CameraView] getUserMedia:', err);
         return;
       }
 
@@ -378,22 +372,11 @@ export default function CameraView({ exercise, onStop }) {
 
   return (
     <div className="fixed inset-0 z-40 bg-black">
-      {/* Video feed — z:1 always below canvas */}
-      <video
-        ref={videoRef}
-        playsInline
-        muted
-        autoPlay
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ zIndex: 1 }}
-      />
+      {/* Video feed */}
+      <video ref={videoRef} playsInline muted className="absolute inset-0 w-full h-full object-cover" />
 
-      {/* Canvas overlay — z:2, transparent background, pointer-events: none */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-        style={{ zIndex: 2, pointerEvents: 'none', objectFit: 'cover' }}
-      />
+      {/* Canvas overlay — pointer-events: none so controls always respond */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" style={{ pointerEvents: 'none' }} />
 
       {/* Confidence bar — 3px top edge */}
       <div
