@@ -67,11 +67,9 @@ export default function CameraView({ exercise, onStop }) {
     orch.onRep = ({ repNumber }) => setReps(repNumber);
     orch.onCue = ({ text, severity }) => {
       setActiveCueText(text);
-      setStatusMsg(text.toUpperCase());
-      setStatusColor(severity === 'HIGH' ? '#EF4444' : severity === 'MODERATE' ? '#F97316' : '#EAB308');
-      // Auto-clear cue text display after 15s
+      // Auto-clear cue text banner after 12s
       clearTimeout(orch._cueTimer);
-      orch._cueTimer = setTimeout(() => setActiveCueText(null), 15000);
+      orch._cueTimer = setTimeout(() => setActiveCueText(null), 12000);
     };
     orch.onLockState = (state) => {
       setLockState(state);
@@ -81,6 +79,45 @@ export default function CameraView({ exercise, onStop }) {
         setStatusColor("#EF4444");
       } else if (state === 'LOCKED') {
         setBodyVisible(true);
+      }
+    };
+    orch.onFrame = ({ phase, faults, repState, lockState: ls }) => {
+      if (ls === 'LOST' || ls === 'SEARCHING') return;
+      // Phase-reactive color + message
+      const phaseColors = {
+        // descent / eccentric phases
+        descent: '#60A5FA', lowering: '#60A5FA', lower: '#60A5FA', pull: '#60A5FA', step: '#60A5FA',
+        // bottom / pause phases
+        bottom: '#A78BFA', hang: '#A78BFA',
+        // ascent / concentric phases
+        ascent: '#34D399', press: '#34D399', concentric: '#34D399',
+        // lockout / top
+        lockout: '#22C55E', top: '#22C55E', plank: '#22C55E',
+        // setup
+        setup: '#C9A84C', start: '#C9A84C', 
+      };
+      const phaseLabels = {
+        descent: 'ECCENTRIC', lowering: 'ECCENTRIC', lower: 'LOWERING', pull: 'PULLING',
+        bottom: 'HOLD', hang: 'HOLD',
+        ascent: 'CONCENTRIC', press: 'PRESSING', 
+        lockout: 'LOCKOUT', top: 'TOP',
+        plank: 'PLANK LOCKED', setup: 'SETUP', start: 'READY', step: 'STEPPING',
+      };
+
+      const highFault = faults?.find(f => f.severity === 'HIGH');
+      const modFault  = faults?.find(f => f.severity === 'MODERATE');
+
+      if (highFault) {
+        setStatusColor('#EF4444');
+        setStatusMsg(highFault.cue.toUpperCase());
+      } else if (modFault) {
+        setStatusColor('#F97316');
+        setStatusMsg(modFault.cue.toUpperCase());
+      } else {
+        const color = (phase && phaseColors[phase]) ?? '#C9A84C';
+        const label = (phase && phaseLabels[phase]) ?? (phase ? phase.replace(/_/g,'').toUpperCase() : 'FORM LOCKED IN');
+        setStatusColor(color);
+        setStatusMsg(label);
       }
     };
     orchestratorRef.current = orch;
