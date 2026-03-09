@@ -92,6 +92,19 @@ export class LiveSessionOrchestrator {
       this.onLockState?.(lockState);
     }
 
+    // ── LAYER 2b: Motion readiness gate ────────────────────────────────────────
+    const motionReady = this.readiness.check(poseConf, visibility, lockState);
+    if (!motionReady && lockState !== 'LOCKED') {
+      // Not ready yet — keep tracking, skip detection
+      this.onFrame?.({
+        frame: null, phase: this.lastPhaseId, faults: [],
+        confidence: poseConf, repState: this.repDetector.getState(),
+        lockState, repCount: this.repDetector.getRepCount(),
+        activeCue: null, readiness: this.readiness.readinessScore,
+      });
+      return;
+    }
+
     // If frozen (DEGRADED), use prev stabilized positions but skip fault detection
     if (frozen) {
       const prev = this.stabilizer.getPrev();
