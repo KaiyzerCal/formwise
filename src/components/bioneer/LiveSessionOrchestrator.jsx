@@ -92,8 +92,8 @@ export class LiveSessionOrchestrator {
       this.onLockState?.(lockState);
     }
 
-    // ── LAYER 2b: Motion readiness gate ────────────────────────────────────────
-    const motionReady = this.readiness.check(poseConf, visibility, lockState);
+    // ── LAYER 2b: Motion readiness gate (confidence + visibility + stability) ──
+    const motionReady = this.readiness.check(poseConf, visibility, lockState, rawJoints);
     if (!motionReady && lockState !== 'LOCKED') {
       // Not ready yet — keep tracking, skip detection
       this.onFrame?.({
