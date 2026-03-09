@@ -7,7 +7,7 @@
  *   const profile = classifier.select('squat');
  */
 
-import { MovementResolver } from './MovementResolver.js';
+import { MovementResolver } from './MovementResolver';
 
 export class MovementClassifier {
   constructor() {
