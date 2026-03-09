@@ -178,15 +178,19 @@ export class RepDetector {
 
       case 'LOCKOUT':
         this.lockoutDetected = true;
-        // Validate and count rep
+        // Validate and count rep/event
         const rom = this.maxAngle - this.minAngle;
         const dur = tMs - (this.repStartMs ?? tMs);
         const valid = this.bottomDetected && rom >= MIN_ROM && dur >= (this.profile.minRepMs ?? 800);
 
         if (valid) {
           this.repCount++;
+          // Use EVENT_COMPLETE for event-type movements, REP_COMPLETE for rep-type
+          const isEvent = this.profile.movementType === 'event' ||
+            this.profile.repValidationMode === 'event_cycle' ||
+            this.profile.repValidationMode === 'peak_detect';
           event = {
-            type:           'REP_COMPLETE',
+            type:           isEvent ? 'EVENT_COMPLETE' : 'REP_COMPLETE',
             repNumber:      this.repCount,
             tMs,
             rangeOfMotion:  Math.round(rom),
