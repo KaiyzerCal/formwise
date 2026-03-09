@@ -7,23 +7,16 @@
  *   const profile = classifier.select('squat');
  */
 
-import { MOVEMENT_LIBRARY, getMovement } from './MovementLibraryData.js';
-import { MOVEMENT_PROFILES, getProfile } from './MovementProfiles.jsx';
+import { MovementResolver } from './MovementResolver.js';
 
 export class MovementClassifier {
   constructor() {
     this._selected = null;
   }
 
-  /**
-   * Select a movement by id.
-   * Prefers MovementLibraryData (extended schema), falls back to MovementProfiles.
-   */
+  /** Select a movement by id — delegates to MovementResolver */
   select(id) {
-    const fromLibrary = getMovement(id);
-    const fromProfiles = getProfile(id);
-    // Merge: library entry takes priority, profile fills missing keys
-    this._selected = { ...fromProfiles, ...fromLibrary };
+    this._selected = MovementResolver.resolve(id);
     return this._selected;
   }
 
@@ -31,10 +24,8 @@ export class MovementClassifier {
     return this._selected;
   }
 
-  /** List all available movement ids */
-  static list() {
-    const libIds  = MOVEMENT_LIBRARY.map(m => m.id);
-    const profIds = Object.keys(MOVEMENT_PROFILES);
-    return [...new Set([...libIds, ...profIds])];
-  }
+  static list()                  { return MovementResolver.list(); }
+  static byCategory(cat)         { return MovementResolver.byCategory(cat); }
+  static categories()            { return MovementResolver.categories(); }
+  static validate(profile)       { return MovementResolver.validate(profile); }
 }
