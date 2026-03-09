@@ -4,8 +4,8 @@
  * Templates and fault rules are inherited; profiles override only what is unique.
  */
 
-import { PhaseTemplates } from './PhaseTemplates.js';
-import { FaultRuleLibrary as F } from './FaultRuleLibrary.js';
+import { PhaseTemplates } from './PhaseTemplates';
+import { FaultRuleLibrary as F } from './FaultRuleLibrary';
 
 // ── PHASE MAPS (reusable) ─────────────────────────────────────────────────────
 const PM_KNEE_SQ   = { START:'start', ECCENTRIC:'eccentric',    BOTTOM:'bottom',       CONCENTRIC:'concentric',  LOCKOUT:'lockout'   };
