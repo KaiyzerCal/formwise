@@ -7,6 +7,7 @@
 import { PhaseTemplates } from './PhaseTemplates';
 import { FaultRuleLibrary as F } from './FaultRuleLibrary';
 
+
 // ── PHASE MAPS (reusable) ─────────────────────────────────────────────────────
 const PM_KNEE_SQ   = { START:'start', ECCENTRIC:'eccentric',    BOTTOM:'bottom',       CONCENTRIC:'concentric',  LOCKOUT:'lockout'   };
 const PM_HIP_HINGE = { START:'start', ECCENTRIC:'hinge_descent',BOTTOM:'hinge_bottom', CONCENTRIC:'hinge_ascent',LOCKOUT:'lockout'   };
