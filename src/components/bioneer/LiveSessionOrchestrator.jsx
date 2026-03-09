@@ -150,19 +150,23 @@ export class LiveSessionOrchestrator {
       this.kinematics.compute(smoothedJoints, smoothedVelocities, worldJoints);
     const kinAngles = { ...angles, asymmetry };
 
-    // ── LAYER 5a: Phase classification (MUST run before rep/event detection) ──
-    const phase   = this.phaseClass.classify(smoothedJoints, tMs, angles);
+    // ── LAYER 5a: Rep/Event state machine (drives phase transitions) ────────
+    // RepDetector is the state machine; PhaseClassifier maps states → display names.
+    // Both run together; phase display comes from RepDetector state.
+    const repEvent = this.repDetector.evaluate(
+      smoothedJoints, velocities, angles, tMs, visibility
+    );
+
+    // ── LAYER 5b: Phase classification (maps rep state → human phase label) ─
+    const repState = this.repDetector.getState();
+    this.phaseClass.updateRepState(repState);
+    const phase   = this.phaseClass.classify(smoothedJoints, tMs, repState);
     const phaseId = phase?.id ?? null;
 
     if (phaseId !== this.lastPhaseId) {
       this.logger.logPhase(phaseId, tMs);
       this.lastPhaseId = phaseId;
     }
-
-    // ── LAYER 5b: Rep/Event detection (phase-transition driven) ────────────
-    const repEvent = this.repDetector.evaluate(
-      smoothedJoints, velocities, angles, tMs, visibility
-    );
 
     if (repEvent?.type === 'PHASE_ECCENTRIC' || repEvent?.type === 'PHASE_DESCENT') {
       this.scheduler.setRepStartSuppression(tMs, 200);
