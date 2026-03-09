@@ -37,6 +37,7 @@ export class LiveSessionOrchestrator {
 
     // Modules
     this.subjectLock   = new SubjectLockEngine();
+    this.readiness     = new MotionReadinessManager();
     this.stabilizer    = new StabilizationEngine();
     this.kinematics    = new KinematicsEngine();
     this.repDetector   = new RepDetector(profile);
