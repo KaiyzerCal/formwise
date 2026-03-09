@@ -96,6 +96,42 @@ export class KinematicsEngine {
     angles.elbowL = angle('l_shoulder', 'l_elbow', 'l_wrist');
     angles.elbowR = angle('r_shoulder', 'r_elbow', 'r_wrist');
 
+    // ── Ankle dorsiflexion: knee → ankle → toe (approximated via heel)
+    angles.ankleDorsiL = angle('l_knee', 'l_ankle', 'l_heel');
+    angles.ankleDorsiR = angle('r_knee', 'r_ankle', 'r_heel');
+
+    // ── Hip / shoulder / trunk rotation (frontal plane X-offset ratios)
+    if (w.l_hip && w.r_hip && w.l_shoulder && w.r_shoulder) {
+      angles.hipRotation      = Math.atan2(w.l_hip.z      - w.r_hip.z,      w.r_hip.x      - w.l_hip.x)      * (180 / Math.PI);
+      angles.shoulderRotation = Math.atan2(w.l_shoulder.z - w.r_shoulder.z, w.r_shoulder.x - w.l_shoulder.x) * (180 / Math.PI);
+      angles.trunkRotation    = angles.shoulderRotation - angles.hipRotation;
+    }
+
+    // ── Centre of mass (simple mid-point of hips, normalized Y)
+    const comJoints = {};
+    if (j.l_hip && j.r_hip) {
+      comJoints.centerOfMassX = (j.l_hip.x + j.r_hip.x) / 2;
+      comJoints.centerOfMassY = (j.l_hip.y + j.r_hip.y) / 2;
+    }
+    if (j.pelvis) {
+      comJoints.pelvisDriftX = j.pelvis.x - 0.5; // 0.5 = frame centre
+      comJoints.pelvisDriftY = j.pelvis.y;
+    }
+
+    // ── Stride / arm-swing (locomotion metrics)
+    const locomotion = {};
+    if (j.l_ankle && j.r_ankle) {
+      locomotion.strideLength = Math.abs(j.l_ankle.x - j.r_ankle.x);
+    }
+    if (j.l_wrist && j.r_wrist) {
+      const lSwing = velocities.l_wrist?.x ?? 0;
+      const rSwing = velocities.r_wrist?.x ?? 0;
+      const swingAvg = (Math.abs(lSwing) + Math.abs(rSwing)) / 2;
+      locomotion.armSwingSymmetry = swingAvg > 0
+        ? 1 - Math.abs(Math.abs(lSwing) - Math.abs(rSwing)) / swingAvg
+        : 1;
+    }
+
     // ── Knee asymmetry
     const asymmetry = {};
     if (angles.kneeL != null && angles.kneeR != null) {
@@ -108,7 +144,7 @@ export class KinematicsEngine {
       if (angles[k] == null) delete angles[k];
     }
 
-    return { velocities, angles, asymmetry };
+    return { velocities, angles: { ...angles, ...comJoints, ...locomotion }, asymmetry };
   }
 
   reset() {

@@ -13,8 +13,9 @@
  */
 
 import { normalizeLandmarks, avgVisibility } from './pipeline/PoseNormalizer';
-import { SubjectLockEngine }    from './pipeline/SubjectLockEngine';
-import { StabilizationEngine }  from './pipeline/StabilizationEngine';
+import { SubjectLockEngine }        from './pipeline/SubjectLockEngine';
+import { MotionReadinessManager }   from './pipeline/MotionReadinessManager';
+import { StabilizationEngine }      from './pipeline/StabilizationEngine';
 import { KinematicsEngine }     from './pipeline/KinematicsEngine';
 import { getProfile }           from './pipeline/MovementProfiles';
 import { RepDetector }          from './pipeline/RepDetector';
