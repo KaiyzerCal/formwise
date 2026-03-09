@@ -343,6 +343,17 @@ export const MOVEMENT_LIBRARY = [
     cueMap:{ ankleCollapse:'Full plantar extension', asymmetricPush:'Even rise' },
   },
   {
+    id:'seated_calf_raise', displayName:'Seated Calf Raise', category:'strength',
+    movementFamily:'bilateral_knee_dominant', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.BILATERAL_KNEE_DOMINANT, phaseMap: PM_KNEE_SQ,
+    primaryAngleKey:'kneeL', secondaryAngleKey:null,
+    visibilityJoints:['l_ankle','r_ankle','l_knee'],
+    thresholds:{ descentVel:0.003, ascentVel:0.003, bottomAngle:90, lockoutAngle:130 },
+    faultRules:[F.ankleCollapse, F.asymmetricPush],
+    repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
+    cueMap:{ ankleCollapse:'Full plantar extension — seated', asymmetricPush:'Even rise both feet' },
+  },
+  {
     id:'farmer_carry', displayName:'Farmer Carry', category:'strength',
     movementFamily:'locomotion', trackingMode:'dynamic_linear',
     phaseTemplate: PhaseTemplates.LOCOMOTION, phaseMap: PM_LOCO,
