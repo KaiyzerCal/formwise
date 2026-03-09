@@ -19,11 +19,20 @@ import { validateMovementProfile } from './validateMovementProfile';
  * Preserves backward compatibility when exercise selections used legacy names.
  */
 const ALIASES = {
-  squat:          'back_squat',
-  lunge:          'reverse_lunge',
-  sprint:         'sprint_acceleration',
-  jump_landing:   'vertical_jump',
-  basketball_shot:'overhead_med_ball_throw',
+  // Legacy short names
+  squat:               'back_squat',
+  lunge:               'reverse_lunge',
+  sprint:              'sprint_acceleration',
+  jump_landing:        'vertical_jump',
+  basketball_shot:     'overhead_med_ball_throw',
+  // Spec names → library IDs
+  shot_put:            'rotational_med_ball_throw',
+  discus:              'rotational_med_ball_throw',
+  repeated_pogo_jump:  'pogo_jump',
+  soccer_instep_kick:  'soccer_kick',
+  volleyball_spike_approach: 'volleyball_spike',
+  strict_overhead_press:     'overhead_press',
+  lat_pulldown_pattern:      'lat_pulldown',
 };
 
 export class MovementResolver {
