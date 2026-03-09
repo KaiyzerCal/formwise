@@ -17,7 +17,7 @@ import { SubjectLockEngine }        from './pipeline/SubjectLockEngine';
 import { MotionReadinessManager }   from './pipeline/MotionReadinessManager';
 import { StabilizationEngine }      from './pipeline/StabilizationEngine';
 import { KinematicsEngine }     from './pipeline/KinematicsEngine';
-import { MovementResolver }     from './pipeline/MovementResolver.js';
+import { MovementResolver }     from './pipeline/MovementResolver';
 import { RepDetector }          from './pipeline/RepDetector';
 import { PhaseClassifier }      from './pipeline/PhaseClassifier';
 import { FaultDetector, FaultPersistenceBuffer } from './pipeline/FaultDetector';
