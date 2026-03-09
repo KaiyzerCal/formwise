@@ -18,7 +18,21 @@ export class PhaseClassifier {
     this.repStartMs = tMs;
   }
 
-  classify(smoothedJoints, tMs, repState) {
+  /**
+   * Classify current phase.
+   * @param {object} smoothedJoints
+   * @param {number} tMs
+   * @param {object|string} repStateOrAngles — accepts angles object (new) or legacy state string
+   */
+  classify(smoothedJoints, tMs, repStateOrAngles) {
+    // Support both new (angles object) and legacy (state string) callers
+    const repState = typeof repStateOrAngles === 'string'
+      ? repStateOrAngles
+      : this._lastRepState ?? 'START';
+
+    // Store for backward compat
+    this._lastRepState = repState;
+
     const phaseId = this._map(repState);
     if (phaseId !== this.lastPhase) {
       this.lastPhase = phaseId;
@@ -26,13 +40,16 @@ export class PhaseClassifier {
     return phaseId ? { id: phaseId } : null;
   }
 
+  /** Update internal state directly from RepDetector (for hybrid usage) */
+  updateRepState(state) {
+    this._lastRepState = state;
+  }
+
   _map(repState) {
-    // Use profile's phaseMap if defined (preferred)
     if (this.profile.phaseMap && this.profile.phaseMap[repState]) {
       return this.profile.phaseMap[repState];
     }
 
-    // Generic fallback for movements without a phaseMap
     const phases = this.profile.phases ?? [];
     const fallback = {
       START:       phases[0] ?? null,
@@ -40,7 +57,6 @@ export class PhaseClassifier {
       BOTTOM:      phases[2] ?? phases[1] ?? null,
       CONCENTRIC:  phases[3] ?? phases[2] ?? null,
       LOCKOUT:     phases[4] ?? phases[0] ?? null,
-      // Legacy states (RepDetector previously used these)
       DESCENT:     phases[1] ?? phases[0] ?? null,
       ASCENT:      phases[3] ?? phases[2] ?? null,
     };
