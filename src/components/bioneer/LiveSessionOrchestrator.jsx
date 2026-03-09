@@ -150,29 +150,27 @@ export class LiveSessionOrchestrator {
       this.kinematics.compute(smoothedJoints, smoothedVelocities, worldJoints);
     const kinAngles = { ...angles, asymmetry };
 
-    // ── LAYER 5a: Rep detection ─────────────────────────────────────────────
-    const repEvent = this.repDetector.evaluate(
-      smoothedJoints, velocities, angles, tMs, visibility
-    );
-
-    if (repEvent?.type === 'PHASE_DESCENT') {
-      this.phaseClass.setRepStart(tMs);
-      this.scheduler.setRepStartSuppression(tMs, 200);
-    }
-    if (repEvent?.type === 'REP_COMPLETE') {
-      // Build rep score from session data
-      const repScore = this._scoreCurrentRep();
-      this.logger.logRep(repEvent, repScore, this.currentFaults);
-      this.onRep?.({ repNumber: repEvent.repNumber, score: repScore, tMs });
-    }
-
-    // ── LAYER 5b: Phase classification ─────────────────────────────────────
-    const phase = this.phaseClass.classify(smoothedJoints, tMs, this.repDetector.getState());
+    // ── LAYER 5a: Phase classification (MUST run before rep/event detection) ──
+    const phase   = this.phaseClass.classify(smoothedJoints, tMs, angles);
     const phaseId = phase?.id ?? null;
 
     if (phaseId !== this.lastPhaseId) {
       this.logger.logPhase(phaseId, tMs);
       this.lastPhaseId = phaseId;
+    }
+
+    // ── LAYER 5b: Rep/Event detection (phase-transition driven) ────────────
+    const repEvent = this.repDetector.evaluate(
+      smoothedJoints, velocities, angles, tMs, visibility
+    );
+
+    if (repEvent?.type === 'PHASE_ECCENTRIC' || repEvent?.type === 'PHASE_DESCENT') {
+      this.scheduler.setRepStartSuppression(tMs, 200);
+    }
+    if (repEvent?.type === 'REP_COMPLETE' || repEvent?.type === 'EVENT_COMPLETE') {
+      const repScore = this._scoreCurrentRep();
+      this.logger.logRep(repEvent, repScore, this.currentFaults);
+      this.onRep?.({ repNumber: repEvent.repNumber, score: repScore, tMs });
     }
 
     // ── LAYER 6: Fault detection (phase-gated) ─────────────────────────────
