@@ -10,8 +10,8 @@
  *   const cats    = MovementResolver.categories();
  */
 
-import { getMovement, listMovementIds, getMovementsByCategory, MOVEMENT_LIBRARY } from './MovementLibraryData.js';
-import { MOVEMENT_PROFILES } from './MovementProfiles.jsx';
+import { getMovement, listMovementIds, getMovementsByCategory, MOVEMENT_LIBRARY } from './MovementLibraryData';
+import { MOVEMENT_PROFILES } from './MovementProfiles';
 
 export class MovementResolver {
 
