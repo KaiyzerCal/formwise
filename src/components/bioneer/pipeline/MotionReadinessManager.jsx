@@ -11,7 +11,8 @@
  *   if (ready) { ... run kinematics ... }
  */
 
-import { CONFIDENCE, LOCK_STATES } from './contracts.js';
+const LOCK_STATES = { SEARCHING:'SEARCHING', LOCKED:'LOCKED', DEGRADED:'DEGRADED', LOST:'LOST' };
+const CONFIDENCE  = { POSE_MIN: 0.60 };
 
 const REQUIRED_JOINTS = [
   'l_hip', 'r_hip', 'l_knee', 'r_knee',
