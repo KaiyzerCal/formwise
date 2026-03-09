@@ -33,7 +33,7 @@ export class LiveSessionOrchestrator {
     this.userId      = userId;
     this.sessionId   = `session_${Date.now()}_${++_sessionIdCounter}`;
 
-    const profile    = getProfile(exerciseId);
+    const profile    = MovementResolver.resolve(exerciseId);
 
     // Modules
     this.subjectLock   = new SubjectLockEngine();
