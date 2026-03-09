@@ -502,6 +502,17 @@ export const MOVEMENT_LIBRARY = [
     cueMap:{ lowerBackArch:'Lower back pressed flat', hipShift:'Legs together and straight' },
   },
   {
+    id:'crab_walk', displayName:'Crab Walk', category:'calisthenics',
+    movementFamily:'locomotion', trackingMode:'dynamic_linear',
+    phaseTemplate: PhaseTemplates.LOCOMOTION, phaseMap: PM_LOCO,
+    primaryAngleKey:'hipHingeL', secondaryAngleKey:null,
+    visibilityJoints:['l_hip','r_hip','l_knee','r_knee','l_wrist','r_wrist'],
+    thresholds:{ descentVel:0.006, ascentVel:0.006, bottomAngle:90, lockoutAngle:140 },
+    faultRules:[F.trunkCollapse, F.hipShift, F.lowerBackArch],
+    repValidationMode:'stride_cycle', confidenceWeights: W_CALI,
+    cueMap:{ trunkCollapse:'Hips up — reverse table position', hipShift:'Alternate hands and feet' },
+  },
+  {
     id:'hand_release_pushup', displayName:'Hand Release Push Up', category:'calisthenics',
     movementFamily:'horizontal_push', trackingMode:'stationary',
     phaseTemplate: PhaseTemplates.HORIZONTAL_PUSH, phaseMap: PM_H_PUSH,
