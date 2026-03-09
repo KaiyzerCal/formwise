@@ -249,6 +249,7 @@ export class LiveSessionOrchestrator {
 
   reset() {
     this.subjectLock.reset();
+    this.readiness.reset();
     this.stabilizer.reset();
     this.kinematics.reset();
     this.repDetector.reset();
