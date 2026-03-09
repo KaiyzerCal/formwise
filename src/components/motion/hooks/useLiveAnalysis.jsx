@@ -21,7 +21,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { LiveSessionOrchestrator } from '../../bioneer/LiveSessionOrchestrator';
+import { LiveSessionOrchestrator } from '../../bioneer/LiveSessionOrchestrator.jsx';
 
 const PHASE_COLORS = {
   descent: '#60A5FA', lowering: '#60A5FA', lower: '#60A5FA', pull: '#60A5FA', step: '#60A5FA',

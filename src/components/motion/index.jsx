@@ -37,7 +37,7 @@ export { normalizeLandmarks, avgVisibility, MEDIAPIPE_MAP } from '../bioneer/pip
 export { SubjectLockEngine }  from '../bioneer/pipeline/SubjectLockEngine';
 
 // ── Readiness ─────────────────────────────────────────────────────────────
-export { MotionReadinessManager } from '../bioneer/pipeline/MotionReadinessManager.js';
+export { MotionReadinessManager } from '../bioneer/pipeline/MotionReadinessManager';
 
 // ── Stabilization ─────────────────────────────────────────────────────────
 export { StabilizationEngine } from '../bioneer/pipeline/StabilizationEngine';
@@ -71,6 +71,6 @@ export { FeedbackScheduler }  from '../bioneer/pipeline/FeedbackScheduler';
 export { RepScoringEngine }   from '../bioneer/pipeline/RepScoringEngine';
 
 // ── Session ───────────────────────────────────────────────────────────────
-export { LiveSessionOrchestrator } from '../bioneer/LiveSessionOrchestrator';
+export { LiveSessionOrchestrator } from '../bioneer/LiveSessionOrchestrator.jsx';
 export { SessionLogger }           from '../bioneer/pipeline/SessionLogger';
 export { SessionSummaryBuilder }   from '../bioneer/pipeline/SessionSummaryBuilder';
