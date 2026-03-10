@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Menu, X } from "lucide-react";
-import { FONT_LINK, COLORS, FONT } from "./components/bioneer/ui/DesignTokens";
+import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 
 const NAV_ITEMS = [
   { name: 'LiveSession', label: 'LIVE SESSION', icon: Camera },
