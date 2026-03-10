@@ -53,6 +53,8 @@ import ProperFormDemo from './pages/ProperFormDemo';
 import LiveSession from './pages/LiveSession';
 import TechniqueCompare from './pages/TechniqueCompare';
 import Analytics from './pages/Analytics';
+import MovementLibraryPage from './pages/MovementLibraryPage';
+import SessionHistory from './pages/SessionHistory';
 import __Layout from './Layout.jsx';
 
 
@@ -63,6 +65,8 @@ export const PAGES = {
     "LiveSession": LiveSession,
     "TechniqueCompare": TechniqueCompare,
     "Analytics": Analytics,
+    "MovementLibraryPage": MovementLibraryPage,
+    "SessionHistory": SessionHistory,
 }
 
 export const pagesConfig = {
