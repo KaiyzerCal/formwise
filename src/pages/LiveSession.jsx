@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
+import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 import { COACHING_CUES, PHASE_SEQUENCE, LIVE_MOVEMENTS } from "../components/bioneer/ui/mockData";
-import ScoreRing from "../components/bioneer/ui/ScoreRing";
 import LiveCameraPanel from "../components/bioneer/ui/LiveCameraPanel";
 import LiveSidebar from "../components/bioneer/ui/LiveSidebar";
 import LiveBottomBar from "../components/bioneer/ui/LiveBottomBar";
