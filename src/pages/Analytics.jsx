@@ -1,4 +1,5 @@
 import React from "react";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from "recharts";
 import { COLORS, FONT, scoreColor, faultColor } from "../components/bioneer/ui/DesignTokens";
 import { MOCK_SESSIONS, MOCK_ROM_TREND, MOCK_FAULT_FREQ, MOCK_INSIGHTS, MOCK_SYMMETRY, MOCK_BODY_HEATMAP } from "../components/bioneer/ui/mockData";
 import { TrendingUp, Calendar, Activity, Target } from "lucide-react";
@@ -61,7 +62,6 @@ export default function Analytics() {
 }
 
 function SymmetryMiniChart({ data }) {
-  const { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid } = require('recharts');
   return (
     <ResponsiveContainer width="100%" height={140}>
       <LineChart data={data}>
