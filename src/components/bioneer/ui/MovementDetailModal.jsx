@@ -1,6 +1,6 @@
 import React from "react";
 import { COLORS, FONT } from "./DesignTokens";
-import { X, AlertTriangle, AlertCircle } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 import PhasePill from "./PhasePill";
 
 export default function MovementDetailModal({ movement, onClose }) {
