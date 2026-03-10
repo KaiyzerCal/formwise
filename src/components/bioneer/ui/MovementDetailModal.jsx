@@ -57,13 +57,15 @@ export default function MovementDetailModal({ movement, onClose }) {
             <span className="text-[9px] tracking-[0.15em] uppercase block mb-2" style={{ color: COLORS.textTertiary }}>FAULT RULES</span>
             <div className="space-y-2">
               {faultRules.map((rule, i) => {
-                const ruleId = typeof rule === 'string' ? rule : (rule?.id || rule?.name || `rule_${i}`);
+                // rule is a function reference from FaultRuleLibrary; its .name is the function name
+                const ruleId = typeof rule === 'function' ? rule.name : (typeof rule === 'string' ? rule : `rule_${i}`);
+                const displayName = ruleId.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
                 const cue = cueMap[ruleId] || '';
                 return (
                   <div key={i} className="flex items-start gap-2 px-3 py-2 rounded border" style={{ background: COLORS.bg, borderColor: COLORS.border }}>
                     <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" style={{ color: COLORS.warning }} />
                     <div>
-                      <span className="text-[10px] block" style={{ color: COLORS.textPrimary }}>{ruleId.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim()}</span>
+                      <span className="text-[10px] block capitalize" style={{ color: COLORS.textPrimary }}>{displayName}</span>
                       {cue && <span className="text-[9px] block mt-0.5" style={{ color: COLORS.textTertiary }}>{cue}</span>}
                     </div>
                   </div>
