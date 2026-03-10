@@ -96,7 +96,7 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto md:pt-0 pt-12" style={{ background: COLORS.bg }}>
+        <main className="flex-1 overflow-hidden md:pt-0 pt-12" style={{ background: COLORS.bg }}>
           {children}
         </main>
       </div>
