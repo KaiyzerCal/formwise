@@ -64,7 +64,7 @@ export const FEATURED_MOVEMENTS = [
   'romanian_deadlift', 'bench_press', 'overhead_press', 'pull_up', 'bent_over_row',
   'bulgarian_split_squat', 'hip_thrust', 'push_up', 'sprint_acceleration',
   'baseball_swing', 'golf_swing', 'soccer_kick', 'vertical_jump', 'tennis_forehand',
-  'power_clean'
+  'sprint_start'
 ];
 
 // Simulated live session data
