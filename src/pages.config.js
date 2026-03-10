@@ -51,6 +51,8 @@ import FormCheck from './pages/FormCheck';
 import FormHistory from './pages/FormHistory';
 import ProperFormDemo from './pages/ProperFormDemo';
 import LiveSession from './pages/LiveSession';
+import TechniqueCompare from './pages/TechniqueCompare';
+import Analytics from './pages/Analytics';
 import __Layout from './Layout.jsx';
 
 
@@ -59,6 +61,8 @@ export const PAGES = {
     "FormHistory": FormHistory,
     "ProperFormDemo": ProperFormDemo,
     "LiveSession": LiveSession,
+    "TechniqueCompare": TechniqueCompare,
+    "Analytics": Analytics,
 }
 
 export const pagesConfig = {
