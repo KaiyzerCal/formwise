@@ -47,26 +47,26 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Analytics from './pages/Analytics';
 import FormCheck from './pages/FormCheck';
 import FormHistory from './pages/FormHistory';
-import ProperFormDemo from './pages/ProperFormDemo';
 import LiveSession from './pages/LiveSession';
-import TechniqueCompare from './pages/TechniqueCompare';
-import Analytics from './pages/Analytics';
 import MovementLibraryPage from './pages/MovementLibraryPage';
+import ProperFormDemo from './pages/ProperFormDemo';
 import SessionHistory from './pages/SessionHistory';
+import TechniqueCompare from './pages/TechniqueCompare';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Analytics": Analytics,
     "FormCheck": FormCheck,
     "FormHistory": FormHistory,
-    "ProperFormDemo": ProperFormDemo,
     "LiveSession": LiveSession,
-    "TechniqueCompare": TechniqueCompare,
-    "Analytics": Analytics,
     "MovementLibraryPage": MovementLibraryPage,
+    "ProperFormDemo": ProperFormDemo,
     "SessionHistory": SessionHistory,
+    "TechniqueCompare": TechniqueCompare,
 }
 
 export const pagesConfig = {
