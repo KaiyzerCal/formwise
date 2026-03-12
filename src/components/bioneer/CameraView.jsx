@@ -352,7 +352,7 @@ export default function CameraView({ exercise, onStop }) {
         <div className="absolute bottom-28 left-0 right-0 z-50 flex justify-center pointer-events-none">
           <div className="px-3 py-2 rounded-xl border"
             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderColor: 'rgba(255,255,255,0.08)' }}>
-            <FormStabilityRing score={formScore} />
+            <FormStabilityRing score={formScore ?? 0} />
           </div>
         </div>
       )}
