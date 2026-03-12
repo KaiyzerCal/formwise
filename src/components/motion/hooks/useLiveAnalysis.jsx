@@ -46,19 +46,23 @@ export function useLiveAnalysis(exerciseId, userId = 'local') {
   // CameraView reads this in the canvas draw callback for zero-lag rendering.
   const frameRef      = useRef(null);
 
-  const [frameState,  setFrameState]  = useState(null);
-  const [repCount,    setRepCount]    = useState(0);
-  const [lockState,   setLockState]   = useState('SEARCHING');
-  const [activeCue,   setActiveCue]   = useState(null);
-  const [statusMsg,   setStatusMsg]   = useState('Initializing...');
-  const [statusColor, setStatusColor] = useState('#C9A84C');
+  const [frameState,      setFrameState]      = useState(null);
+  const [repCount,        setRepCount]        = useState(0);
+  const [lockState,       setLockState]       = useState('SEARCHING');
+  const [activeCue,       setActiveCue]       = useState(null);
+  const [statusMsg,       setStatusMsg]       = useState('Initializing...');
+  const [statusColor,     setStatusColor]     = useState('#C9A84C');
+  const [lastRepMastery,  setLastRepMastery]  = useState(null); // { score, repNumber }
 
   // Build or rebuild the orchestrator when exerciseId changes
   useEffect(() => {
     const orch = new LiveSessionOrchestrator(exerciseId, userId);
 
-    orch.onRep = ({ repNumber }) => {
+    orch.onRep = ({ repNumber, masteryScore }) => {
       setRepCount(repNumber);
+      if (masteryScore != null) {
+        setLastRepMastery({ score: masteryScore, repNumber });
+      }
     };
 
     orch.onCue = ({ text, severity }) => {
@@ -128,6 +132,10 @@ export function useLiveAnalysis(exerciseId, userId = 'local') {
   /**
    * Reset the engine state (e.g. on re-start).
    */
+  const updateJointResults = useCallback((jointResults) => {
+    orchRef.current?.updateJointResults(jointResults);
+  }, []);
+
   const resetSession = useCallback(() => {
     orchRef.current?.reset();
     setRepCount(0);
@@ -136,17 +144,20 @@ export function useLiveAnalysis(exerciseId, userId = 'local') {
     setFrameState(null);
     setStatusMsg('Initializing...');
     setStatusColor('#C9A84C');
+    setLastRepMastery(null);
   }, []);
 
   return {
     frameState,
-    frameRef,      // sync ref for canvas renderer (no React re-render lag)
+    frameRef,
     repCount,
     lockState,
     activeCue,
     statusMsg,
     statusColor,
+    lastRepMastery,
     processFrame,
+    updateJointResults,
     stopSession,
     resetSession,
   };
