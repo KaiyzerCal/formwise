@@ -44,20 +44,22 @@ export default function CameraView({ exercise, onStop }) {
   
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
 
-  // Persist camera choice to localStorage
+  // Switch camera without reloading — use hook method directly
   const handleToggleCamera = useCallback(async () => {
     if (!isSecure) {
       alert('Camera requires HTTPS or localhost');
       return;
     }
     
-    setIsSwitchingCamera(true);
     const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
-    setCameraFacing(newFacing);
-    localStorage.setItem('bioneer_camera_facing', newFacing);
-    // useCameraStream will re-run with new facingMode and restart stream
-    setIsSwitchingCamera(false);
-  }, [cameraFacing, isSecure]);
+    const success = await switchCamera(newFacing);
+    
+    if (success) {
+      setCameraFacing(newFacing);
+      localStorage.setItem('bioneer_camera_facing', newFacing);
+    }
+    // If failed, error is shown in camError state via hook
+  }, [cameraFacing, isSecure, switchCamera]);
 
   // Temporal filter engine — persists for the lifetime of this exercise session
   const temporalFilterRef = useRef(null);
