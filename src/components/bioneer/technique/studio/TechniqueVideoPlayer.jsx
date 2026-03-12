@@ -22,6 +22,8 @@ export default function TechniqueVideoPlayer({
   onTimeUpdate,
   onLoadedMetadata,
   videoRef: externalVideoRef,
+  activeTool,
+  onAnnotationCreate,
 }) {
   const internalVideoRef = useRef(null);
   // Use external ref if provided, otherwise use internal
@@ -30,6 +32,8 @@ export default function TechniqueVideoPlayer({
   const animationFrameRef = useRef(null);
 
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [draftPoints, setDraftPoints] = useState([]);
 
   /**
    * Get pose frame closest to current frame index
