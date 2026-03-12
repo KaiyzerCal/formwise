@@ -22,6 +22,7 @@ export default function TechniqueVideoPlayer({
   onTimeUpdate,
   onLoadedMetadata,
   videoRef: externalVideoRef,
+  isMirroredPreview = false,
 }) {
   const internalVideoRef = useRef(null);
   // Use external ref if provided, otherwise use internal
