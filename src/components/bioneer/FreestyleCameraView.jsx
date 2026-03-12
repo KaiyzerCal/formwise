@@ -141,23 +141,51 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
     : null;
 
   // ── Stop session ──────────────────────────────────────────────────────────
-  const handleStop = useCallback(() => {
-    stopRecording();
+  const handleStop = useCallback(async () => {
+    // If not recording and no session active, just go back
+    if (!isRecording && !sessionActive) {
+      onStop(null);
+      return;
+    }
 
-    setTimeout(() => {
-      const data = getSessionData();
-      const freestyleSession = createFreestyleSession({
-        sessionId: sessionIdRef.current,
-        category,
-        videoBlob: data.videoBlob,
-        poseFrames: data.poseFrames,
-        angleFrames: data.angleFrames,
-        duration: data.duration,
-      });
+    // If recording, finalize it
+    if (isRecording) {
+      setWorkflowState('finalizing');
+      setErrorMsg(null);
 
-      onStop(freestyleSession);
-    }, 100);
-  }, [stopRecording, getSessionData, category, onStop]);
+      try {
+        const finalized = await stopRecording();
+
+        // Validate finalized data
+        if (!finalized.videoBlob || !(finalized.videoBlob instanceof Blob) || finalized.videoBlob.size === 0) {
+          throw new Error('Recording failed to finalize: video blob is invalid.');
+        }
+
+        if (!Array.isArray(finalized.poseFrames)) {
+          throw new Error('Recording failed to finalize: pose frames are missing.');
+        }
+
+        const freestyleSession = createFreestyleSession({
+          sessionId: sessionIdRef.current,
+          category,
+          videoBlob: finalized.videoBlob,
+          poseFrames: finalized.poseFrames,
+          angleFrames: finalized.angleFrames,
+          duration: finalized.duration,
+        });
+
+        setWorkflowState('idle');
+        onStop(freestyleSession);
+      } catch (error) {
+        setErrorMsg(error.message || 'Failed to finalize recording');
+        setWorkflowState('error');
+        console.error('Finalization error:', error);
+      }
+    } else {
+      // Session active but not recording — just exit
+      onStop(null);
+    }
+  }, [isRecording, sessionActive, stopRecording, category, onStop]);
 
   const handleStartRecording = useCallback(() => {
     startRecording();
