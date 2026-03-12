@@ -229,18 +229,20 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
 
   return (
     <div className="fixed inset-0 z-40 bg-black">
-      {/* Video */}
+      {/* Video — mirror when using front camera */}
       <video
         ref={videoRef}
         playsInline
         muted
         className="absolute inset-0 w-full h-full object-cover"
+        style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }}
       />
 
-      {/* Canvas (video + skeleton overlay) */}
+      {/* Canvas (video + skeleton overlay) — mirror when using front camera */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }}
       />
 
       {/* Camera failed */}
