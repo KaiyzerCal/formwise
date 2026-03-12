@@ -50,7 +50,7 @@ export function useCameraStream(videoRef, facingMode = 'environment') {
     setCamState('requesting');
     setCamError(null);
 
-    acquireStream()
+    acquireStream(facingMode)
       .then((stream) => {
         if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
         streamRef.current = stream;
@@ -94,7 +94,7 @@ export function useCameraStream(videoRef, facingMode = 'environment') {
         streamRef.current = null;
       }
     };
-  }, [videoRef]);
+  }, [videoRef, facingMode]);
 
   return { camState, camError };
 }
