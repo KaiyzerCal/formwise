@@ -99,6 +99,11 @@ export default function SessionHistory() {
     try {
       console.log('[SessionHistory] Creating technique draft from freestyle session:', session.sessionId);
       const draft = await createTechniqueDraftFromFreestyleSession(session);
+      
+      if (!draft || !draft.techniqueId) {
+        throw new Error('Draft creation returned invalid result');
+      }
+
       console.log('[SessionHistory] Draft created successfully:', draft.techniqueId);
       navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
     } catch (error) {
