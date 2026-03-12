@@ -67,9 +67,26 @@ export default function CameraView({ exercise, onStop }) {
 
     const smoothed = smoothLandmarks(result.poseLandmarks, prevLandmarksRef.current);
     prevLandmarksRef.current = smoothed;
+
+    // ── Build joint results from exercise definition (green/yellow/red + angle badges)
+    const livePhase  = frameRef.current?.phase ?? null;
+    const jointResults = exercise.joints?.length
+      ? computeJointAngles(smoothed, exercise, livePhase)
+      : [];
+
+    // ── Trigger beep when any joint enters DANGER (with cooldown)
+    const hasDanger = jointResults.some(jr => jr.state === 'DANGER');
+    if (hasDanger && !muted) {
+      const now = Date.now();
+      if (now - lastDangerBeepRef.current > 2200) {
+        lastDangerBeepRef.current = now;
+        beep(false);
+      }
+    }
+
     const ghost = generateGhostPose(smoothed);
     if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
-    drawSkeleton(ctx, smoothed, [], canvas.width, canvas.height);
+    drawSkeleton(ctx, smoothed, jointResults, canvas.width, canvas.height);
 
     if (exercise.cameraMode === 'motion') {
       const xs = result.poseLandmarks.map(l => l.x);
