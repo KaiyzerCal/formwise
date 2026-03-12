@@ -44,7 +44,7 @@ export default function Analytics() {
           <span className="text-sm font-bold" style={{ color: COLORS.correct, fontFamily: FONT.heading }}>Highly Consistent</span>
         </StatCard>
         <StatCard label="Sessions Tracked" icon={Calendar} color={COLORS.gold}>
-          <span className="text-2xl font-bold" style={{ color: COLORS.textPrimary, fontFamily: FONT.heading }}>{sessions.length}</span>
+          <span className="text-2xl font-bold" style={{ color: COLORS.textPrimary, fontFamily: FONT.heading }}>{sessionCount}</span>
         </StatCard>
       </div>
 
