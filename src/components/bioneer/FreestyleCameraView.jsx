@@ -38,7 +38,7 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
   const [errorMsg, setErrorMsg] = useState(null);
 
   // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError } = useCameraStream(videoRef);
+  const { camState, camError, cameraFacing, isMirrored, isSwitching, switchCamera } = useCameraController(videoRef);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
