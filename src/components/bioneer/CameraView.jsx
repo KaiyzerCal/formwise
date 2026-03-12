@@ -78,18 +78,21 @@ export default function CameraView({ exercise, onStop }) {
 
     // ── Build joint results from exercise definition (green/yellow/red + angle badges)
     const livePhase  = frameRef.current?.phase ?? null;
-    const jointResults = exercise.joints?.length
+    const rawResults = exercise.joints?.length
       ? computeJointAngles(smoothed, exercise, livePhase)
       : [];
 
-    // ── Trigger beep when any joint enters DANGER (with cooldown)
-    const hasDanger = jointResults.some(jr => jr.state === 'DANGER');
-    if (hasDanger && !muted) {
-      const now = Date.now();
-      if (now - lastDangerBeepRef.current > 2200) {
-        lastDangerBeepRef.current = now;
-        beep(false);
-      }
+    // ── Temporal filtering: smooth angles + stabilize zone states + beep hysteresis
+    const tNow      = performance.now();
+    const poseConf  = frameRef.current?.confidence ?? 0.7;
+    const temporal  = temporalFilterRef.current;
+    const jointResults = temporal
+      ? temporal.filter(rawResults, tNow, poseConf)
+      : rawResults;
+
+    // ── Beep: fires only on confirmed DANGER transitions (with hysteresis)
+    if (!muted && temporal && temporal.shouldBeep(jointResults, tNow)) {
+      beep(false);
     }
 
     const ghost = generateGhostPose(smoothed);
