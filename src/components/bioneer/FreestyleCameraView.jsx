@@ -332,8 +332,8 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
         />
       )}
 
-      {/* Loading overlay */}
-      {poseState === 'initializing' && camState === 'active' && (
+      {/* Loading overlay for pose init or camera switch */}
+      {(poseState === 'initializing' && camState === 'active') || (isCameraSwitching || isSwitchingCamera) && (
         <div className="absolute top-20 left-0 right-0 flex justify-center z-50 pointer-events-none">
           <div className="flex items-center gap-3 px-4 py-2.5 rounded-full border"
             style={{ background: 'rgba(0,0,0,0.75)', borderColor: `${GOLD}40`, backdropFilter: 'blur(8px)' }}>
@@ -341,7 +341,7 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
               style={{ borderColor: GOLD, borderTopColor: 'transparent' }} />
             <span className="text-[10px] tracking-widest uppercase"
               style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
-              {phase || 'Initializing pose…'}
+              {isCameraSwitching || isSwitchingCamera ? 'Switching camera…' : phase || 'Initializing pose…'}
             </span>
           </div>
         </div>
