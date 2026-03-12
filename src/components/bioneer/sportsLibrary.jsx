@@ -754,7 +754,6 @@ export const SPORTS_MOVEMENTS = [
       "Hip_DANGER": "Hip drive absent — all arm — injury risk and power loss.",
     },
   },
-];
 
   // ── AGILITY STEP ───────────────────────────────────────────────────────────
   {
