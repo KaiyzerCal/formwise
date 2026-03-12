@@ -119,7 +119,7 @@ export function getAggregateStats() {
   const totalReps  = all.reduce((sum, s) => sum + (s.rep_count ?? 0), 0);
   const totalTime  = all.reduce((sum, s) => sum + (s.duration_seconds ?? 0), 0);
   const avgScore   = Math.round(all.reduce((sum, s) => sum + (s.average_form_score ?? 0), 0) / all.length);
-  const bestScore  = Math.max(...all.map(s => s.highest_form_score ?? 0));
+  const bestScore  = all.length ? Math.max(...all.map(s => s.highest_form_score ?? 0)) : 0;
 
   // Fault frequency map
   const faultMap = {};
