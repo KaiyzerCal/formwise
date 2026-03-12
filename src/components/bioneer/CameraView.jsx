@@ -287,15 +287,17 @@ export default function CameraView({ exercise, onStop }) {
       </div>
 
       {/* ── Rep counter ───────────────────────────────────────────────────── */}
-      <div className="absolute top-16 left-4 z-50">
-        <div className="px-3 py-2 rounded-xl border"
-          style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
-          <span className="text-[10px] text-white/40 uppercase tracking-widest block"
-            style={{ fontFamily: "'DM Mono', monospace" }}>REPS</span>
-          <span className="text-2xl font-bold text-white"
-            style={{ fontFamily: "'DM Mono', monospace" }}>{repCount}</span>
+      {!(sessionActive && lastRepMastery) && (
+        <div className="absolute top-16 left-4 z-50">
+          <div className="px-3 py-2 rounded-xl border"
+            style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
+            <span className="text-[10px] text-white/40 uppercase tracking-widest block"
+              style={{ fontFamily: "'DM Mono', monospace" }}>REPS</span>
+            <span className="text-2xl font-bold text-white"
+              style={{ fontFamily: "'DM Mono', monospace" }}>{repCount}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Mute ─────────────────────────────────────────────────────────── */}
       <div className="absolute top-16 right-4 z-50">
