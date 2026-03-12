@@ -385,6 +385,19 @@ export default function CameraView({ exercise, onStop }) {
         </div>
       )}
 
+      {/* ── System health warning ─────────────────────────────────────────── */}
+      {healthMsg && (
+        <div className="absolute top-32 left-4 right-4 z-50 flex justify-center pointer-events-none">
+          <div className="px-4 py-2 rounded-xl border text-center"
+            style={{ background: 'rgba(0,0,0,0.75)', borderColor: 'rgba(234,179,8,0.4)', backdropFilter: 'blur(8px)' }}>
+            <p className="text-[10px] font-bold tracking-widest uppercase"
+              style={{ color: '#EAB308', fontFamily: "'DM Mono', monospace" }}>
+              {healthMsg}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Cue banner ────────────────────────────────────────────────────── */}
       {activeCue && sessionActive && (
         <div className="absolute top-32 left-4 right-4 z-50 flex justify-center pointer-events-none">
