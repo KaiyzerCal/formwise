@@ -25,7 +25,7 @@ import { ConfidenceEngine }     from './pipeline/ConfidenceEngine';
 import { FeedbackScheduler }    from './pipeline/FeedbackScheduler';
 import { SessionLogger }        from './pipeline/SessionLogger';
 import { MasteryScoreEngine }        from './pipeline/MasteryScoreEngine';
-import { MovementContextEngine }     from './pipeline/MovementContextEngine.js';
+import { MovementContextEngine }     from './pipeline/MovementContextEngine';
 
 let _sessionIdCounter = 0;
 
