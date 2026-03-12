@@ -313,8 +313,17 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
         </div>
       </div>
 
-      {/* Mute */}
-      <div className="absolute top-16 right-4 z-50">
+      {/* Camera + Mute */}
+      <div className="absolute top-16 right-4 z-50 flex gap-2">
+        <button onClick={handleSwitchCamera}
+          disabled={switchingCamera || camState !== 'active'}
+          className="p-2.5 rounded-full border disabled:opacity-50"
+          style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}
+          title={`Switch to ${currentFacing === 'user' ? 'back' : 'front'} camera`}>
+          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+          </svg>
+        </button>
         <button onClick={() => setMuted(m => !m)}
           className="p-2.5 rounded-full border"
           style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
