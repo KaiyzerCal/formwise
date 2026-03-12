@@ -219,7 +219,7 @@ export default function TechniqueExportPanel({ session, onClose }) {
           >
             <AlertCircle size={12} className="flex-shrink-0 mt-0.5" style={{ color: COLORS.gold }} />
             <p>
-              MP4 video export with rendered annotations is coming soon. For now, export the session package and annotations will be preserved.
+              Full MP4 rendering with video compositing is available via the backend rendering pipeline. For now, use snapshot or package exports.
             </p>
           </div>
 
