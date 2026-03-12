@@ -32,6 +32,7 @@ export function createFreestyleSession({
     videoBlob,
     poseFrames,
     angleFrames,
+    compositedVideo: true,
   };
 }
 
