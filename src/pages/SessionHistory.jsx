@@ -83,6 +83,24 @@ export default function SessionHistory() {
 
       {/* Session list */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-5 space-y-2">
+        {sessions.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ background: COLORS.goldDim, border: `1px solid ${COLORS.goldBorder}` }}>
+              <BarChart3 size={20} style={{ color: COLORS.gold }} />
+            </div>
+            <div className="text-center space-y-1.5 max-w-xs">
+              <p className="text-xs font-medium tracking-[0.1em] uppercase"
+                style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+                No sessions logged yet
+              </p>
+              <p className="text-[10px] leading-relaxed"
+                style={{ color: COLORS.textMuted, fontFamily: FONT.mono }}>
+                Complete your first live session to start building your training history.
+              </p>
+            </div>
+          </div>
+        )}
         {sessions.slice().reverse().map(session => {
           const expanded = expandedId === session.id;
           return (
