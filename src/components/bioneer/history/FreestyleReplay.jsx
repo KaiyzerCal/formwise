@@ -180,6 +180,7 @@ export default function FreestyleReplay({ session, onClose }) {
           ref={videoRef}
           src={videoUrl}
           className="w-full h-full object-contain"
+          style={isMirroredPreview ? { transform: 'scaleX(-1)' } : {}}
           onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onPlay={() => setIsPlaying(true)}
