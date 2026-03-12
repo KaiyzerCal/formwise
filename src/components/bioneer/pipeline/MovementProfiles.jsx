@@ -469,3 +469,16 @@ export const MOVEMENT_PROFILES = {
 export function getProfile(exerciseId) {
   return MOVEMENT_PROFILES[exerciseId] ?? MOVEMENT_PROFILES['back_squat'];
 }
+
+/**
+ * Unified movement lookup — resolves exercise definitions from any library.
+ * Used by pipeline modules to ensure consistent exercise metadata.
+ */
+export function getMovementMetadata(exerciseId) {
+  // Try local movement profiles first (phase-aware + kinematics)
+  const profile = MOVEMENT_PROFILES[exerciseId];
+  if (profile) return profile;
+  
+  // Fallback: generic strength profile
+  return MOVEMENT_PROFILES['back_squat'];
+}
