@@ -89,10 +89,30 @@ export default function CameraView({ exercise, onStop }) {
     const ctx = canvas.getContext('2d');
     canvas.width  = video.videoWidth  || canvas.offsetWidth;
     canvas.height = video.videoHeight || canvas.offsetHeight;
-    clearCanvas(ctx, canvas.width, canvas.height);
+
+    // Draw video (mirrored if front camera)
+    if (isMirrored) {
+      ctx.save();
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    } else {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
+
     if (!result.poseLandmarks) return;
 
-    const smoothed = smoothLandmarks(result.poseLandmarks, prevLandmarksRef.current);
+    // Mirror pose landmarks for front camera display
+    let landmarksToRender = result.poseLandmarks;
+    if (isMirrored) {
+      landmarksToRender = result.poseLandmarks.map(lm => ({
+        ...lm,
+        x: 1 - lm.x, // Mirror horizontally
+      }));
+    }
+
+    const smoothed = smoothLandmarks(landmarksToRender, prevLandmarksRef.current);
     prevLandmarksRef.current = smoothed;
 
     // ── Build joint results from exercise definition (green/yellow/red + angle badges)
