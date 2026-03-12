@@ -289,13 +289,13 @@ export default function CameraView({ exercise, onStop }) {
         <div className="px-3 py-1.5 rounded-full border"
           style={{
             background: 'rgba(0,0,0,0.5)',
-            borderColor: formScore >= 80 ? '#22C55E' : formScore >= 65 ? '#EAB308' : RED,
+            borderColor: formScore == null ? 'rgba(255,255,255,0.2)' : formScore >= 80 ? '#22C55E' : formScore >= 65 ? '#EAB308' : RED,
           }}>
           <span className="text-sm font-bold" style={{
             fontFamily: "'DM Mono', monospace",
-            color: formScore >= 80 ? '#22C55E' : formScore >= 65 ? '#EAB308' : RED,
+            color: formScore == null ? 'rgba(255,255,255,0.3)' : formScore >= 80 ? '#22C55E' : formScore >= 65 ? '#EAB308' : RED,
           }}>
-            {formScore}%
+            {formScore == null ? '—' : `${formScore}%`}
           </span>
         </div>
       </div>
