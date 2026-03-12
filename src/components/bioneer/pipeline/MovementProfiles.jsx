@@ -182,6 +182,220 @@ export const MOVEMENT_PROFILES = {
     thresholds:  { descentVel: 0.014, ascentVel: 0.008, bottomAngle: 80, lockoutAngle: 150 },
     phases:      ['load','jump','set','release','follow'],
   },
+
+  // ── New strength movements ────────────────────────────────────────────────
+
+  goblet_squat: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 170, minRepMs: 1200,
+    visibilityJoints: ['l_hip','r_hip','l_knee','r_knee'],
+    phases: ['setup','descent','bottom','ascent','lockout'],
+    phaseMap: { START:'setup', ECCENTRIC:'descent', BOTTOM:'bottom', CONCENTRIC:'ascent', LOCKOUT:'lockout' },
+    repVelJoint: 'pelvis', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.006, ascentVel:0.004, bottomAngle:90, lockoutAngle:170 },
+  },
+
+  front_squat: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 170, minRepMs: 1200,
+    visibilityJoints: ['l_hip','r_hip','l_knee','r_knee'],
+    phases: ['setup','descent','bottom','ascent','lockout'],
+    phaseMap: { START:'setup', ECCENTRIC:'descent', BOTTOM:'bottom', CONCENTRIC:'ascent', LOCKOUT:'lockout' },
+    repVelJoint: 'pelvis', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.006, ascentVel:0.004, bottomAngle:100, lockoutAngle:170 },
+  },
+
+  romanian_deadlift: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 170, minRepMs: 1500,
+    visibilityJoints: ['l_hip','r_hip','l_knee'],
+    phases: ['setup','hinge','bottom','ascent','lockout'],
+    phaseMap: { START:'setup', ECCENTRIC:'hinge', BOTTOM:'bottom', CONCENTRIC:'ascent', LOCKOUT:'lockout' },
+    repVelJoint: 'l_hip', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.004, ascentVel:0.003, bottomAngle:60, lockoutAngle:170 },
+  },
+
+  incline_pushup: {
+    category: 'strength', primaryAngleKey: 'elbowL', secondaryAngleKey: 'elbowR',
+    lockoutAngle: 148, minRepMs: 800,
+    visibilityJoints: ['l_elbow','r_elbow','l_wrist','r_wrist'],
+    phases: ['plank','lowering','bottom','press','top'],
+    phaseMap: { START:'plank', ECCENTRIC:'lowering', BOTTOM:'bottom', CONCENTRIC:'press', LOCKOUT:'top' },
+    repVelJoint: 'chest', angleKey: 'elbowL',
+    thresholds: { descentVel:0.005, ascentVel:0.004, bottomAngle:85, lockoutAngle:148 },
+  },
+
+  chinup: {
+    category: 'strength', primaryAngleKey: 'elbowL', secondaryAngleKey: 'elbowR',
+    lockoutAngle: 155, minRepMs: 1000,
+    visibilityJoints: ['l_elbow','r_elbow','l_shoulder','r_shoulder'],
+    phases: ['hang','pull','top','lower'],
+    phaseMap: { START:'hang', ECCENTRIC:'lower', BOTTOM:'hang', CONCENTRIC:'pull', LOCKOUT:'top' },
+    repVelJoint: 'pelvis', angleKey: 'elbowL',
+    thresholds: { descentVel:0.005, ascentVel:0.004, bottomAngle:90, lockoutAngle:155 },
+  },
+
+  bent_row: {
+    category: 'strength', primaryAngleKey: 'elbowL', secondaryAngleKey: 'elbowR',
+    lockoutAngle: 140, minRepMs: 1000,
+    visibilityJoints: ['l_elbow','r_elbow','l_wrist','r_wrist'],
+    phases: ['setup','pull','peak','lower'],
+    phaseMap: { START:'setup', ECCENTRIC:'lower', BOTTOM:'setup', CONCENTRIC:'pull', LOCKOUT:'peak' },
+    repVelJoint: 'chest', angleKey: 'elbowL',
+    thresholds: { descentVel:0.004, ascentVel:0.004, bottomAngle:60, lockoutAngle:140 },
+  },
+
+  reverse_lunge: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 160, minRepMs: 1000,
+    visibilityJoints: ['l_hip','l_knee','l_ankle'],
+    phases: ['setup','step','bottom','ascent','lockout'],
+    phaseMap: { START:'setup', ECCENTRIC:'step', BOTTOM:'bottom', CONCENTRIC:'ascent', LOCKOUT:'lockout' },
+    repVelJoint: 'pelvis', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.005, ascentVel:0.004, bottomAngle:100, lockoutAngle:160 },
+  },
+
+  bulgarian_split_squat: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 155, minRepMs: 1200,
+    visibilityJoints: ['l_hip','l_knee','l_ankle'],
+    phases: ['setup','descent','bottom','ascent','lockout'],
+    phaseMap: { START:'setup', ECCENTRIC:'descent', BOTTOM:'bottom', CONCENTRIC:'ascent', LOCKOUT:'lockout' },
+    repVelJoint: 'pelvis', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.005, ascentVel:0.004, bottomAngle:90, lockoutAngle:155 },
+  },
+
+  glute_bridge: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 170, minRepMs: 800,
+    visibilityJoints: ['l_hip','r_hip','l_knee'],
+    phases: ['floor','lift','top','lower'],
+    phaseMap: { START:'floor', ECCENTRIC:'lower', BOTTOM:'floor', CONCENTRIC:'lift', LOCKOUT:'top' },
+    repVelJoint: 'l_hip', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.003, ascentVel:0.003, bottomAngle:80, lockoutAngle:170 },
+  },
+
+  hip_thrust: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 175, minRepMs: 1000,
+    visibilityJoints: ['l_hip','r_hip','l_knee'],
+    phases: ['floor','lift','top','lower'],
+    phaseMap: { START:'floor', ECCENTRIC:'lower', BOTTOM:'floor', CONCENTRIC:'lift', LOCKOUT:'top' },
+    repVelJoint: 'l_hip', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.004, ascentVel:0.004, bottomAngle:90, lockoutAngle:175 },
+  },
+
+  plank: {
+    category: 'strength', primaryAngleKey: 'elbowL', secondaryAngleKey: null,
+    lockoutAngle: 175, minRepMs: 3000,
+    visibilityJoints: ['l_shoulder','r_shoulder','l_hip','r_hip','l_ankle'],
+    phases: ['hold'],
+    phaseMap: { START:'hold', ECCENTRIC:'hold', BOTTOM:'hold', CONCENTRIC:'hold', LOCKOUT:'hold' },
+    repVelJoint: 'chest', angleKey: 'elbowL',
+    thresholds: { descentVel:0.002, ascentVel:0.002, bottomAngle:170, lockoutAngle:175 },
+  },
+
+  side_plank: {
+    category: 'strength', primaryAngleKey: 'elbowL', secondaryAngleKey: null,
+    lockoutAngle: 175, minRepMs: 3000,
+    visibilityJoints: ['l_shoulder','l_hip','l_ankle'],
+    phases: ['hold'],
+    phaseMap: { START:'hold', ECCENTRIC:'hold', BOTTOM:'hold', CONCENTRIC:'hold', LOCKOUT:'hold' },
+    repVelJoint: 'chest', angleKey: 'elbowL',
+    thresholds: { descentVel:0.002, ascentVel:0.002, bottomAngle:170, lockoutAngle:175 },
+  },
+
+  mountain_climber: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: null,
+    lockoutAngle: 160, minRepMs: 500,
+    visibilityJoints: ['l_hip','r_hip','l_knee','r_knee','l_wrist','r_wrist'],
+    phases: ['plank','drive','extend'],
+    phaseMap: { START:'plank', ECCENTRIC:'extend', BOTTOM:'plank', CONCENTRIC:'drive', LOCKOUT:'extend' },
+    repVelJoint: 'pelvis', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.010, ascentVel:0.010, bottomAngle:80, lockoutAngle:160 },
+  },
+
+  // ── New athletic movements ────────────────────────────────────────────────
+
+  sprint: {
+    category: 'locomotion', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
+    lockoutAngle: 150, minRepMs: 300,
+    phases: ['drive','transition','maxvel','float'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.020, ascentVel:0.015, bottomAngle:80, lockoutAngle:150 },
+  },
+
+  acceleration_start: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
+    lockoutAngle: 150, minRepMs: 300,
+    phases: ['stance','first_step','drive','transition'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.020, ascentVel:0.015, bottomAngle:80, lockoutAngle:150 },
+  },
+
+  vertical_jump: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: 'kneeR',
+    lockoutAngle: 155, minRepMs: 400,
+    phases: ['load','takeoff','flight','land'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.025, ascentVel:0.020, bottomAngle:90, lockoutAngle:155 },
+  },
+
+  broad_jump: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: 'kneeR',
+    lockoutAngle: 155, minRepMs: 400,
+    phases: ['load','takeoff','flight','land'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.025, ascentVel:0.020, bottomAngle:90, lockoutAngle:155 },
+  },
+
+  lateral_shuffle: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
+    lockoutAngle: 158, minRepMs: 300,
+    phases: ['set','push','receive','reset'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.012, ascentVel:0.010, bottomAngle:100, lockoutAngle:158 },
+  },
+
+  skater_jump: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
+    lockoutAngle: 155, minRepMs: 400,
+    phases: ['load','push','flight','land'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.018, ascentVel:0.015, bottomAngle:100, lockoutAngle:155 },
+  },
+
+  cut: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: 'kneeR',
+    lockoutAngle: 155, minRepMs: 300,
+    phases: ['approach','plant','cut','acceleration'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.020, ascentVel:0.018, bottomAngle:95, lockoutAngle:155 },
+  },
+
+  pivot: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
+    lockoutAngle: 155, minRepMs: 300,
+    phases: ['set','load','rotate','stabilize'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.014, ascentVel:0.010, bottomAngle:100, lockoutAngle:155 },
+  },
+
+  rotation_throw: {
+    category: 'rotational', primaryAngleKey: 'elbowR', secondaryAngleKey: null,
+    lockoutAngle: 150, minRepMs: 400,
+    phases: ['load','rotate','release','follow_through'],
+    repVelJoint: 'r_wrist', angleKey: 'elbowR',
+    thresholds: { descentVel:0.016, ascentVel:0.010, bottomAngle:80, lockoutAngle:150 },
+  },
+
+  medicine_ball_throw: {
+    category: 'rotational', primaryAngleKey: 'elbowR', secondaryAngleKey: 'elbowL',
+    lockoutAngle: 150, minRepMs: 400,
+    phases: ['load','drive','release','follow_through'],
+    repVelJoint: 'r_wrist', angleKey: 'elbowR',
+    thresholds: { descentVel:0.014, ascentVel:0.010, bottomAngle:85, lockoutAngle:150 },
+  },
 };
 
 export function getProfile(exerciseId) {
