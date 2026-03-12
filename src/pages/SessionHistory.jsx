@@ -150,33 +150,73 @@ export default function SessionHistory() {
           const expanded = expandedId === session.id;
           return (
             <div key={session.id} className="rounded-lg border overflow-hidden" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
-              <button onClick={() => setExpandedId(expanded ? null : session.id)} className="w-full text-left px-4 py-3 flex items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-medium" style={{ color: COLORS.textPrimary }}>{session.exercise}</span>
-                    <span className="text-[8px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-full border" style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>{session.category}</span>
-                  </div>
-                  <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
-                    {session.date} · {session.time}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <Repeat size={10} style={{ color: COLORS.textMuted }} />
-                    <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>{session.reps}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={10} style={{ color: COLORS.textMuted }} />
+              {/* Session header — different layout for freestyle */}
+              {session._freestyle ? (
+                <div className="px-4 py-3 flex items-center gap-4">
+                  {/* Thumbnail */}
+                  {session._freestyleData?.thumbnail && (
+                    <div className="w-12 h-12 rounded-lg flex-shrink-0 bg-black/50 overflow-hidden">
+                      <img
+                        src={getThumbnailUrl(session._freestyleData.thumbnail)}
+                        alt="Session thumbnail"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-medium" style={{ color: COLORS.textPrimary }}>{session.exercise}</span>
+                      <span className="text-[8px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-full border" style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>FREESTYLE</span>
+                    </div>
                     <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
-                      {Math.floor(session.duration / 60)}:{String(session.duration % 60).padStart(2, '0')}
+                      {session.date} · {session.time}
                     </span>
                   </div>
-                  <span className="text-sm font-bold w-8 text-right" style={{ color: scoreColor(session.score) }}>{session.score}</span>
-                  {expanded ? <ChevronUp size={14} style={{ color: COLORS.textTertiary }} /> : <ChevronDown size={14} style={{ color: COLORS.textTertiary }} />}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={10} style={{ color: COLORS.textMuted }} />
+                      <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                        {Math.floor(session.duration / 60)}:{String(session.duration % 60).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setSelectedReplay(session._freestyleData)}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold }}>
+                      <Play size={14} fill={COLORS.gold} />
+                    </button>
+                  </div>
                 </div>
-              </button>
+              ) : (
+                <button onClick={() => setExpandedId(expanded ? null : session.id)} className="w-full text-left px-4 py-3 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-medium" style={{ color: COLORS.textPrimary }}>{session.exercise}</span>
+                      <span className="text-[8px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-full border" style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>{session.category}</span>
+                    </div>
+                    <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                      {session.date} · {session.time}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <Repeat size={10} style={{ color: COLORS.textMuted }} />
+                      <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>{session.reps}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={10} style={{ color: COLORS.textMuted }} />
+                      <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                        {Math.floor(session.duration / 60)}:{String(session.duration % 60).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <span className="text-sm font-bold w-8 text-right" style={{ color: scoreColor(session.score) }}>{session.score}</span>
+                    {expanded ? <ChevronUp size={14} style={{ color: COLORS.textTertiary }} /> : <ChevronDown size={14} style={{ color: COLORS.textTertiary }} />}
+                  </div>
+                </button>
+              )}
 
-              {expanded && (
+              {/* Expanded content — only for exercise sessions */}
+              {expanded && !session._freestyle && (
                 <div className="px-4 pb-4 pt-1 border-t space-y-3" style={{ borderColor: COLORS.border }}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[9px] tracking-[0.1em] uppercase" style={{ color: COLORS.textTertiary }}>Top Fault:</span>
