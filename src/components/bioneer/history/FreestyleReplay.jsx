@@ -18,11 +18,20 @@ export default function FreestyleReplay({ session, onClose }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentAngles, setCurrentAngles] = useState({});
+  const [videoUrl, setVideoUrl] = useState(null);
 
   if (!session) return null;
 
-  const videoUrl = URL.createObjectURL(session.videoBlob);
   const poseFrames = session.poseFrames || [];
+
+  // Create blob URL once on mount
+  useEffect(() => {
+    if (session.videoBlob instanceof Blob) {
+      const url = URL.createObjectURL(session.videoBlob);
+      setVideoUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [session.videoBlob]);
 
   // Find pose frame closest to video time
   const getFrameAtTime = (time) => {
