@@ -99,6 +99,7 @@ export async function saveFreestyleSession({
   videoBlob,
   poseFrames,
   angleFrames,
+  cameraFacing,
 }) {
   // Validate required fields
   if (!sessionId) {
@@ -128,6 +129,7 @@ export async function saveFreestyleSession({
     poseFrames,
     angleFrames,
     thumbnail,
+    cameraFacing: cameraFacing || 'environment',
   };
 
   return new Promise((resolve, reject) => {
