@@ -223,6 +223,7 @@ export class LiveSessionOrchestrator {
       frame:      { tMs, phase: phaseId, joints: smoothedJoints },
       phase:      phaseId,
       faults:     cueFaults,
+      angles:     kinAngles,        // exposed so CameraView can drive the renderer
       confidence: poseConf,
       repState:   this.repDetector.getState(),
       lockState,

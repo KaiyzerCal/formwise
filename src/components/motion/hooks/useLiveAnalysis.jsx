@@ -42,6 +42,9 @@ const PHASE_LABELS = {
 export function useLiveAnalysis(exerciseId, userId = 'local') {
   const orchRef       = useRef(null);
   const cueTimerRef   = useRef(null);
+  // Sync ref — updated on every frame BEFORE React batches the state update.
+  // CameraView reads this in the canvas draw callback for zero-lag rendering.
+  const frameRef      = useRef(null);
 
   const [frameState,  setFrameState]  = useState(null);
   const [repCount,    setRepCount]    = useState(0);
