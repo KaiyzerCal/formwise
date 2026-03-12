@@ -84,7 +84,13 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
     const ctx = canvas.getContext('2d');
     canvas.width = video.videoWidth || canvas.offsetWidth;
     canvas.height = video.videoHeight || canvas.offsetHeight;
-    clearCanvas(ctx, canvas.width, canvas.height);
+
+    // Composite: draw video frame first
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    } else {
+      clearCanvas(ctx, canvas.width, canvas.height);
+    }
 
     if (!result.poseLandmarks) return;
 
@@ -97,7 +103,7 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
     setPoseConfidence(avgConf);
     setVisibleJoints(visible);
 
-    // Draw skeleton overlay (no scoring, just visual)
+    // Draw skeleton overlay on top of video (no scoring, just visual)
     const ghost = generateGhostPose(smoothed);
     if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
     drawSkeleton(ctx, smoothed, [], canvas.width, canvas.height);
