@@ -840,3 +840,16 @@ export const EXERCISES = [
 export function getExerciseById(id) {
   return EXERCISES.find((e) => e.id === id);
 }
+
+/**
+ * Freestyle pseudo-exercise — not a real exercise, but a navigation entry
+ */
+export const FREESTYLE_MODE = {
+  id: 'freestyle',
+  name: 'Freestyle',
+  displayName: 'Freestyle Capture',
+  icon: '🎥',
+  category: 'freestyle',
+  description: 'Track any movement live and review it later',
+  isFreestyle: true,
+};
