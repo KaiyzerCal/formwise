@@ -36,6 +36,23 @@ export default function CameraView({ exercise, onStop }) {
   const [liveJointResults, setLiveJointResults] = useState([]);
   const [liveFormScore, setLiveFormScore] = useState(100);
 
+  // Camera facing mode — persisted to localStorage
+  const [cameraFacing, setCameraFacing] = useState(() => {
+    return localStorage.getItem('bioneer_camera_facing') || 'environment';
+  });
+  
+  const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
+
+  // Persist camera choice to localStorage
+  const handleToggleCamera = useCallback(async () => {
+    setIsSwitchingCamera(true);
+    const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    setCameraFacing(newFacing);
+    localStorage.setItem('bioneer_camera_facing', newFacing);
+    // useCameraStream will re-run with new facingMode and restart stream
+    setIsSwitchingCamera(false);
+  }, [cameraFacing]);
+
   // Temporal filter engine — persists for the lifetime of this exercise session
   const temporalFilterRef = useRef(null);
   useEffect(() => {
@@ -51,7 +68,7 @@ export default function CameraView({ exercise, onStop }) {
   }, []);
 
   // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError } = useCameraStream(videoRef);
+  const { camState, camError } = useCameraStream(videoRef, cameraFacing);
   useEffect(() => { healthRef.current?.reportCamera(camState); }, [camState]);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
