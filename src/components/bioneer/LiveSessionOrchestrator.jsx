@@ -218,10 +218,15 @@ export class LiveSessionOrchestrator {
       const persistScore = this.confidenceEng.persistenceScore(
         pending ? tMs - pending.startMs : 0
       );
+      // Context-aware phase confidence: blend static 0.85 with continuity signal
+      const ctxPhaseConf = phaseId
+        ? (movCtx.phaseContinuityConf * 0.6 + 0.85 * 0.4)
+        : 0.50;
+
       return this.confidenceEng.shouldSurface({
         poseConfidence:    poseConf,
         trackingStability: trackStab,
-        phaseConfidence:   phaseId ? 0.85 : 0.50,
+        phaseConfidence:   ctxPhaseConf,
         faultPersistence:  persistScore,
       });
     });
