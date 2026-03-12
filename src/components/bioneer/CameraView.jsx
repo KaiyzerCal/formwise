@@ -43,10 +43,23 @@ export default function CameraView({ exercise, onStop }) {
   }, [exercise.id, exercise.category]);
 
   // System health monitor — passive watchdog
-  const healthRef = useRef(null);
+  const healthRef  = useRef(null);
+  const [healthMsg, setHealthMsg] = useState(null);
   useEffect(() => {
-    healthRef.current = new SystemHealthMonitor();
-    return () => healthRef.current?.destroy();
+    const mon = new SystemHealthMonitor();
+    mon.onStatus = ({ status, issues }) => {
+      if (status === 'critical') {
+        setHealthMsg(issues.includes('camera_failed') ? 'Camera lost' :
+                     issues.includes('pose_failed')   ? 'Pose engine error' :
+                     issues.includes('fps_critical')  ? 'Performance critical — reduce motion' : null);
+      } else if (status === 'warn' && issues.includes('fps_low')) {
+        setHealthMsg('Performance reduced');
+      } else {
+        setHealthMsg(null);
+      }
+    };
+    healthRef.current = mon;
+    return () => mon.destroy();
   }, []);
 
   // ── Camera ───────────────────────────────────────────────────────────────
