@@ -35,24 +35,55 @@ async function initDB() {
 
 /**
  * Generate thumbnail from video blob (first frame)
+ * Waits for actual first frame to be available before drawing
  */
 async function generateThumbnail(videoBlob) {
   return new Promise((resolve) => {
     const video = document.createElement('video');
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+    const blobUrl = URL.createObjectURL(videoBlob);
 
-    video.onloadedmetadata = () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
-      canvas.toBlob((blob) => {
-        resolve(blob);
-      }, 'image/jpeg', 0.8);
+    const cleanup = () => {
+      URL.revokeObjectURL(blobUrl);
     };
 
-    video.onerror = () => resolve(null);
-    video.src = URL.createObjectURL(videoBlob);
+    const onSuccess = (thumbnailBlob) => {
+      cleanup();
+      resolve(thumbnailBlob);
+    };
+
+    const onError = () => {
+      cleanup();
+      resolve(null); // Fail gracefully — still save session without thumbnail
+    };
+
+    video.onloadedmetadata = () => {
+      // Set to first frame and wait for it to load
+      video.currentTime = 0;
+    };
+
+    video.onseeked = () => {
+      // Now the first frame is ready
+      try {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            onSuccess(blob);
+          } else {
+            onError();
+          }
+        }, 'image/jpeg', 0.8);
+      } catch (error) {
+        console.warn('Failed to generate thumbnail:', error);
+        onError();
+      }
+    };
+
+    video.onerror = onError;
+    video.src = blobUrl;
   });
 }
 
