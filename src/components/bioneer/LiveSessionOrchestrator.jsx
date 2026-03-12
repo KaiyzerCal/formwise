@@ -158,6 +158,12 @@ export class LiveSessionOrchestrator {
       this.kinematics.compute(smoothedJoints, smoothedVelocities, worldJoints);
     const kinAngles = { ...angles, asymmetry };
 
+    // ── LAYER 4b: Movement Context Engine ─────────────────────────────────────
+    // Runs after kinematics; produces trajectory, velocity, stability, symmetry,
+    // phase-continuity confidence and control score for downstream layers.
+    const movCtx = this.context.update(kinAngles, this.lastPhaseId, tMs);
+    this.lastContext = movCtx;
+
     // ── LAYER 5a: Rep/Event state machine (drives phase transitions) ────────
     // RepDetector is the state machine; PhaseClassifier maps states → display names.
     // Both run together; phase display comes from RepDetector state.
