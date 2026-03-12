@@ -26,14 +26,30 @@ function avgOf(arr) {
 
 // ── Public selectors ──────────────────────────────────────────────────────────
 
+// Zero-state returned when no sessions exist yet — all values at 0
+const ZERO_OVERVIEW = {
+  sessionCount: 0,
+  totalReps: 0,
+  totalTime: 0,
+  avgFormScore: 0,
+  bestScore: 0,
+  latestDate: null,
+  mostTrainedMovement: null,
+  mostTrainedCount: 0,
+  topFault: null,
+  avgTrackingConfidence: null,
+  improvementDir: null,
+  isEmpty: true,
+};
+
 export function getAnalyticsOverview() {
   const sessions = getValidSessions();
-  if (!sessions.length) return null;
+  if (!sessions.length) return ZERO_OVERVIEW;
 
   const totalReps   = sessions.reduce((sum, s) => sum + (s.rep_count ?? 0), 0);
   const totalTime   = sessions.reduce((sum, s) => sum + (s.duration_seconds ?? 0), 0);
-  const avgFormScore = avgOf(sessions.map(s => s.average_form_score).filter(v => v != null));
-  const bestScore   = Math.max(...sessions.map(s => s.highest_form_score ?? s.average_form_score ?? 0));
+  const avgFormScore = avgOf(sessions.map(s => s.average_form_score).filter(v => v != null)) ?? 0;
+  const bestScore   = Math.max(0, ...sessions.map(s => s.highest_form_score ?? s.average_form_score ?? 0));
   const latestDate  = sessions[sessions.length - 1]?.started_at;
 
   // Most-trained movement
@@ -77,12 +93,13 @@ export function getAnalyticsOverview() {
     topFault:               topFaultEntry ? topFaultEntry[0].replace(/_/g, ' ') : null,
     avgTrackingConfidence:  avgTracking,
     improvementDir,
+    isEmpty:                false,
   };
 }
 
 export function getFormScoreTrend() {
   const sessions = getValidSessions();
-  if (sessions.length < 2) return { data: [], insufficient: true };
+  if (sessions.length < 2) return { data: [], insufficient: true, isEmpty: sessions.length === 0 };
 
   const data = sessions.map((s, i) => ({
     label:    fmtDate(s.started_at) || `S${i + 1}`,
@@ -171,7 +188,7 @@ export function getMovementBreakdown() {
 
 export function getRiskSignalSummary() {
   const sessions = getValidSessions();
-  if (sessions.length < 2) return { signals: [], insufficient: true };
+  if (sessions.length < 2) return { signals: [], insufficient: true, isEmpty: sessions.length === 0 };
 
   const signals = [];
   const recent  = sessions.slice(-5);
@@ -243,7 +260,7 @@ export function getRiskSignalSummary() {
 
 export function getRecentInsights() {
   const sessions = getValidSessions();
-  if (!sessions.length) return { insights: [], insufficient: true };
+  if (!sessions.length) return { insights: [], insufficient: true, isEmpty: true };
 
   const insights = [];
 
