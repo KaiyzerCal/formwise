@@ -17,14 +17,15 @@ export class MasteryScoreEngine {
 
   /**
    * @param {Object} params
-   * @param {Array}  params.jointResults   — [{ state, angle, label }] from TemporalFilterEngine
-   * @param {Array}  params.frameBuffer    — recent frames [{ angles, phase }]
-   * @param {Array}  params.faults         — confirmed fault objects
-   * @param {number} params.confidence     — 0-1 pose confidence
-   * @param {number} params.repDurationMs  — duration of this rep in ms
+   * @param {Array}  params.jointResults     — [{ state, angle, label }] from TemporalFilterEngine
+   * @param {Array}  params.frameBuffer      — recent frames [{ angles, phase }]
+   * @param {Array}  params.faults           — confirmed fault objects
+   * @param {number} params.confidence       — 0-1 pose confidence
+   * @param {number} params.repDurationMs    — duration of this rep in ms
+   * @param {Object} [params.movementContext] — MovementContextEngine output (optional)
    * @returns {number} 0-100 mastery score
    */
-  score({ jointResults = [], frameBuffer = [], faults = [], confidence = 1, repDurationMs = 0 }) {
+  score({ jointResults = [], frameBuffer = [], faults = [], confidence = 1, repDurationMs = 0, movementContext = null }) {
 
     // ── Alignment quality ─────────────────────────────────────────────────
     const alignScore = this._alignmentScore(jointResults);
@@ -32,8 +33,10 @@ export class MasteryScoreEngine {
     // ── Range of motion ───────────────────────────────────────────────────
     const romScore = this._romScore(jointResults);
 
-    // ── Movement stability (smoothness of angle change across frames) ─────
-    const stabilityScore = this._stabilityScore(frameBuffer);
+    // ── Movement stability — use context engine if available ──────────────
+    const stabilityScore = movementContext
+      ? this._contextStabilityScore(movementContext)
+      : this._stabilityScore(frameBuffer);
 
     // ── Tempo consistency (rep duration vs session mean) ──────────────────
     const tempoScore = this._tempoScore(repDurationMs);
@@ -41,14 +44,29 @@ export class MasteryScoreEngine {
     // ── Rep consistency (score vs session running avg) ────────────────────
     const consistencyScore = this._consistencyScore();
 
+    // ── Context bonuses / penalties ───────────────────────────────────────
+    let contextAdj = 0;
+    if (movementContext) {
+      // Bonus: controlled descent
+      if (movementContext.isControlled)           contextAdj += 4;
+      // Bonus: clean phase transitions
+      if (movementContext.transitionSmoothness > 0.8) contextAdj += 3;
+      // Penalty: jerkiness detected
+      if (movementContext.hasJerkiness)           contextAdj -= 8;
+      // Penalty: recurring asymmetry
+      if (movementContext.hasAsymmetry)           contextAdj -= 5;
+      // Bonus: high phase continuity
+      if (movementContext.phaseContinuityConf > 0.85) contextAdj += 2;
+    }
+
     // ── Weighted base ─────────────────────────────────────────────────────
     const base = (
-      alignScore      * 0.35 +
-      romScore        * 0.25 +
-      stabilityScore  * 0.20 +
-      tempoScore      * 0.10 +
+      alignScore       * 0.35 +
+      romScore         * 0.25 +
+      stabilityScore   * 0.20 +
+      tempoScore       * 0.10 +
       consistencyScore * 0.10
-    );
+    ) + contextAdj;
 
     // ── Confidence dampening ──────────────────────────────────────────────
     const confDamp = 0.7 + 0.3 * confidence; // low conf → max ~85%
