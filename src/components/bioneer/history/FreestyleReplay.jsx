@@ -111,11 +111,11 @@ export default function FreestyleReplay({ session, onClose }) {
   const handleLoadedMetadata = useCallback(() => {
     const duration = videoRef.current?.duration || 0;
     setDuration(duration);
-    // Render first frame immediately
-    if (videoRef.current) {
+    // Render first frame immediately (only if not composited)
+    if (videoRef.current && shouldDrawOverlay) {
       renderOverlayAtTime(0);
     }
-  }, [renderOverlayAtTime]);
+  }, [renderOverlayAtTime, shouldDrawOverlay]);
 
   const handleTimeUpdate = useCallback(() => {
     const currentTime = videoRef.current?.currentTime || 0;
