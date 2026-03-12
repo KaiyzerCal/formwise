@@ -285,7 +285,6 @@ export default function SessionHistory() {
           onClose={() => setSelectedReplay(null)}
         />
       )}
-      </div>
     </div>
   );
 }
