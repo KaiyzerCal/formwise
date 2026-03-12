@@ -337,13 +337,20 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
               </button>
             )}
             <button onClick={handleStop}
-              className="flex-1 py-3.5 rounded-xl border text-white font-bold text-sm tracking-wider transition-colors"
+              disabled={workflowState === 'finalizing'}
+              className="flex-1 py-3.5 rounded-xl border text-white font-bold text-sm tracking-wider transition-colors disabled:opacity-60"
               style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', fontFamily: "'DM Mono', monospace" }}>
-              {isRecording ? 'STOP & SAVE' : 'EXIT'}
+              {workflowState === 'finalizing' ? 'FINALIZING...' : isRecording ? 'STOP & SAVE' : 'EXIT'}
             </button>
           </div>
+          {errorMsg && (
+            <div className="mt-3 text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-3"
+              style={{ fontFamily: "'DM Mono', monospace" }}>
+              {errorMsg}
+            </div>
+          )}
         </div>
       </div>
-    </div>
-  );
-}
+      </div>
+      );
+      }
