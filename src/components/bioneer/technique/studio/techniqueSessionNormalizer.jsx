@@ -28,9 +28,9 @@ export function normalizeToTechniqueSession(source) {
   if (source._freestyleData || (source.poseFrames && source.videoBlob)) {
     const fs = source._freestyleData || source;
     sourceType = 'freestyle';
-    videoBlob = fs.videoBlob;
-    poseFrames = fs.poseFrames || [];
-    duration = fs.duration || 0;
+    videoBlob = fs.videoBlob || null;
+    poseFrames = Array.isArray(fs.poseFrames) ? fs.poseFrames : [];
+    duration = typeof fs.duration === 'number' ? fs.duration : 0;
     category = fs.category || 'freestyle';
     sessionId = fs.sessionId || `freestyle-${Date.now()}`;
     createdAt = fs.createdAt || createdAt;
@@ -40,8 +40,8 @@ export function normalizeToTechniqueSession(source) {
   if (source.techniqueId || (source.sourceType && source.sourceType.includes('history'))) {
     sourceType = source.sourceType || 'technique_draft';
     videoBlob = source.videoBlob || videoBlob;
-    poseFrames = source.poseFrames || [];
-    duration = source.duration || duration;
+    poseFrames = Array.isArray(source.poseFrames) ? source.poseFrames : poseFrames;
+    duration = typeof source.duration === 'number' ? source.duration : duration;
     category = source.category || category;
     sessionId = source.techniqueId || source.sourceSessionId || sessionId;
     createdAt = source.createdAt || createdAt;
@@ -56,7 +56,7 @@ export function normalizeToTechniqueSession(source) {
     // Note: live sessions don't have video blobs directly — they come from elsewhere
   }
 
-  // Extract video metadata if blob exists
+  // Extract video metadata if blob exists (always safe)
   let videoMetadata = {
     url: null,
     width: null,
@@ -66,16 +66,24 @@ export function normalizeToTechniqueSession(source) {
   };
 
   if (videoBlob instanceof Blob) {
-    videoMetadata = {
-      url: URL.createObjectURL(videoBlob),
-      width: null,
-      height: null,
-      fps: 30, // Default assumption
-      durationMs: duration * 1000,
-    };
+    try {
+      videoMetadata = {
+        url: URL.createObjectURL(videoBlob),
+        width: null,
+        height: null,
+        fps: 30, // Default assumption
+        durationMs: typeof duration === 'number' ? duration * 1000 : null,
+      };
+    } catch (error) {
+      console.warn('Failed to create object URL from blob:', error);
+      videoBlob = null; // Fallback to null on error
+    }
   }
 
-  // Build normalized session
+  // Validate and coerce poseFrames to always be an array
+  const safePoseFrames = Array.isArray(poseFrames) ? poseFrames : [];
+
+  // Build normalized session (GUARANTEED valid shape)
   const normalized = {
     version: TECHNIQUE_SESSION_VERSION,
     id: sessionId || `technique-${Date.now()}`,
@@ -83,44 +91,53 @@ export function normalizeToTechniqueSession(source) {
     sourceType,
     sourceSessionId: source.sourceSessionId || source.sessionId || null,
 
+    // VIDEO OBJECT (always valid structure)
     video: {
-      blob: videoBlob,
-      ...videoMetadata,
+      blob: videoBlob || null,
+      url: videoMetadata.url || null,
+      width: videoMetadata.width || null,
+      height: videoMetadata.height || null,
+      fps: videoMetadata.fps || 30,
+      durationMs: videoMetadata.durationMs || null,
     },
 
+    // POSE OBJECT (always valid structure)
     pose: {
-      frames: Array.isArray(poseFrames) ? poseFrames : [],
-      timestamps: extractTimestamps(poseFrames),
-      jointsTracked: extractTrackedJoints(poseFrames),
+      frames: safePoseFrames,
+      timestamps: extractTimestamps(safePoseFrames),
+      jointsTracked: extractTrackedJoints(safePoseFrames),
       confidenceSummary: {
-        average: calculateAverageConfidence(poseFrames),
-        min: calculateMinConfidence(poseFrames),
-        max: calculateMaxConfidence(poseFrames),
+        average: calculateAverageConfidence(safePoseFrames),
+        min: calculateMinConfidence(safePoseFrames),
+        max: calculateMaxConfidence(safePoseFrames),
       },
     },
 
+    // DERIVED OBJECT (always valid structure)
     derived: {
-      angleFrames: source.angleFrames || [],
-      movementName: source.movement_name || source.movementName || category,
-      category,
-      metrics: source.metrics || {},
+      angleFrames: Array.isArray(source.angleFrames) ? source.angleFrames : [],
+      movementName: source.movement_name || source.movementName || category || 'unknown',
+      category: category || 'unknown',
+      metrics: (source.metrics && typeof source.metrics === 'object') ? source.metrics : {},
     },
 
+    // ANNOTATIONS OBJECT (always valid structure)
     annotations: {
       frames: [],
       ranges: [],
       markers: [],
     },
 
-    audioComments: [],
-    compareTargets: [],
+    // AUXILIARY FIELDS (always valid)
+    audioComments: Array.isArray(source.audioComments) ? source.audioComments : [],
+    compareTargets: Array.isArray(source.compareTargets) ? source.compareTargets : [],
 
-    // Flags for UI/UX degradation
+    // FLAGS FOR UI/UX DEGRADATION (always valid)
     flags: {
       hasVideo: videoBlob instanceof Blob,
-      hasPoseData: poseFrames.length > 0,
-      isComplete: videoBlob instanceof Blob && poseFrames.length > 0,
-      isFallback: videoBlob === null || poseFrames.length === 0,
+      hasPoseData: safePoseFrames.length > 0,
+      isComplete: (videoBlob instanceof Blob) && (safePoseFrames.length > 0),
+      isFallback: !(videoBlob instanceof Blob) || (safePoseFrames.length === 0),
     },
   };
 
