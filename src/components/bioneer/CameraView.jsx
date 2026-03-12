@@ -359,13 +359,21 @@ export default function CameraView({ exercise, onStop }) {
 
       {/* ── Mute ─────────────────────────────────────────────────────────── */}
       <div className="absolute top-16 right-4 z-50">
-        <button onClick={() => setMuted(m => !m)}
-          className="p-2.5 rounded-full border"
-          style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
-          {muted
-            ? <VolumeX className="w-4 h-4 text-white/50" />
-            : <Volume2 className="w-4 h-4 text-white" />}
-        </button>
+        <div className="flex gap-2">
+          <CameraToggleButton
+            cameraFacing={cameraFacing}
+            isSwitching={isSwitching}
+            onSwitch={switchCamera}
+            disabled={camState !== 'active'}
+          />
+          <button onClick={() => setMuted(m => !m)}
+            className="p-2.5 rounded-full border"
+            style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
+            {muted
+              ? <VolumeX className="w-4 h-4 text-white/50" />
+              : <Volume2 className="w-4 h-4 text-white" />}
+          </button>
+        </div>
       </div>
 
       {/* ── Rep Mastery Badge ────────────────────────────────────────────── */}
