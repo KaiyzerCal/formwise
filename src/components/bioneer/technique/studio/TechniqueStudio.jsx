@@ -16,6 +16,7 @@ import { normalizeToTechniqueSession } from './techniqueSessionNormalizer';
 import { useFrameSync } from './useFrameSync';
 import { useAnnotationEditor } from './useAnnotationEditor';
 import { getTechniqueDraft } from '../techniqueStorage';
+import { saveTechniqueProject } from '../TechniqueProjectStore';
 import { X } from 'lucide-react';
 
 export default function TechniqueStudio() {
