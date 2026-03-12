@@ -5,7 +5,9 @@ import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl } from
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
 import FreestyleReplay from "../components/bioneer/history/FreestyleReplay";
+import { createTechniqueDraftFromFreestyleSession } from "../components/bioneer/technique/techniqueConverter";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
 
