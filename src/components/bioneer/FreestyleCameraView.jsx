@@ -11,6 +11,7 @@ import { usePoseRuntime } from './live/usePoseRuntime';
 import { usePoseInferenceLoop } from './live/usePoseInferenceLoop';
 import SessionReadinessGate from './live/SessionReadinessGate';
 import PoseErrorCard from './live/PoseErrorCard';
+import CameraToggle from './CameraToggle';
 import { useSessionRecorder } from './session/useSessionRecorder';
 import { createFreestyleSession, SESSION_CATEGORIES } from './session/sessionTypes';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
