@@ -71,13 +71,100 @@ async function acquireStream(facingMode = 'environment') {
 export function useCameraStream(videoRef, facingMode = 'environment') {
   const [camState, setCamState] = useState('idle');
   const [camError, setCamError] = useState(null);
+  const [isSwitching, setIsSwitching] = useState(false);
   const streamRef = useRef(null);
+  const switchAbortRef = useRef(null);
+
+  /**
+   * Safely switch camera without unmounting — handles cleanup + rebind
+   */
+  const switchCamera = async (newFacingMode) => {
+    try {
+      setIsSwitching(true);
+      setCamError(null);
+
+      // Abort any in-flight operations
+      if (switchAbortRef.current) {
+        switchAbortRef.current.abort();
+      }
+      switchAbortRef.current = new AbortController();
+
+      // Stop current stream's tracks
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+
+      const video = videoRef.current;
+      if (!video) {
+        throw new Error('Video element not found');
+      }
+
+      // Clear old stream from video element
+      video.srcObject = null;
+
+      // Acquire new stream
+      const newStream = await acquireStream(newFacingMode);
+
+      if (switchAbortRef.current?.signal.aborted) {
+        newStream.getTracks().forEach(t => t.stop());
+        return;
+      }
+
+      // Bind new stream to video
+      streamRef.current = newStream;
+      video.srcObject = newStream;
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('autoplay', 'true');
+      video.setAttribute('muted', 'true');
+      video.muted = true;
+
+      // Wait for metadata and play
+      await new Promise((resolve, reject) => {
+        const onMetadata = () => {
+          video.removeEventListener('loadedmetadata', onMetadata);
+          const playPromise = video.play();
+          if (playPromise && typeof playPromise.then === 'function') {
+            playPromise.then(resolve).catch(() => resolve());
+          } else {
+            resolve();
+          }
+        };
+
+        video.addEventListener('loadedmetadata', onMetadata);
+        const timeoutId = setTimeout(() => {
+          video.removeEventListener('loadedmetadata', onMetadata);
+          if (video.readyState >= 1) resolve();
+          else reject(new Error('Video metadata timeout'));
+        }, 5000);
+
+        return () => clearTimeout(timeoutId);
+      });
+
+      setIsSwitching(false);
+      return true;
+    } catch (err) {
+      setIsSwitching(false);
+      
+      let msg = `Camera error: ${err?.message || 'unknown'}`;
+      if (err?.name === 'NotAllowedError') {
+        msg = 'Camera permission denied. Tap Settings > Camera to allow.';
+      } else if (err?.name === 'NotFoundError') {
+        msg = 'No camera found on this device.';
+      } else if (err?.name === 'NotReadableError') {
+        msg = 'Camera is in use by another app. Close it and try again.';
+      } else if (err?.message?.includes('facingMode')) {
+        msg = 'Requested camera not available.';
+      }
+      
+      setCamError(msg);
+      return false;
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
     
-    // Don't request permission on mount — only on explicit user interaction
-    // Parent component should call this hook only when user clicks a button
     if (!videoRef.current) {
       setCamState('idle');
       return;
@@ -119,10 +206,8 @@ export function useCameraStream(videoRef, facingMode = 'environment') {
             const playPromise = video.play();
             if (playPromise && typeof playPromise.then === 'function') {
               playPromise.then(resolve).catch((err) => {
-                // play() can fail if video paused before it started
-                // Try again or resolve with warning
                 console.warn('Initial play() failed, will retry', err);
-                resolve(); // Still continue — video may auto-play
+                resolve();
               });
             } else {
               resolve();
@@ -183,6 +268,9 @@ export function useCameraStream(videoRef, facingMode = 'environment') {
     // Cleanup on unmount or facingMode change
     return () => {
       cancelled = true;
+      if (switchAbortRef.current) {
+        switchAbortRef.current.abort();
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop());
         streamRef.current = null;
@@ -190,5 +278,5 @@ export function useCameraStream(videoRef, facingMode = 'environment') {
     };
   }, [videoRef, facingMode]);
 
-  return { camState, camError, streamRef };
+  return { camState, camError, streamRef, isSwitching, switchCamera };
 }
