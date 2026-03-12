@@ -80,6 +80,7 @@ export function useLiveAnalysis(exerciseId, userId = 'local') {
 
     orch.onFrame = (payload) => {
       if (!payload) return;
+      frameRef.current = payload;   // sync update for canvas renderer
       setFrameState(payload);
 
       const { phase, faults, lockState: ls } = payload;
@@ -139,6 +140,7 @@ export function useLiveAnalysis(exerciseId, userId = 'local') {
 
   return {
     frameState,
+    frameRef,      // sync ref for canvas renderer (no React re-render lag)
     repCount,
     lockState,
     activeCue,
