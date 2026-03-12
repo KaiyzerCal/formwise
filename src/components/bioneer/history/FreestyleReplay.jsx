@@ -81,14 +81,14 @@ export default function FreestyleReplay({ session, onClose }) {
     }
   }, [poseFrames, getFrameAtTime]);
 
-  // When playing, continuously render
+  // When playing, continuously render (only if not composited)
   const renderOverlay = useCallback(() => {
     const video = videoRef.current;
-    if (!video || video.paused) return;
+    if (!video || video.paused || !shouldDrawOverlay) return;
 
     renderOverlayAtTime(video.currentTime);
     animationFrameRef.current = requestAnimationFrame(renderOverlay);
-  }, [renderOverlayAtTime]);
+  }, [renderOverlayAtTime, shouldDrawOverlay]);
 
   const handlePlay = useCallback(() => {
     if (videoRef.current) {
