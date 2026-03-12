@@ -195,8 +195,11 @@ export default function TechniqueCompare() {
       {/* ── Source Controls ──────────────────────────────────────── */}
       <div className="flex-shrink-0 border-b" style={{ borderColor: COLORS.border, background: COLORS.surface }}>
         <SourceSelector
-          userSrc={userSrc} userFilename={userFilename} refClipId={refClipId}
-          onUserUpload={handleUserUpload} onRefSelect={handleRefSelect}
+          userSrc={userSrc}
+          userFilename={userFilename || (sourceMode === 'history-import' ? 'Imported from History' : '')}
+          refClipId={refClipId}
+          onUserUpload={handleUserUpload}
+          onRefSelect={handleRefSelect}
         />
       </div>
 
