@@ -96,6 +96,16 @@ export default function TechniqueCompare() {
     if (videoRightRef.current) videoRightRef.current.playbackRate = speed;
   }, [userSrc, refSrc, speed]);
 
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (videoUrlRef.current) {
+        URL.revokeObjectURL(videoUrlRef.current);
+        videoUrlRef.current = null;
+      }
+    };
+  }, []);
+
   const handleUserUpload = (url, name) => {
     pause(); setUserSrc(url); setUserFilename(name); setCurrentTime(0); setDuration(0);
   };
