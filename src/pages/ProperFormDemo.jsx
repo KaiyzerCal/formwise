@@ -106,7 +106,7 @@ export default function ProperFormDemo() {
           </div>
           <div className="px-2.5 py-1 rounded-full border border-[#C9A84C]/40 bg-[#C9A84C]/10">
             <span className="text-[9px] font-bold text-[#C9A84C] tracking-[0.2em] uppercase" style={{ fontFamily: "'DM Mono', monospace" }}>
-              IDEAL FORM
+              REFERENCE
             </span>
           </div>
         </div>
