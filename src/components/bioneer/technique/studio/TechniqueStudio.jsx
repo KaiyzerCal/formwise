@@ -101,25 +101,34 @@ export default function TechniqueStudio() {
 
       try {
         const draftId = searchParams.get('draft');
+        console.log('[TechniqueStudio] Loading draft ID:', draftId);
 
         if (!draftId) {
-          setLoadError('No session specified');
+          setLoadError('No draft ID provided in URL');
+          console.error('[TechniqueStudio] Missing draft parameter');
+          setLoading(false);
           return;
         }
 
         const draft = await getTechniqueDraft(draftId);
+        console.log('[TechniqueStudio] Retrieved draft:', draft ? 'success' : 'null');
 
         if (!draft) {
-          setLoadError('Session not found or was deleted');
+          setLoadError('Session not found or was deleted. Draft ID: ' + draftId);
+          console.error('[TechniqueStudio] Draft not found for ID:', draftId);
+          setLoading(false);
           return;
         }
 
         // Normalize the draft into a TechniqueSession
         const normalized = normalizeToTechniqueSession(draft);
+        console.log('[TechniqueStudio] Session normalized successfully');
         setTechniqueSession(normalized);
       } catch (error) {
-        console.error('Failed to load session:', error);
-        setLoadError(error.message || 'Failed to load session');
+        console.error('[TechniqueStudio] Error loading session:', error);
+        setLoadError(
+          `Failed to load session: ${error?.message || 'Unknown error'}\n\nCheck browser console for details.`
+        );
       } finally {
         setLoading(false);
       }
