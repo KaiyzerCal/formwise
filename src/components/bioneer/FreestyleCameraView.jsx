@@ -33,6 +33,8 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
   const [elapsedTime, setElapsedTime] = useState(0);
   const [poseConfidence, setPoseConfidence] = useState(0);
   const [visibleJoints, setVisibleJoints] = useState(0);
+  const [workflowState, setWorkflowState] = useState('idle'); // idle, recording, finalizing, error
+  const [errorMsg, setErrorMsg] = useState(null);
 
   // ── Camera ───────────────────────────────────────────────────────────────
   const { camState, camError } = useCameraStream(videoRef);
