@@ -112,6 +112,11 @@ export default function CameraView({ exercise, onStop }) {
     if (allReady && !sessionActive) setSessionActive(true);
   }, [allReady, sessionActive]);
 
+  // Manual override — let user force-start when pose is ready but body detection stalls
+  const handleForceStart = useCallback(() => {
+    if (poseState === 'ready') setSessionActive(true);
+  }, [poseState]);
+
   const guidance = !bodyDetected && poseState === 'ready'
     ? 'Ensure your full body is visible'
     : !confOk && bodyDetected
@@ -180,7 +185,11 @@ export default function CameraView({ exercise, onStop }) {
 
       {/* ── Readiness gate (only shown before session starts) ─────────────── */}
       {!sessionActive && poseState !== 'failed' && camState === 'active' && (
-        <SessionReadinessGate checks={readinessChecks} guidance={guidance} />
+        <SessionReadinessGate
+          checks={readinessChecks}
+          guidance={guidance}
+          onForceStart={handleForceStart}
+        />
       )}
 
       {/* ── Loading overlay while pose initializing ───────────────────────── */}
