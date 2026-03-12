@@ -11,6 +11,7 @@ import { usePoseInferenceLoop }  from './live/usePoseInferenceLoop';
 import SessionReadinessGate      from './live/SessionReadinessGate';
 import LiveSessionHUD            from './live/LiveSessionHUD';
 import PoseErrorCard             from './live/PoseErrorCard';
+import CameraToggle              from './CameraToggle';
 import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles, computeFormScore } from './poseEngine';
