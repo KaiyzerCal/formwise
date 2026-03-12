@@ -22,6 +22,8 @@ export function createFreestyleSession({
   poseFrames = [],
   angleFrames = [],
   duration = 0,
+  cameraFacing = 'environment',
+  isMirroredPreview = false,
 }) {
   return {
     sessionId,
@@ -33,6 +35,8 @@ export function createFreestyleSession({
     poseFrames,
     angleFrames,
     compositedVideo: true,
+    cameraFacing,
+    isMirroredPreview,
   };
 }
 
