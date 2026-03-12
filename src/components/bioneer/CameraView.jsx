@@ -15,6 +15,7 @@ import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles } from './poseEngine';
 import { initAudio, destroyAudio, beep } from './audioEngine';
+import { TemporalFilterEngine } from './pipeline/TemporalFilterEngine';
 
 const GOLD = '#C9A84C';
 const RED  = '#EF4444';
