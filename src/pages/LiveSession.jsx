@@ -31,6 +31,15 @@ export default function LiveSession() {
   const handleStart = (movement) => {
     setSelectedExercise(movement);
     sessionStartRef.current = Date.now();
+    // Stay in select phase to allow movement profile selection before camera
+  };
+
+  const handleStartWithMovement = () => {
+    if (!selectedExercise || !selectedMovementId) {
+      alert('Please select both an exercise and a movement profile');
+      return;
+    }
+    sessionStartRef.current = Date.now();
     setPhase("camera");
   };
 
