@@ -286,10 +286,10 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
       {sessionActive && (
         <div className="absolute bottom-28 left-0 right-0 z-50 flex justify-center pointer-events-none">
           <div className="px-3 py-2 rounded-xl border"
-            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderColor: 'rgba(255,255,255,0.08)' }}>
-            <div className="flex items-center gap-4 text-xs" style={{ fontFamily: "'DM Mono', monospace" }}>
-              <span style={{ color: COLORS.textTertiary }}>CONF: <span style={{ color: GOLD }}>{Math.round(poseConfidence * 100)}%</span></span>
-              <span style={{ color: COLORS.textTertiary }}>JOINTS: <span style={{ color: GOLD }}>{visibleJoints}/33</span></span>
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderColor: 'rgba(255,255,255,0.08)', fontFamily: FONT.mono }}>
+            <div className="flex items-center gap-4 text-xs">
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>CONF: <span style={{ color: GOLD }}>{Math.round(poseConfidence * 100)}%</span></span>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>JOINTS: <span style={{ color: GOLD }}>{visibleJoints}/33</span></span>
             </div>
           </div>
         </div>
