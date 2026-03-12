@@ -50,6 +50,8 @@ const AuthenticatedApp = () => {
       } />
       {/* Freestyle session route (no layout) */}
       <Route path="/FreestyleSession" element={<FreestyleSession />} />
+      {/* Technique Studio route (no layout) */}
+      <Route path="/TechniqueStudio" element={<TechniqueStudio />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
