@@ -76,18 +76,23 @@ function buildCoachingText(exerciseDef, jointData) {
 }
 
 export default function SessionSummary({ sessionData, onSave, onDiscard, saving, saveOutcome }) {
-  const score = sessionData.movement_score ?? sessionData.form_score_overall ?? 0;
+  const score = Math.round(sessionData.movement_score ?? sessionData.form_score_overall ?? 0);
   const exerciseDef = sessionData.exercise_def;
   const jointData = sessionData.joint_data;
 
   // Mastery stats from session logger reps array
   const reps = sessionData.reps ?? [];
-  const repScores = reps.map(r => r.score).filter(s => s != null);
+  const repScores = reps
+    .map(r => r.score)
+    .filter(s => s != null && !isNaN(s));
   const avgMastery = repScores.length
     ? Math.round(repScores.reduce((a, b) => a + b, 0) / repScores.length)
     : null;
   const bestRep = repScores.length
-    ? { score: Math.max(...repScores), number: reps[repScores.indexOf(Math.max(...repScores))]?.repNumber }
+    ? {
+        score: Math.max(...repScores),
+        number: reps[repScores.indexOf(Math.max(...repScores))]?.repNumber ?? 0
+      }
     : null;
   const masteryColor = avgMastery == null ? '#888' : avgMastery >= 90 ? '#C9A84C' : avgMastery >= 80 ? '#22C55E' : avgMastery >= 70 ? '#EAB308' : '#EF4444';
 
