@@ -111,8 +111,9 @@ export function useLiveAnalysis(exerciseId, userId = 'local') {
 
     return () => {
       clearTimeout(cueTimerRef.current);
-      // Reset state cleanly so the next exercise starts fresh
-      orchRef.current?.reset();
+      // Use local reference so cleanup always targets THIS orchestrator,
+      // not whatever orchRef.current points to after a new one is created
+      orch.reset?.();
     };
   }, [exerciseId, userId]);
 
