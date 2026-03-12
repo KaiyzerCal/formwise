@@ -5,22 +5,31 @@
  *
  * FIX: Falls back from environment camera → any camera → reduced resolution
  * FIX: Waits for video loadedmetadata before signalling 'active'
+ * FIX: Supports front/back camera switching via facingMode constraint
  */
 import { useEffect, useRef, useState } from 'react';
 
-// Ordered constraints to try. First match wins.
-const CAMERA_CONSTRAINTS = [
-  { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } },
-  { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
-  { video: { width: { ideal: 640 }, height: { ideal: 480 } } },
-  { video: true },
-];
+/**
+ * Build constraint array for a given facing mode
+ * Attempt order: exact → ideal → generic fallback
+ */
+function buildConstraints(facingMode) {
+  return [
+    { video: { facingMode: { exact: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+    { video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+    { video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } } },
+    { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
+    { video: { width: { ideal: 640 }, height: { ideal: 480 } } },
+    { video: true },
+  ];
+}
 
-async function acquireStream() {
+async function acquireStream(facingMode = 'environment') {
   let lastErr = null;
-  for (const constraints of CAMERA_CONSTRAINTS) {
+  const constraints = buildConstraints(facingMode);
+  for (const c of constraints) {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(c);
       return stream;
     } catch (err) {
       lastErr = err;
@@ -31,7 +40,7 @@ async function acquireStream() {
   throw lastErr;
 }
 
-export function useCameraStream(videoRef) {
+export function useCameraStream(videoRef, facingMode = 'environment') {
   const [camState, setCamState] = useState('idle');
   const [camError, setCamError] = useState(null);
   const streamRef               = useRef(null);
