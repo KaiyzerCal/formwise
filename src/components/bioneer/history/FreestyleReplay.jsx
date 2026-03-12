@@ -72,14 +72,21 @@ export default function FreestyleReplay({ session, onClose }) {
     const ctx = overlay.getContext('2d');
     ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-    // Draw skeleton
-    if (frame.landmarks && frame.landmarks.length > 0) {
-      drawSkeleton(ctx, frame.landmarks, [], overlay.width, overlay.height);
+    // Draw skeleton (mirror landmarks if recorded with front camera)
+      if (frame.landmarks && frame.landmarks.length > 0) {
+        let landmarksToRender = frame.landmarks;
+        if (isMirroredPreview) {
+          landmarksToRender = frame.landmarks.map(lm => ({
+            ...lm,
+            x: 1 - lm.x, // Mirror horizontally
+          }));
+        }
+        drawSkeleton(ctx, landmarksToRender, [], overlay.width, overlay.height);
 
-      // Extract angles from frame
-      const angles = frame.angles || {};
-      setCurrentAngles(angles);
-    }
+        // Extract angles from frame
+        const angles = frame.angles || {};
+        setCurrentAngles(angles);
+      }
   }, [poseFrames, getFrameAtTime]);
 
   // When playing, continuously render (only if not composited)
