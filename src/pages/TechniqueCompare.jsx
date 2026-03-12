@@ -47,6 +47,7 @@ export default function TechniqueCompare() {
   const [sourceMode,    setSourceMode]    = useState('manual');
   const [importLabel,   setImportLabel]   = useState('');
   const [draftError,    setDraftError]    = useState(null);
+  const [recordingMode, setRecordingMode] = useState(false);
 
   const videoLeftRef  = useRef(null);
   const videoRightRef = useRef(null);
