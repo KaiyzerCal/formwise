@@ -106,6 +106,49 @@ export default function TechniqueCompare() {
     pause();
   };
 
+  // Load technique draft from history import
+  useEffect(() => {
+    const draftId = searchParams.get('draft');
+    if (!draftId) return;
+
+    setDraftError(null);
+    getTechniqueDraft(draftId)
+      .then(draft => {
+        if (!draft) {
+          setDraftError('Imported draft not found or was deleted.');
+          return;
+        }
+
+        // Create blob URL
+        if (draft.videoBlob instanceof Blob) {
+          if (videoUrlRef.current) {
+            URL.revokeObjectURL(videoUrlRef.current);
+          }
+          const url = URL.createObjectURL(draft.videoBlob);
+          videoUrlRef.current = url;
+          setUserSrc(url);
+          setUserFilename(`Imported: ${draft.category || 'Freestyle'}`);
+          setSourceMode('history-import');
+          setImportLabel(`Imported from History • ${draft.category || 'Freestyle'}`);
+          setCurrentTime(0);
+          setDuration(0);
+        } else {
+          setDraftError('Imported video data is invalid.');
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load technique draft:', err);
+        setDraftError('Failed to load imported draft.');
+      });
+
+    return () => {
+      if (videoUrlRef.current) {
+        URL.revokeObjectURL(videoUrlRef.current);
+        videoUrlRef.current = null;
+      }
+    };
+  }, [searchParams]);
+
   return (
     <div className="h-full flex flex-col" style={{ fontFamily: FONT.mono, background: COLORS.bg }}>
 
