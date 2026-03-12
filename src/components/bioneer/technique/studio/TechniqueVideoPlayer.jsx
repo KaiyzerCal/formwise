@@ -148,6 +148,113 @@ export default function TechniqueVideoPlayer({
     }
   }, [onTimeUpdate]);
 
+  /**
+   * Get normalized coordinates relative to overlay
+   */
+  const getNormalizedCoords = useCallback((e) => {
+    const canvas = overlayCanvasRef.current;
+    if (!canvas) return null;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((e.clientY - rect.top) / rect.height) * canvas.height;
+
+    return { x, y };
+  }, []);
+
+  /**
+   * Handle pointer down (start drawing)
+   */
+  const handlePointerDown = useCallback((e) => {
+    if (activeTool === 'pointer' || !activeTool || isPlaying) return;
+
+    const coords = getNormalizedCoords(e);
+    if (!coords) return;
+
+    setIsDrawing(true);
+    setDraftPoints([coords]);
+  }, [activeTool, isPlaying, getNormalizedCoords]);
+
+  /**
+   * Handle pointer move (draw)
+   */
+  const handlePointerMove = useCallback((e) => {
+    if (!isDrawing) return;
+
+    const coords = getNormalizedCoords(e);
+    if (!coords) return;
+
+    if (activeTool === 'freehand') {
+      setDraftPoints(prev => [...prev, coords]);
+    }
+  }, [isDrawing, activeTool, getNormalizedCoords]);
+
+  /**
+   * Handle pointer up (finish drawing)
+   */
+  const handlePointerUp = useCallback(() => {
+    if (!isDrawing || draftPoints.length === 0) {
+      setIsDrawing(false);
+      setDraftPoints([]);
+      return;
+    }
+
+    if (activeTool === 'line' && draftPoints.length >= 2) {
+      onAnnotationCreate?.({
+        type: 'line',
+        frameIndex: currentFrameIndex,
+        startPoint: draftPoints[0],
+        endPoint: draftPoints[draftPoints.length - 1],
+      });
+    } else if (activeTool === 'arrow' && draftPoints.length >= 2) {
+      onAnnotationCreate?.({
+        type: 'arrow',
+        frameIndex: currentFrameIndex,
+        startPoint: draftPoints[0],
+        endPoint: draftPoints[draftPoints.length - 1],
+      });
+    } else if (activeTool === 'circle' && draftPoints.length >= 2) {
+      const center = draftPoints[0];
+      const end = draftPoints[draftPoints.length - 1];
+      const radius = Math.sqrt(Math.pow(end.x - center.x, 2) + Math.pow(end.y - center.y, 2));
+      onAnnotationCreate?.({
+        type: 'circle',
+        frameIndex: currentFrameIndex,
+        center,
+        radius,
+      });
+    } else if (activeTool === 'rectangle' && draftPoints.length >= 2) {
+      const topLeft = draftPoints[0];
+      const bottomRight = draftPoints[draftPoints.length - 1];
+      onAnnotationCreate?.({
+        type: 'rectangle',
+        frameIndex: currentFrameIndex,
+        topLeft,
+        bottomRight,
+      });
+    } else if (activeTool === 'freehand' && draftPoints.length > 2) {
+      onAnnotationCreate?.({
+        type: 'freehand',
+        frameIndex: currentFrameIndex,
+        points: draftPoints,
+      });
+    } else if (activeTool === 'angle' && draftPoints.length >= 2) {
+      // Store for potential 3-point angle (simplified: use 2 points as angle visualization)
+      onAnnotationCreate?.({
+        type: 'angle_marker',
+        frameIndex: currentFrameIndex,
+        points: {
+          p1: draftPoints[0],
+          p2: draftPoints[Math.floor(draftPoints.length / 2)],
+          p3: draftPoints[draftPoints.length - 1],
+        },
+      });
+    }
+
+    setIsDrawing(false);
+    setDraftPoints([]);
+  }, [isDrawing, draftPoints, activeTool, currentFrameIndex, onAnnotationCreate]);
+
   return (
     <div className="relative w-full h-full bg-black overflow-hidden">
       {/* Video */}
