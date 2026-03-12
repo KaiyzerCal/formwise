@@ -13,9 +13,11 @@ import LiveSessionHUD            from './live/LiveSessionHUD';
 import PoseErrorCard             from './live/PoseErrorCard';
 import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
-import { smoothLandmarks, computeJointAngles } from './poseEngine';
+import { smoothLandmarks, computeJointAngles, computeFormScore } from './poseEngine';
 import { initAudio, destroyAudio, beep } from './audioEngine';
 import { TemporalFilterEngine } from './pipeline/TemporalFilterEngine';
+import JointIntelligenceRail from './live/JointIntelligenceRail';
+import FormStabilityRing from './live/FormStabilityRing';
 
 const GOLD = '#C9A84C';
 const RED  = '#EF4444';
