@@ -353,8 +353,8 @@ export default function CameraView({ exercise, onStop }) {
         />
       )}
 
-      {/* ── Loading overlay while pose initializing ───────────────────────── */}
-      {poseState === 'initializing' && camState === 'active' && (
+      {/* ── Loading overlay while pose initializing or camera switching ──── */}
+      {(poseState === 'initializing' && camState === 'active') || (isSwitching || isSwitchingCamera) && (
         <div className="absolute top-20 left-0 right-0 flex justify-center z-50 pointer-events-none">
           <div className="flex items-center gap-3 px-4 py-2.5 rounded-full border"
             style={{ background: 'rgba(0,0,0,0.75)', borderColor: `${GOLD}40`, backdropFilter: 'blur(8px)' }}>
@@ -362,7 +362,7 @@ export default function CameraView({ exercise, onStop }) {
               style={{ borderColor: GOLD, borderTopColor: 'transparent' }} />
             <span className="text-[10px] tracking-widest uppercase"
               style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
-              {phase || 'Initializing pose…'}
+              {isSwitching || isSwitchingCamera ? 'Switching camera…' : phase || 'Initializing pose…'}
             </span>
           </div>
         </div>
