@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { EXERCISES } from "./exerciseLibrary";
+import { EXERCISES, FREESTYLE_MODE } from "./exerciseLibrary";
 import { SPORTS_MOVEMENTS } from "./sportsLibrary";
 import ExerciseCard from "./ExerciseCard";
 import { ArrowLeft, Scan } from "lucide-react";
@@ -7,9 +7,14 @@ import { ArrowLeft, Scan } from "lucide-react";
 export default function MovementLibrary({ onSelect, selectedId }) {
   const [activeTab, setActiveTab] = useState("strength");
 
-  const movements = activeTab === "strength"
+  const baseMovements = activeTab === "strength"
     ? EXERCISES
     : SPORTS_MOVEMENTS.filter(m => m.category === "sports" || m.category === "athletic" || !m.category);
+
+  // Add Freestyle mode at the top of the list
+  const movements = activeTab === "strength"
+    ? [FREESTYLE_MODE, ...baseMovements]
+    : baseMovements;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
