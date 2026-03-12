@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
 import { getAllSessions } from "../components/bioneer/data/sessionStore";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
