@@ -199,13 +199,14 @@ export default function CameraView({ exercise, onStop }) {
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const session = stopSession(); // full session object from SessionLogger.finalize()
     const summary = session?.summary;
+    const fallbackScore = formScore ?? 0;
     onStop({
       exercise_id:        exercise.id,
       category:           exercise.category || 'strength',
       duration_seconds:   Math.round(elapsed),
-      form_score_overall: summary?.avgScore      ?? formScore,
-      form_score_peak:    summary?.peakScore     ?? formScore,
-      form_score_lowest:  summary?.lowestScore   ?? formScore,
+      form_score_overall: summary?.avgScore      ?? fallbackScore,
+      form_score_peak:    summary?.peakScore     ?? fallbackScore,
+      form_score_lowest:  summary?.lowestScore   ?? fallbackScore,
       movement_score:     summary?.avgScore      ?? 0,
       reps_detected:      repCount,
       alerts:             session?.faultLog      ?? [],
