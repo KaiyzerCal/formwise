@@ -35,15 +35,19 @@ export default function ExerciseCard({ exercise, selected, onClick }) {
       </h3>
       <p className="text-white/40 text-xs mt-1 tracking-wider uppercase"
          style={{ fontFamily: "'DM Mono', monospace" }}>
-        {exercise.muscleGroup}
+        {exercise.isFreestyle
+          ? 'Track any movement live and review it later'
+          : exercise.muscleGroup}
       </p>
-      <div className="mt-3 flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]/60" />
-        <span className="text-[10px] text-white/30 uppercase tracking-widest"
-              style={{ fontFamily: "'DM Mono', monospace" }}>
-          {exercise.camera} view
-        </span>
-      </div>
+      {!exercise.isFreestyle && (
+        <div className="mt-3 flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]/60" />
+          <span className="text-[10px] text-white/30 uppercase tracking-widest"
+                style={{ fontFamily: "'DM Mono', monospace" }}>
+            {exercise.camera} view
+          </span>
+        </div>
+      )}
 
       {/* Watch Proper Form button */}
       {hasDemo && (
