@@ -261,9 +261,10 @@ export default function CameraView({ exercise, onStop }) {
   return (
     <div className="fixed inset-0 z-40 bg-black">
 
-      {/* Video */}
+      {/* Video — mirror when using front camera */}
       <video ref={videoRef} playsInline muted
-        className="absolute inset-0 w-full h-full object-cover" />
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
 
       {/* Canvas */}
       <canvas ref={canvasRef}
