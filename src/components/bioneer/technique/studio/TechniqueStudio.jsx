@@ -126,6 +126,12 @@ export default function TechniqueStudio() {
     };
 
     loadSession();
+
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
   }, [searchParams]);
 
   /**
