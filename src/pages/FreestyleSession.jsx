@@ -44,6 +44,9 @@ export default function FreestyleSession() {
       return;
     }
 
+    // Capture camera metadata from localStorage
+    freestyleSession.cameraFacing = localStorage.getItem('bioneer_camera_facing') || 'environment';
+
     setRecordedSession(freestyleSession);
     setPhase('replay');
   }, []);
