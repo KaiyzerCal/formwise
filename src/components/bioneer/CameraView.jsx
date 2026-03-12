@@ -161,9 +161,7 @@ export default function CameraView({ exercise, onStop }) {
     ? 'Step back — improve lighting'
     : null;
 
-  const formScore = frameState
-    ? Math.round((frameState.confidence ?? 1) * 100)
-    : 100;
+  const formScore = liveFormScore;
 
   // ── Stop session ──────────────────────────────────────────────────────────
   const handleStop = () => {
