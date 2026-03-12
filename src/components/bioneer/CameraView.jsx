@@ -33,7 +33,7 @@ export default function CameraView({ exercise, onStop }) {
   const [poseResults, setPoseResults] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
   const [liveJointResults, setLiveJointResults] = useState([]);
-  const [liveFormScore, setLiveFormScore] = useState(100);
+  const [liveFormScore, setLiveFormScore] = useState(null);
 
   // Temporal filter engine — persists for the lifetime of this exercise session
   const temporalFilterRef = useRef(null);
