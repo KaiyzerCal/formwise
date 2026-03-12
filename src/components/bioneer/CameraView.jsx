@@ -169,19 +169,21 @@ export default function CameraView({ exercise, onStop }) {
   // ── Stop session ──────────────────────────────────────────────────────────
   const handleStop = () => {
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    const summary = stopSession();
+    const session = stopSession(); // full session object from SessionLogger.finalize()
+    const summary = session?.summary;
     onStop({
       exercise_id:        exercise.id,
       category:           exercise.category || 'strength',
       duration_seconds:   Math.round(elapsed),
-      form_score_overall: summary?.avgFormScore  ?? formScore,
+      form_score_overall: summary?.avgScore      ?? formScore,
       form_score_peak:    summary?.peakScore     ?? formScore,
       form_score_lowest:  summary?.lowestScore   ?? formScore,
-      movement_score:     summary?.movementScore ?? 0,
+      movement_score:     summary?.avgScore      ?? 0,
       reps_detected:      repCount,
-      alerts:             summary?.alerts        ?? [],
+      alerts:             session?.faultLog      ?? [],
       form_timeline:      summary?.formTimeline  ?? [],
       phases:             summary?.phases        ?? {},
+      reps:               session?.reps          ?? [], // for mastery stats
     });
   };
 
