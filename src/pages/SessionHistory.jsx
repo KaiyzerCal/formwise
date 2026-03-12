@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
 import { getAllSessions } from "../components/bioneer/data/sessionStore";
-import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl } from "../components/bioneer/history/sessionStorage";
+import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { createPageUrl } from "@/utils";
+import FreestyleReplay from "../components/bioneer/history/FreestyleReplay";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
 
