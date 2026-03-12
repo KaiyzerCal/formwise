@@ -9,14 +9,12 @@
  * FIX: Skip frame if currentTime hasn't advanced (paused video)
  */
 import { useEffect, useRef } from 'react';
-
-const THROTTLE_MS = 50; // ~20fps
+import { FPSGovernor } from '../pipeline/runtime/FPSGovernor';
 
 export function usePoseInferenceLoop({ videoRef, landmarkerRef, poseState, active, onResult }) {
   const rafRef      = useRef(null);
-  const lastTimeRef = useRef(-1);
-  const lastSentMs  = useRef(0);
   const onResultRef = useRef(onResult);
+  const govRef      = useRef(null);
 
   // Keep callback ref fresh without retriggering the loop effect
   useEffect(() => { onResultRef.current = onResult; }, [onResult]);
@@ -24,6 +22,9 @@ export function usePoseInferenceLoop({ videoRef, landmarkerRef, poseState, activ
   useEffect(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (poseState !== 'ready' || !active) return;
+
+    // Create a fresh governor for this session
+    govRef.current = new FPSGovernor({ target: 30, minFPS: 15 });
 
     const loop = () => {
       const video = videoRef.current;
@@ -43,14 +44,19 @@ export function usePoseInferenceLoop({ videoRef, landmarkerRef, poseState, activ
         video.videoHeight > 0 &&
         !video.paused &&
         !video.ended &&
-        now - lastSentMs.current >= THROTTLE_MS
+        govRef.current.tick(now)   // adaptive throttle replaces fixed THROTTLE_MS
       ) {
-        lastSentMs.current = now;
         try {
+          const t0     = performance.now();
           const result = lm.detectForVideo(video, now);
+          const frameMs = performance.now() - t0;
+          // Expose frame timing on the governor for external monitoring
+          govRef.current._lastFrameMs = frameMs;
           onResultRef.current?.({
             poseLandmarks:      result.landmarks?.[0]      ?? null,
             poseWorldLandmarks: result.worldLandmarks?.[0] ?? null,
+            _fps:               govRef.current.fps,
+            _frameMs:           frameMs,
           });
         } catch (err) {
           // frame failed — skip, keep looping
@@ -64,6 +70,7 @@ export function usePoseInferenceLoop({ videoRef, landmarkerRef, poseState, activ
     rafRef.current = requestAnimationFrame(loop);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      govRef.current?.reset();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poseState, active]);
