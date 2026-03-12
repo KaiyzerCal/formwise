@@ -42,21 +42,26 @@ export default function FreestyleSession() {
     setSaveError(null);
 
     try {
+      // Validate blob before saving
+      if (!recordedSession.videoBlob || !(recordedSession.videoBlob instanceof Blob) || recordedSession.videoBlob.size === 0) {
+        throw new Error('Replay unavailable: session recording did not finalize correctly.');
+      }
+
       await saveFreestyleSession({
         sessionId: recordedSession.sessionId,
         mode: recordedSession.mode,
         category: recordedSession.category,
         duration: recordedSession.duration,
         videoBlob: recordedSession.videoBlob,
-        poseFrames: recordedSession.poseFrames,
-        angleFrames: recordedSession.angleFrames,
+        poseFrames: recordedSession.poseFrames || [],
+        angleFrames: recordedSession.angleFrames || [],
       });
 
       // Reset to library after successful save
       setRecordedSession(null);
       setPhase('select');
     } catch (error) {
-      setSaveError(error.message);
+      setSaveError(error.message || 'Failed to save session. Please try again.');
       console.error('Failed to save freestyle session:', error);
     } finally {
       setIsSaving(false);
