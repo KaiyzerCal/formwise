@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
-import { MOCK_SESSIONS } from "../components/bioneer/ui/mockData";
 import { getAllSessions } from "../components/bioneer/data/sessionStore";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
@@ -34,13 +33,13 @@ export default function SessionHistory() {
   const [filter, setFilter] = useState('All Time');
   const [expandedId, setExpandedId] = useState(null);
 
-  const realRaw = useMemo(() => getAllSessions(), []);
-  const realSessions = useMemo(() => realRaw.map(adaptSession), [realRaw]);
-  // Use real sessions if any exist, otherwise fall back to mock
-  const sessions = realSessions.length > 0 ? realSessions : MOCK_SESSIONS;
+  const rawSessions = useMemo(() => getAllSessions(), []);
+  const sessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
   const totalReps = sessions.reduce((a, s) => a + s.reps, 0);
   const totalTime = sessions.reduce((a, s) => a + s.duration, 0);
-  const avgScore = Math.round(sessions.reduce((a, s) => a + s.score, 0) / sessions.length);
+  const avgScore = sessions.length > 0
+    ? Math.round(sessions.reduce((a, s) => a + s.score, 0) / sessions.length)
+    : 0;
 
   const mm = Math.floor(totalTime / 60);
 
