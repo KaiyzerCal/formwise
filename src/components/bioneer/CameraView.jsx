@@ -98,6 +98,10 @@ export default function CameraView({ exercise, onStop }) {
       beep(false);
     }
 
+    // ── Update React state for HUD panels
+    setLiveJointResults(jointResults);
+    setLiveFormScore(computeFormScore(jointResults));
+
     const ghost = generateGhostPose(smoothed);
     if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
     drawSkeleton(ctx, smoothed, jointResults, canvas.width, canvas.height);
