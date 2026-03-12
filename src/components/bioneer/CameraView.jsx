@@ -302,28 +302,34 @@ export default function CameraView({ exercise, onStop }) {
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
 
-      {/* ── Camera failed ──────────────────────────────────────────────────── */}
-      {camState === 'failed' && isSecure && (
+      {/* ── Camera failed or switch error ────────────────────────────────── */}
+      {(camState === 'failed' || camError) && isSecure && !isSwitching && (
         <div className="absolute inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.92)' }}>
           <div className="w-80 rounded-2xl border p-6 space-y-4 text-center"
             style={{ background: '#0c0c0c', borderColor: `${RED}40` }}>
             <p className="text-sm font-bold" style={{ color: RED, fontFamily: "'DM Mono', monospace" }}>
-              Camera Unavailable
+              Camera Error
             </p>
             <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)', fontFamily: "'DM Mono', monospace" }}>
               {camError}
             </p>
             <div className="space-y-2">
-              <button onClick={() => window.location.reload()}
+              <button onClick={() => {
+                setCamError(null);
+                window.location.reload();
+              }}
                 className="w-full py-2 rounded-lg text-xs font-bold"
                 style={{ background: 'rgba(201,168,76,0.2)', color: GOLD, border: `1px solid ${GOLD}40` }}>
                 Retry
               </button>
-              <button onClick={() => {
+              <button onClick={async () => {
                 const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
-                setCameraFacing(newFacing);
-                localStorage.setItem('bioneer_camera_facing', newFacing);
+                const success = await switchCamera(newFacing);
+                if (success) {
+                  setCameraFacing(newFacing);
+                  localStorage.setItem('bioneer_camera_facing', newFacing);
+                }
               }}
                 className="w-full py-2 rounded-lg text-xs font-bold"
                 style={{ background: 'rgba(201,168,76,0.2)', color: GOLD, border: `1px solid ${GOLD}40` }}>
