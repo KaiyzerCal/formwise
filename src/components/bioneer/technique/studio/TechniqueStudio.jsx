@@ -302,6 +302,7 @@ export default function TechniqueStudio() {
         {/* Video player + controls */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <TechniqueVideoPlayer
+            videoRef={videoRef}
             videoUrl={techniqueSession.video.url}
             poseFrames={techniqueSession.pose.frames}
             annotations={annotationEditor.annotations}
