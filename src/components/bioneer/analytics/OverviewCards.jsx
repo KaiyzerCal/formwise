@@ -26,7 +26,7 @@ const DIR_META = {
 export default function OverviewCards({ overview }) {
   if (!overview) return null;
 
-  const { avgFormScore, sessionCount, totalReps, totalTime, improvementDir, topFault, mostTrainedMovement } = overview;
+  const { avgFormScore, sessionCount, totalReps, totalTime, improvementDir, topFault, mostTrainedMovement, isEmpty } = overview;
   const dirMeta = improvementDir ? DIR_META[improvementDir] : null;
   const mm = Math.floor((totalTime ?? 0) / 60);
 
@@ -68,7 +68,9 @@ export default function OverviewCards({ overview }) {
             {mostTrainedMovement}
           </span>
         ) : (
-          <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>—</span>
+          <span className="text-[10px]" style={{ color: COLORS.textMuted, fontFamily: FONT.mono }}>
+            {isEmpty ? 'No sessions yet' : '—'}
+          </span>
         )}
       </StatBlock>
 
@@ -80,7 +82,9 @@ export default function OverviewCards({ overview }) {
             {topFault}
           </span>
         ) : (
-          <span className="text-[10px]" style={{ color: COLORS.correct }}>No recurring faults</span>
+          <span className="text-[10px]" style={{ color: isEmpty ? COLORS.textMuted : COLORS.correct, fontFamily: FONT.mono }}>
+            {isEmpty ? 'No data yet' : 'No recurring faults'}
+          </span>
         )}
       </StatBlock>
     </div>
