@@ -50,8 +50,15 @@ export default function CameraView({ exercise, onStop }) {
   }, []);
 
   // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError } = useCameraStream(videoRef);
+  const { camState, camError, currentFacing, switchCamera } = useCameraStream(videoRef);
+  const [switchingCamera, setSwitchingCamera] = useState(false);
   useEffect(() => { healthRef.current?.reportCamera(camState); }, [camState]);
+
+  const handleSwitchCamera = useCallback(async () => {
+    setSwitchingCamera(true);
+    await switchCamera();
+    setSwitchingCamera(false);
+  }, [switchCamera]);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
