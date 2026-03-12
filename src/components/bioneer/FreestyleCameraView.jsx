@@ -324,6 +324,22 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
         </div>
       </div>
 
+      {/* Camera Toggle */}
+      <div className="absolute top-16 right-20 z-50">
+        <CameraToggle
+          cameraFacing={cameraFacing}
+          onToggle={handleToggleCamera}
+          isLoading={isSwitchingCamera}
+          className="px-2 py-1.5 rounded-full border"
+          style={{
+            background: 'rgba(0,0,0,0.5)',
+            borderColor: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(8px)',
+            color: 'white',
+          }}
+        />
+      </div>
+
       {/* Mute */}
       <div className="absolute top-16 right-4 z-50">
         <button onClick={() => setMuted(m => !m)}
