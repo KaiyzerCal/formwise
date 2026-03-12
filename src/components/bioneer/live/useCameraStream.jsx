@@ -1,17 +1,30 @@
 /**
- * useCameraStream.js
- * Responsible ONLY for camera access and video stream.
+ * useCameraStream.js — Mobile-Safe Camera Hook
+ * Handles secure context, permission requests, stream lifecycle, and camera switching
  * States: idle | requesting | active | failed
  *
- * FIX: Falls back from environment camera → any camera → reduced resolution
- * FIX: Waits for video loadedmetadata before signalling 'active'
- * FIX: Supports front/back camera switching via facingMode constraint
+ * Mobile optimizations:
+ * - Secure context enforcement (https + localhost only)
+ * - No autoplay on page load (permission only on user interaction)
+ * - video.playsInline + muted for iOS compatibility
+ * - Graceful fallback chain: exact → ideal → generic → reduced res
+ * - Proper track cleanup on switch/unmount
+ * - Safe play() promise handling
  */
 import { useEffect, useRef, useState } from 'react';
 
 /**
+ * Check if running in secure context
+ * https or localhost are the only safe contexts for camera
+ */
+function isSecureContext() {
+  return window.isSecureContext || false;
+}
+
+/**
  * Build constraint array for a given facing mode
  * Attempt order: exact → ideal → generic fallback
+ * Using 'ideal' instead of 'min'/'max' for mobile flexibility
  */
 function buildConstraints(facingMode) {
   return [
