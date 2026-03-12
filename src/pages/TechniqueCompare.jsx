@@ -184,6 +184,7 @@ export default function TechniqueCompare() {
             <div className="w-px h-4 mx-1" style={{ background: COLORS.border }} />
             <ToggleBtn label="Side by Side" active={mode === 'sidebyside'} onClick={() => setMode('sidebyside')} />
             <ToggleBtn label="Overlay"      active={mode === 'overlay'}    onClick={() => setMode('overlay')} />
+            <ToggleBtn label="Live Capture" active={recordingMode} onClick={() => setRecordingMode(v => !v)} />
           </div>
         </div>
         {draftError && (
