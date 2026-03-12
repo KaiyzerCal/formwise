@@ -45,9 +45,51 @@ export default function TechniqueStudio() {
   // Annotation state
   const annotationEditor = useAnnotationEditor();
 
+  // Autosave with debounce
+  const autosaveTimeoutRef = useRef(null);
+
   // Video and sync
   const videoRef = useRef(null);
   const frameSync = useFrameSync(techniqueSession?.pose?.frames || [], videoRef, techniqueSession?.video?.fps || 30);
+
+  /**
+   * Autosave annotations and notes (debounced)
+   */
+  const triggerAutosave = useCallback(() => {
+    if (!techniqueSession) return;
+
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
+
+    autosaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await saveTechniqueProject({
+          id: techniqueSession.id,
+          videoId: techniqueSession.id,
+          videoURL: techniqueSession.video.url,
+          annotations: annotationEditor.annotations,
+          selectedReference: null,
+          playbackSpeed: speed,
+          coachNotes: techniqueSession.coachNotes || '',
+          focusTags: techniqueSession.focusTags || [],
+          metadata: {
+            category: techniqueSession.derived?.category,
+            movementName: techniqueSession.derived?.movementName,
+          },
+        });
+      } catch (error) {
+        console.error('Autosave failed:', error);
+      }
+    }, 2000); // Debounce 2 seconds
+  }, [techniqueSession, annotationEditor.annotations, speed]);
+
+  /**
+   * Trigger autosave on annotation changes
+   */
+  useEffect(() => {
+    triggerAutosave();
+  }, [annotationEditor.annotations, triggerAutosave]);
 
   /**
    * Load session from draft ID or history
