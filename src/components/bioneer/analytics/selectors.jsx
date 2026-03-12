@@ -21,7 +21,9 @@ function fmtDate(iso) {
 
 function avgOf(arr) {
   if (!arr.length) return null;
-  return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+  const valid = arr.filter(v => v != null && !isNaN(v));
+  if (!valid.length) return null;
+  return Math.round(valid.reduce((a, b) => a + b, 0) / valid.length);
 }
 
 // ── Public selectors ──────────────────────────────────────────────────────────
