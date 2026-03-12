@@ -150,6 +150,29 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
           ))}
         </div>
 
+        {/* Mastery Stats */}
+        {(avgMastery != null || bestRep) && (
+          <div className="rounded-xl border p-3 space-y-2" style={{ background: 'rgba(201,168,76,0.06)', borderColor: 'rgba(201,168,76,0.2)' }}>
+            <p className="text-[10px] uppercase tracking-widest" style={{ fontFamily: "'DM Mono', monospace", color: 'rgba(201,168,76,0.6)' }}>
+              Mastery
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {avgMastery != null && (
+                <div className="text-center rounded-lg bg-white/[0.03] py-2.5 border border-white/5">
+                  <div className="text-lg font-bold" style={{ fontFamily: "'DM Mono', monospace", color: masteryColor }}>{avgMastery}</div>
+                  <div className="text-[9px] text-white/30 uppercase tracking-widest mt-0.5">AVG MASTERY</div>
+                </div>
+              )}
+              {bestRep && (
+                <div className="text-center rounded-lg bg-white/[0.03] py-2.5 border border-white/5">
+                  <div className="text-lg font-bold" style={{ fontFamily: "'DM Mono', monospace", color: '#C9A84C' }}>{bestRep.score}</div>
+                  <div className="text-[9px] text-white/30 uppercase tracking-widest mt-0.5">BEST REP {bestRep.number ? `#${bestRep.number}` : ''}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Key metrics */}
         {jointSummary.length > 0 && (
           <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
