@@ -8,6 +8,7 @@ import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import FreestyleReplay from "../components/bioneer/history/FreestyleReplay";
 import { createTechniqueDraftFromFreestyleSession } from "../components/bioneer/technique/techniqueConverter";
+import SessionMovementBadge from "../components/bioneer/movementProfiles/SessionMovementBadge";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
 
