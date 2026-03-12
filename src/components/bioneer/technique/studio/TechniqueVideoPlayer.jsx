@@ -163,7 +163,7 @@ export default function TechniqueVideoPlayer({
   }, []);
 
   /**
-   * Handle pointer down (start drawing)
+   * Handle pointer down (start drawing or place text)
    */
   const handlePointerDown = useCallback((e) => {
     if (activeTool === 'pointer' || !activeTool || isPlaying) return;
@@ -171,9 +171,19 @@ export default function TechniqueVideoPlayer({
     const coords = getNormalizedCoords(e);
     if (!coords) return;
 
+    // Text tool: create annotation immediately
+    if (activeTool === 'text') {
+      onAnnotationCreate?.({
+        type: 'text',
+        frameIndex: currentFrameIndex,
+        position: coords,
+      });
+      return;
+    }
+
     setIsDrawing(true);
     setDraftPoints([coords]);
-  }, [activeTool, isPlaying, getNormalizedCoords]);
+  }, [activeTool, isPlaying, currentFrameIndex, getNormalizedCoords, onAnnotationCreate]);
 
   /**
    * Handle pointer move (draw)
