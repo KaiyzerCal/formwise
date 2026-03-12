@@ -6,7 +6,7 @@
  * FIX: Falls back from environment camera → any camera → reduced resolution
  * FIX: Waits for video loadedmetadata before signalling 'active'
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 // Stored preference for last selected camera facing
 function getStoredCameraFacing() {
