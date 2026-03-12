@@ -185,18 +185,6 @@ export class LiveSessionOrchestrator {
     if (repEvent?.type === 'PHASE_ECCENTRIC' || repEvent?.type === 'PHASE_DESCENT') {
       this.scheduler.setRepStartSuppression(tMs, 200);
     }
-    if (repEvent?.type === 'REP_COMPLETE' || repEvent?.type === 'EVENT_COMPLETE') {
-      const masteryScore = this.mastery.score({
-        jointResults:  this.lastJointResults,
-        frameBuffer:   this.frameBuffer.slice(-60),
-        faults:        confirmedFaults,
-        confidence:    poseConf,
-        repDurationMs: repEvent.durationMs ?? 0,
-      });
-      this.logger.logRep(repEvent, masteryScore, this.currentFaults);
-      this.onRep?.({ repNumber: repEvent.repNumber, score: masteryScore, masteryScore, tMs });
-    }
-
     // ── LAYER 6: Fault detection (phase-gated) ─────────────────────────────
     const instantFaults = locked
       ? this.faultDetector.evaluate(
@@ -205,8 +193,21 @@ export class LiveSessionOrchestrator {
       : [];
 
     // Persist for 400ms before promoting
-    const confirmedIds     = this.faultBuffer.update(instantFaults.map(f => f.id), tMs);
-    const confirmedFaults  = instantFaults.filter(f => confirmedIds.includes(f.id));
+    const confirmedIds    = this.faultBuffer.update(instantFaults.map(f => f.id), tMs);
+    const confirmedFaults = instantFaults.filter(f => confirmedIds.includes(f.id));
+
+    if (repEvent?.type === 'REP_COMPLETE' || repEvent?.type === 'EVENT_COMPLETE') {
+      const masteryScore = this.mastery.score({
+        jointResults:   this.lastJointResults,
+        frameBuffer:    this.frameBuffer.slice(-60),
+        faults:         confirmedFaults,
+        confidence:     poseConf,
+        repDurationMs:  repEvent.durationMs ?? 0,
+        movementContext: movCtx,
+      });
+      this.logger.logRep(repEvent, masteryScore, this.currentFaults);
+      this.onRep?.({ repNumber: repEvent.repNumber, score: masteryScore, masteryScore, tMs });
+    }
     this.currentFaults     = confirmedFaults.map(f => f.id);
 
     // ── LAYER 7: Confidence gating ──────────────────────────────────────────
