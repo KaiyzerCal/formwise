@@ -13,8 +13,8 @@ import LiveSessionHUD            from './live/LiveSessionHUD';
 import PoseErrorCard             from './live/PoseErrorCard';
 import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
-import { smoothLandmarks }       from './poseEngine';
-import { initAudio, destroyAudio } from './audioEngine';
+import { smoothLandmarks, computeJointAngles } from './poseEngine';
+import { initAudio, destroyAudio, beep } from './audioEngine';
 
 const GOLD = '#C9A84C';
 const RED  = '#EF4444';
