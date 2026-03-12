@@ -155,6 +155,34 @@ export default function TechniqueStudio() {
   }, [annotationEditor]);
 
   /**
+   * Handle annotation creation from drawing tools
+   */
+  const handleAnnotationCreate = useCallback((annotation) => {
+    switch (annotation.type) {
+      case 'line':
+        annotationEditor.createLine(annotation.frameIndex, annotation.startPoint, annotation.endPoint);
+        break;
+      case 'arrow':
+        annotationEditor.createLine(annotation.frameIndex, annotation.startPoint, annotation.endPoint, { arrowhead: true });
+        break;
+      case 'circle':
+        annotationEditor.createCircle(annotation.frameIndex, annotation.center, annotation.radius);
+        break;
+      case 'rectangle':
+        annotationEditor.createRectangle(annotation.frameIndex, annotation.topLeft, annotation.bottomRight);
+        break;
+      case 'freehand':
+        annotationEditor.createFreehand(annotation.frameIndex, annotation.points);
+        break;
+      case 'angle_marker':
+        annotationEditor.createAngleMeasurement(annotation.frameIndex, annotation.points);
+        break;
+      default:
+        break;
+    }
+  }, [annotationEditor]);
+
+  /**
    * Autosave (with null guard on session)
    */
   const triggerAutosave = useCallback(() => {
