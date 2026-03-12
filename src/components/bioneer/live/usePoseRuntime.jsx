@@ -103,7 +103,6 @@ export function usePoseRuntime() {
 
     } catch (err) {
       console.error('[PoseRuntime] Failed:', err);
-      setPoseError(err?.message || 'Unknown error');
       setPoseError(err?.message || 'Pose engine failed to start');
       setPhase('');
       setPoseState('failed');
