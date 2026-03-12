@@ -14,6 +14,7 @@ export function useSessionRecorder(videoRef, canvasRef) {
   const recordingStartRef = useRef(null);
   const fpsRef = useRef(30);
   const frameIntervalRef = useRef(0);
+  const stopPromiseRef = useRef(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState(null);
@@ -47,18 +48,63 @@ export function useSessionRecorder(videoRef, canvasRef) {
     recorderRef.current.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
       setRecordedBlob(blob);
+      
+      // Resolve the stop promise with finalized data
+      if (stopPromiseRef.current) {
+        const duration = recordingStartRef.current
+          ? (Date.now() - recordingStartRef.current) / 1000
+          : 0;
+        stopPromiseRef.current.resolve({
+          duration: Math.round(duration),
+          videoBlob: blob,
+          poseFrames: poseFramesRef.current,
+          angleFrames: angleFramesRef.current,
+        });
+        stopPromiseRef.current = null;
+      }
     };
 
     recorderRef.current.start();
     setIsRecording(true);
   }, [canvasRef]);
 
+  // Returns a Promise that resolves only after blob is finalized
   const stopRecording = useCallback(() => {
-    if (recorderRef.current && isRecording) {
+    return new Promise((resolve, reject) => {
+      if (!recorderRef.current) {
+        // Not recording, return current data if available
+        const duration = recordingStartRef.current
+          ? (Date.now() - recordingStartRef.current) / 1000
+          : 0;
+        resolve({
+          duration: Math.round(duration),
+          videoBlob: recordedBlob,
+          poseFrames: poseFramesRef.current,
+          angleFrames: angleFramesRef.current,
+        });
+        return;
+      }
+
+      if (recorderRef.current.state !== 'recording') {
+        // Already stopped, return available data
+        const duration = recordingStartRef.current
+          ? (Date.now() - recordingStartRef.current) / 1000
+          : 0;
+        resolve({
+          duration: Math.round(duration),
+          videoBlob: recordedBlob,
+          poseFrames: poseFramesRef.current,
+          angleFrames: angleFramesRef.current,
+        });
+        return;
+      }
+
+      // Recording is active — wait for onstop to fire
+      stopPromiseRef.current = { resolve, reject };
       recorderRef.current.stop();
       setIsRecording(false);
-    }
-  }, [isRecording]);
+    });
+  }, [recordedBlob]);
 
   // Capture pose frame data at target FPS
   const capturePoseFrame = useCallback((landmarks, angles, confidence) => {
