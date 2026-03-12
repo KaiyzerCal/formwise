@@ -50,13 +50,15 @@ export class LiveSessionOrchestrator {
     this.scheduler     = new FeedbackScheduler();
     this.logger        = new SessionLogger(this.sessionId, exerciseId, userId);
     this.mastery       = new MasteryScoreEngine();
+    this.context       = new MovementContextEngine();
 
     // State
-    this.currentFaults = [];
-    this.lastPhaseId   = null;
-    this.baseline      = null;
-    this.frameBuffer   = [];
-    this.frameCount    = 0;
+    this.currentFaults  = [];
+    this.lastPhaseId    = null;
+    this.baseline       = null;
+    this.frameBuffer    = [];
+    this.frameCount     = 0;
+    this.lastContext    = null;  // most recent MovementContextEngine output
 
     // Callbacks (set by consumer)
     this.onFrame     = null;
