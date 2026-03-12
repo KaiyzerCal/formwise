@@ -80,13 +80,7 @@ export class SystemHealthMonitor {
   // ── Internal ──────────────────────────────────────────────────────────────
 
   _checkStalePose() {
-    if (this._pose !== 'ready') return;
-    const elapsed = Date.now() - this._lastPoseFrameMs;
-    if (elapsed > STALE_POSE_MS) {
-      this._issues.add('pose_stale');
-    } else {
-      this._issues.delete('pose_stale');
-    }
+    // Just trigger a re-evaluation — staleness is checked inside _evaluate
     this._evaluate();
   }
 
@@ -101,6 +95,12 @@ export class SystemHealthMonitor {
     // Pose runtime
     if (this._pose === 'failed') {
       this._issues.add('pose_failed');
+    }
+
+    // Pose stale (no frame received for a while, even though pose is 'ready')
+    if (this._pose === 'ready' && this._lastPoseFrameMs > 0) {
+      const elapsed = Date.now() - this._lastPoseFrameMs;
+      if (elapsed > STALE_POSE_MS) this._issues.add('pose_stale');
     }
 
     // FPS
