@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { COLORS, FONT } from '../components/bioneer/ui/DesignTokens';
 import VideoPanel from '../components/bioneer/compare/VideoPanel';
