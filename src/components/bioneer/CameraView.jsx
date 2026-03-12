@@ -35,6 +35,7 @@ export default function CameraView({ exercise, onStop }) {
   const [sessionActive, setSessionActive] = useState(false);
   const [liveJointResults, setLiveJointResults] = useState([]);
   const [liveFormScore, setLiveFormScore] = useState(100);
+  const [isSecure, setIsSecure] = useState(window.isSecureContext || false);
 
   // Camera facing mode — persisted to localStorage
   const [cameraFacing, setCameraFacing] = useState(() => {
@@ -45,13 +46,18 @@ export default function CameraView({ exercise, onStop }) {
 
   // Persist camera choice to localStorage
   const handleToggleCamera = useCallback(async () => {
+    if (!isSecure) {
+      alert('Camera requires HTTPS or localhost');
+      return;
+    }
+    
     setIsSwitchingCamera(true);
     const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
     setCameraFacing(newFacing);
     localStorage.setItem('bioneer_camera_facing', newFacing);
     // useCameraStream will re-run with new facingMode and restart stream
     setIsSwitchingCamera(false);
-  }, [cameraFacing]);
+  }, [cameraFacing, isSecure]);
 
   // Temporal filter engine — persists for the lifetime of this exercise session
   const temporalFilterRef = useRef(null);
