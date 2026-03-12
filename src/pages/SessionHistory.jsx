@@ -155,18 +155,25 @@ export default function SessionHistory() {
                   </div>
 
                   {/* Mini rep chart */}
-                  <div>
-                    <span className="text-[9px] tracking-[0.1em] uppercase block mb-1" style={{ color: COLORS.textTertiary }}>Rep Quality</span>
-                    <ResponsiveContainer width="100%" height={60}>
-                      <BarChart data={session.repScores.map((s, i) => ({ rep: i + 1, score: s }))}>
-                        <XAxis dataKey="rep" tick={false} axisLine={false} />
-                        <YAxis domain={[50, 100]} hide />
-                        <Bar dataKey="score" radius={[2, 2, 0, 0]}>
-                          {session.repScores.map((s, i) => <Cell key={i} fill={scoreColor(s)} />)}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {session.repScores.length > 0 ? (
+                    <div>
+                      <span className="text-[9px] tracking-[0.1em] uppercase block mb-1" style={{ color: COLORS.textTertiary }}>Rep Quality</span>
+                      <ResponsiveContainer width="100%" height={60}>
+                        <BarChart data={session.repScores.map((s, i) => ({ rep: i + 1, score: s }))}>
+                          <XAxis dataKey="rep" tick={false} axisLine={false} />
+                          <YAxis domain={[0, 100]} hide />
+                          <Bar dataKey="score" radius={[2, 2, 0, 0]}>
+                            {session.repScores.map((s, i) => <Cell key={i} fill={scoreColor(s)} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-[9px] tracking-[0.1em] uppercase block mb-1" style={{ color: COLORS.textTertiary }}>Rep Quality</span>
+                      <p className="text-[10px]" style={{ color: COLORS.textMuted }}>No rep data recorded</p>
+                    </div>
+                  )}
 
                   {/* Insights */}
                   <div className="space-y-1">
