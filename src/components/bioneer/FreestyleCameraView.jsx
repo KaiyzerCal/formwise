@@ -13,6 +13,7 @@ import SessionReadinessGate from './live/SessionReadinessGate';
 import PoseErrorCard from './live/PoseErrorCard';
 import { useSessionRecorder } from './session/useSessionRecorder';
 import { createFreestyleSession, SESSION_CATEGORIES } from './session/sessionTypes';
+import CameraToggleButton from './ui/CameraToggleButton';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles } from './poseEngine';
 import { COLORS, FONT } from './ui/DesignTokens';
