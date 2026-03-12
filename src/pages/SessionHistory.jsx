@@ -34,11 +34,14 @@ function adaptSession(s) {
 }
 
 export default function SessionHistory() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('All Time');
   const [expandedId, setExpandedId] = useState(null);
   const [freestyleSessions, setFreestyleSessions] = useState([]);
   const [selectedReplay, setSelectedReplay] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [sending, setSending] = useState(null);
+  const [sendError, setSendError] = useState(null);
 
   // Load freestyle sessions
   useEffect(() => {
