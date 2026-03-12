@@ -11,6 +11,7 @@ const WASM_URL   = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14
 const MODEL_URL  = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task';
 const TIMEOUT_MS = 14000;
 
+// Lowered thresholds for real-world lighting and mobile performance
 const POSE_OPTIONS = (delegate) => ({
   baseOptions: {
     modelAssetPath: MODEL_URL,
@@ -18,9 +19,9 @@ const POSE_OPTIONS = (delegate) => ({
   },
   runningMode:                'VIDEO',
   numPoses:                   1,
-  minPoseDetectionConfidence: 0.6,
-  minPosePresenceConfidence:  0.55,
-  minTrackingConfidence:      0.55,
+  minPoseDetectionConfidence: 0.35,
+  minPosePresenceConfidence:  0.35,
+  minTrackingConfidence:      0.35,
   outputSegmentationMasks:    false,
 });
 

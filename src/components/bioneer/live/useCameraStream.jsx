@@ -2,29 +2,67 @@
  * useCameraStream.js
  * Responsible ONLY for camera access and video stream.
  * States: idle | requesting | active | failed
+ *
+ * FIX: Falls back from environment camera → any camera → reduced resolution
+ * FIX: Waits for video loadedmetadata before signalling 'active'
  */
 import { useEffect, useRef, useState } from 'react';
 
+// Ordered constraints to try. First match wins.
+const CAMERA_CONSTRAINTS = [
+  { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } },
+  { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
+  { video: { width: { ideal: 640 }, height: { ideal: 480 } } },
+  { video: true },
+];
+
+async function acquireStream() {
+  let lastErr = null;
+  for (const constraints of CAMERA_CONSTRAINTS) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      return stream;
+    } catch (err) {
+      lastErr = err;
+      // NotAllowedError → no point retrying other constraints
+      if (err?.name === 'NotAllowedError') throw err;
+    }
+  }
+  throw lastErr;
+}
+
 export function useCameraStream(videoRef) {
-  const [camState, setCamState]   = useState('idle');
-  const [camError, setCamError]   = useState(null);
-  const streamRef                 = useRef(null);
+  const [camState, setCamState] = useState('idle');
+  const [camError, setCamError] = useState(null);
+  const streamRef               = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
     setCamState('requesting');
     setCamError(null);
 
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 } })
+    acquireStream()
       .then((stream) => {
         if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
         streamRef.current = stream;
         const video = videoRef.current;
-        if (video) {
-          video.srcObject = stream;
-          return video.play();
-        }
+        if (!video) return;
+
+        video.srcObject = stream;
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('muted', 'true');
+        video.muted = true;
+
+        return new Promise((resolve, reject) => {
+          video.onloadedmetadata = () => {
+            video.play().then(resolve).catch(reject);
+          };
+          // Safety timeout if metadata never fires
+          setTimeout(() => {
+            if (video.readyState >= 1) video.play().then(resolve).catch(reject);
+            else reject(new Error('Video metadata timeout'));
+          }, 5000);
+        });
       })
       .then(() => {
         if (!cancelled) setCamState('active');
@@ -42,8 +80,10 @@ export function useCameraStream(videoRef) {
 
     return () => {
       cancelled = true;
-      streamRef.current?.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
     };
   }, [videoRef]);
 
