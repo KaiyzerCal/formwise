@@ -53,6 +53,87 @@ export default function TechniqueStudio() {
   const frameSync = useFrameSync(techniqueSession?.pose?.frames || [], videoRef, techniqueSession?.video?.fps || 30);
 
   /**
+   * CRITICAL: Define all callbacks BEFORE useEffect hooks that depend on them
+   * This prevents ReferenceError at runtime
+   */
+
+  /**
+   * Playback controls
+   */
+  const handlePlay = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
+  }, []);
+
+  const handlePause = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  }, []);
+
+  const handleSeek = useCallback((time) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
+  }, []);
+
+  const handleSpeedChange = useCallback((newSpeed) => {
+    setSpeed(newSpeed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = newSpeed;
+    }
+  }, []);
+
+  const handleTimeUpdate = useCallback((time) => {
+    setCurrentTime(time);
+  }, []);
+
+  const handleLoadedMetadata = useCallback(() => {
+    const video = videoRef.current;
+    if (video) {
+      setDuration(video.duration);
+    }
+  }, []);
+
+  /**
+   * Frame navigation
+   */
+  const handleStepForward = useCallback(() => {
+    if (frameSync && typeof frameSync.stepForward === 'function') {
+      frameSync.stepForward();
+    }
+  }, [frameSync]);
+
+  const handleStepBackward = useCallback(() => {
+    if (frameSync && typeof frameSync.stepBackward === 'function') {
+      frameSync.stepBackward();
+    }
+  }, [frameSync]);
+
+  const handleJumpFrames = useCallback((count) => {
+    if (frameSync && typeof frameSync.jumpFrames === 'function') {
+      frameSync.jumpFrames(count);
+    }
+  }, [frameSync]);
+
+  /**
+   * Annotation handlers
+   */
+  const handleClearFrame = useCallback(() => {
+    annotationEditor.clearFrameAnnotations(currentFrameIndex);
+  }, [annotationEditor, currentFrameIndex]);
+
+  const handleClearAll = useCallback(() => {
+    if (window.confirm('Clear all annotations? This cannot be undone.')) {
+      annotationEditor.clearAllAnnotations();
+    }
+  }, [annotationEditor]);
+
+  /**
    * Autosave annotations and notes (debounced)
    */
   const triggerAutosave = useCallback(() => {
@@ -64,18 +145,22 @@ export default function TechniqueStudio() {
 
     autosaveTimeoutRef.current = setTimeout(async () => {
       try {
+        const videoUrl = techniqueSession?.video?.url;
+        const category = techniqueSession?.derived?.category;
+        const movementName = techniqueSession?.derived?.movementName;
+
         await saveTechniqueProject({
           id: techniqueSession.id,
           videoId: techniqueSession.id,
-          videoURL: techniqueSession.video.url,
+          videoURL: videoUrl,
           annotations: annotationEditor.annotations,
           selectedReference: null,
           playbackSpeed: speed,
           coachNotes: techniqueSession.coachNotes || '',
           focusTags: techniqueSession.focusTags || [],
           metadata: {
-            category: techniqueSession.derived?.category,
-            movementName: techniqueSession.derived?.movementName,
+            category: category || 'unknown',
+            movementName: movementName || 'unknown',
           },
         });
       } catch (error) {
@@ -183,78 +268,11 @@ export default function TechniqueStudio() {
    * Get current frame index from time
    */
   const currentFrameIndex = useMemo(() => {
-    return frameSync.getFrameIndexAtTime(currentTime);
+    if (frameSync && typeof frameSync.getFrameIndexAtTime === 'function') {
+      return frameSync.getFrameIndexAtTime(currentTime);
+    }
+    return 0;
   }, [currentTime, frameSync]);
-
-  /**
-   * Playback controls
-   */
-  const handlePlay = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    }
-  }, []);
-
-  const handlePause = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  }, []);
-
-  const handleSeek = useCallback((time) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
-  }, []);
-
-  const handleSpeedChange = useCallback((newSpeed) => {
-    setSpeed(newSpeed);
-    if (videoRef.current) {
-      videoRef.current.playbackRate = newSpeed;
-    }
-  }, []);
-
-  const handleTimeUpdate = useCallback((time) => {
-    setCurrentTime(time);
-  }, []);
-
-  const handleLoadedMetadata = useCallback(() => {
-    const video = videoRef.current;
-    if (video) {
-      setDuration(video.duration);
-    }
-  }, []);
-
-  /**
-   * Frame navigation
-   */
-  const handleStepForward = useCallback(() => {
-    frameSync.stepForward();
-  }, [frameSync]);
-
-  const handleStepBackward = useCallback(() => {
-    frameSync.stepBackward();
-  }, [frameSync]);
-
-  const handleJumpFrames = useCallback((count) => {
-    frameSync.jumpFrames(count);
-  }, [frameSync]);
-
-  /**
-   * Annotation handlers
-   */
-  const handleClearFrame = useCallback(() => {
-    annotationEditor.clearFrameAnnotations(currentFrameIndex);
-  }, [annotationEditor, currentFrameIndex]);
-
-  const handleClearAll = useCallback(() => {
-    if (window.confirm('Clear all annotations? This cannot be undone.')) {
-      annotationEditor.clearAllAnnotations();
-    }
-  }, [annotationEditor]);
 
   // Loading state
   if (loading) {
