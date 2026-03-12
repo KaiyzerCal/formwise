@@ -84,12 +84,14 @@ export default function FormCheck() {
   }
 
   if (phase === "summary" && sessionData) {
+    const saveMsg = savedSession ? sessionSaveMessage(savedSession) : null;
     return (
       <SessionSummary
         sessionData={sessionData}
         onSave={handleSave}
         onDiscard={handleDiscard}
         saving={saving}
+        saveOutcome={saveMsg}
       />
     );
   }
