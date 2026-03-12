@@ -42,6 +42,13 @@ export default function CameraView({ exercise, onStop }) {
     return () => temporalFilterRef.current?.reset();
   }, [exercise.id, exercise.category]);
 
+  // System health monitor — passive watchdog
+  const healthRef = useRef(null);
+  useEffect(() => {
+    healthRef.current = new SystemHealthMonitor();
+    return () => healthRef.current?.destroy();
+  }, []);
+
   // ── Camera ───────────────────────────────────────────────────────────────
   const { camState, camError } = useCameraStream(videoRef);
 
