@@ -54,8 +54,7 @@ export default function CameraView({ exercise, onStop }) {
     frameState, frameRef, repCount, lockState, activeCue, statusMsg, statusColor, processFrame, stopSession,
   } = useLiveAnalysis(exercise.id);
 
-  // Track last DANGER state to debounce beep within render loop
-  const lastDangerBeepRef = useRef(0);
+  // (beep hysteresis is now managed by TemporalFilterEngine.shouldBeep)
 
   // ── Inference loop ────────────────────────────────────────────────────────
   const handleResult = useCallback((result) => {
