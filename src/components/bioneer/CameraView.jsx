@@ -43,8 +43,11 @@ export default function CameraView({ exercise, onStop }) {
 
   // ── Analysis engine ───────────────────────────────────────────────────────
   const {
-    frameState, repCount, lockState, activeCue, statusMsg, statusColor, processFrame, stopSession,
+    frameState, frameRef, repCount, lockState, activeCue, statusMsg, statusColor, processFrame, stopSession,
   } = useLiveAnalysis(exercise.id);
+
+  // Track last DANGER state to debounce beep within render loop
+  const lastDangerBeepRef = useRef(0);
 
   // ── Inference loop ────────────────────────────────────────────────────────
   const handleResult = useCallback((result) => {
