@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
 import { getAllSessions } from "../components/bioneer/data/sessionStore";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
@@ -11,8 +11,8 @@ const FILTERS = ['This Week', 'This Month', 'All Time'];
 function adaptSession(s) {
   return {
     id:         s.session_id,
-    exercise:   s.movement_name ?? (s.movement_id?.replace(/_/g, ' ') ?? 'Unknown'),
-    category:   s.category ?? 'strength',
+    exercise:   s.movement_name ?? s.movement_id ?? 'Unknown',
+    category:   'strength',
     date:       s.started_at ? new Date(s.started_at).toLocaleDateString() : '—',
     time:       s.started_at ? new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
     duration:   s.duration_seconds ?? 0,
@@ -33,24 +33,8 @@ export default function SessionHistory() {
   const [filter, setFilter] = useState('All Time');
   const [expandedId, setExpandedId] = useState(null);
 
-  // Recompute on each mount so newly saved sessions appear
-  const [tick, setTick] = useState(0);
-  React.useEffect(() => { setTick(t => t + 1); }, []);
-  const rawSessions = useMemo(() => getAllSessions(), [tick]);
-  const allSessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
-
-  const sessions = useMemo(() => {
-    if (filter === 'All Time') return allSessions;
-    const now = new Date();
-    const cutoff = new Date(now);
-    if (filter === 'This Week') cutoff.setDate(now.getDate() - 7);
-    else if (filter === 'This Month') cutoff.setDate(now.getDate() - 30);
-    return allSessions.filter(s => {
-      const d = rawSessions.find(r => r.session_id === s.id)?.started_at;
-      return d && new Date(d) >= cutoff;
-    });
-  }, [allSessions, rawSessions, filter]);
-
+  const rawSessions = useMemo(() => getAllSessions(), []);
+  const sessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
   const totalReps = sessions.reduce((a, s) => a + s.reps, 0);
   const totalTime = sessions.reduce((a, s) => a + s.duration, 0);
   const avgScore = sessions.length > 0
@@ -117,7 +101,7 @@ export default function SessionHistory() {
             </div>
           </div>
         )}
-        {sessions.map(session => {
+        {sessions.slice().reverse().map(session => {
           const expanded = expandedId === session.id;
           return (
             <div key={session.id} className="rounded-lg border overflow-hidden" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
@@ -155,25 +139,18 @@ export default function SessionHistory() {
                   </div>
 
                   {/* Mini rep chart */}
-                  {session.repScores.length > 0 ? (
-                    <div>
-                      <span className="text-[9px] tracking-[0.1em] uppercase block mb-1" style={{ color: COLORS.textTertiary }}>Rep Quality</span>
-                      <ResponsiveContainer width="100%" height={60}>
-                        <BarChart data={session.repScores.map((s, i) => ({ rep: i + 1, score: s }))}>
-                          <XAxis dataKey="rep" tick={false} axisLine={false} />
-                          <YAxis domain={[0, 100]} hide />
-                          <Bar dataKey="score" radius={[2, 2, 0, 0]}>
-                            {session.repScores.map((s, i) => <Cell key={i} fill={scoreColor(s)} />)}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : (
-                    <div>
-                      <span className="text-[9px] tracking-[0.1em] uppercase block mb-1" style={{ color: COLORS.textTertiary }}>Rep Quality</span>
-                      <p className="text-[10px]" style={{ color: COLORS.textMuted }}>No rep data recorded</p>
-                    </div>
-                  )}
+                  <div>
+                    <span className="text-[9px] tracking-[0.1em] uppercase block mb-1" style={{ color: COLORS.textTertiary }}>Rep Quality</span>
+                    <ResponsiveContainer width="100%" height={60}>
+                      <BarChart data={session.repScores.map((s, i) => ({ rep: i + 1, score: s }))}>
+                        <XAxis dataKey="rep" tick={false} axisLine={false} />
+                        <YAxis domain={[50, 100]} hide />
+                        <Bar dataKey="score" radius={[2, 2, 0, 0]}>
+                          {session.repScores.map((s, i) => <Cell key={i} fill={scoreColor(s)} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
 
                   {/* Insights */}
                   <div className="space-y-1">

@@ -1,29 +1,27 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { getExerciseById } from "../components/bioneer/exerciseLibrary";
+import { EXERCISES, getExerciseById } from "../components/bioneer/exerciseLibrary";
 import { getSportsMovementById } from "../components/bioneer/sportsLibrary";
 import MovementLibrary from "../components/bioneer/MovementLibrary";
 import CameraView from "../components/bioneer/CameraView";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import Disclaimer from "../components/bioneer/Disclaimer";
-import { normalizeSession, sessionSaveMessage } from "../components/bioneer/data/sessionNormalizer";
-import { saveSession } from "../components/bioneer/data/sessionStore";
+import { createPageUrl } from "@/utils";
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
 export default function FormCheck() {
-  const [phase, setPhase] = useState("select");
+  const [phase, setPhase] = useState("select"); // select | camera | summary
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [sessionData, setSessionData] = useState(null);
-  const [savedSession, setSavedSession] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
-  const sessionStartRef = useRef(null);
 
   useEffect(() => {
     const accepted = localStorage.getItem(DISCLAIMER_KEY);
     if (!accepted) setShowDisclaimer(true);
 
+    // Check URL params for exercise pre-selection
     const params = new URLSearchParams(window.location.search);
     const exId = params.get("exercise");
     if (exId) {
@@ -41,38 +39,26 @@ export default function FormCheck() {
     const ex = movement || selectedExercise;
     if (!ex) return;
     setSelectedExercise(ex);
-    sessionStartRef.current = Date.now();
     setPhase("camera");
   };
 
-  const handleStopSession = (rawData) => {
-    const session = normalizeSession(rawData, {
-      movementName: selectedExercise?.name,
-      category: selectedExercise?.category,
-      startedAt: sessionStartRef.current ?? Date.now(),
-    });
-    setSavedSession(session);
-    setSessionData({ ...rawData, _canonicalSession: session });
+  const handleStopSession = (data) => {
+    setSessionData(data);
     setPhase("summary");
   };
 
   const handleSave = async () => {
-    if (!savedSession) { handleDiscard(); return; }
     setSaving(true);
-    // Save to localStorage analytics store
-    saveSession(savedSession);
-    // Also persist to backend entity (strip non-serializable fields)
     const { exercise_def, joint_data, ...saveable } = sessionData;
-    try { await base44.entities.FormSession.create(saveable); } catch (_) {}
+    await base44.entities.FormSession.create(saveable);
     setSaving(false);
-    handleDiscard();
+    setPhase("select");
+    setSessionData(null);
   };
 
   const handleDiscard = () => {
     setPhase("select");
     setSessionData(null);
-    setSavedSession(null);
-    sessionStartRef.current = null;
   };
 
   if (showDisclaimer) {
@@ -84,14 +70,12 @@ export default function FormCheck() {
   }
 
   if (phase === "summary" && sessionData) {
-    const saveMsg = savedSession ? sessionSaveMessage(savedSession) : null;
     return (
       <SessionSummary
         sessionData={sessionData}
         onSave={handleSave}
         onDiscard={handleDiscard}
         saving={saving}
-        saveOutcome={saveMsg}
       />
     );
   }

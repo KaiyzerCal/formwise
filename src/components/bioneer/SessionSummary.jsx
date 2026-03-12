@@ -82,15 +82,13 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
 
   // Mastery stats from session logger reps array
   const reps = sessionData.reps ?? [];
-  const validReps = reps.filter(r => r.score != null);
-  const repScores = validReps.map(r => r.score);
+  const repScores = reps.map(r => r.score).filter(s => s != null);
   const avgMastery = repScores.length
     ? Math.round(repScores.reduce((a, b) => a + b, 0) / repScores.length)
     : null;
-  const bestRepObj = repScores.length
-    ? validReps.reduce((best, r) => r.score > (best?.score ?? -1) ? r : best, null)
+  const bestRep = repScores.length
+    ? { score: Math.max(...repScores), number: reps[repScores.indexOf(Math.max(...repScores))]?.repNumber }
     : null;
-  const bestRep = bestRepObj ? { score: bestRepObj.score, number: bestRepObj.repNumber } : null;
   const masteryColor = avgMastery == null ? '#888' : avgMastery >= 90 ? '#C9A84C' : avgMastery >= 80 ? '#22C55E' : avgMastery >= 70 ? '#EAB308' : '#EF4444';
 
   // Build per-joint summary from joint_data

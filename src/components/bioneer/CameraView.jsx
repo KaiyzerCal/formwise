@@ -33,37 +33,20 @@ export default function CameraView({ exercise, onStop }) {
   const [poseResults, setPoseResults] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
   const [liveJointResults, setLiveJointResults] = useState([]);
-  const [liveFormScore, setLiveFormScore] = useState(null);
+  const [liveFormScore, setLiveFormScore] = useState(100);
 
   // Temporal filter engine — persists for the lifetime of this exercise session
   const temporalFilterRef = useRef(null);
   useEffect(() => {
     temporalFilterRef.current = new TemporalFilterEngine(exercise.category || 'strength');
-    // Reset dependent state so stale angles don't persist on exercise change
-    prevLandmarksRef.current = null;
-    setLiveFormScore(null);
-    setLiveJointResults([]);
     return () => temporalFilterRef.current?.reset();
   }, [exercise.id, exercise.category]);
 
   // System health monitor — passive watchdog
-  const healthRef  = useRef(null);
-  const [healthMsg, setHealthMsg] = useState(null);
+  const healthRef = useRef(null);
   useEffect(() => {
-    const mon = new SystemHealthMonitor();
-    mon.onStatus = ({ status, issues }) => {
-      if (status === 'critical') {
-        setHealthMsg(issues.includes('camera_failed') ? 'Camera lost' :
-                     issues.includes('pose_failed')   ? 'Pose engine error' :
-                     issues.includes('fps_critical')  ? 'Performance critical — reduce motion' : null);
-      } else if (status === 'warn' && issues.includes('fps_low')) {
-        setHealthMsg('Performance reduced');
-      } else {
-        setHealthMsg(null);
-      }
-    };
-    healthRef.current = mon;
-    return () => mon.destroy();
+    healthRef.current = new SystemHealthMonitor();
+    return () => healthRef.current?.destroy();
   }, []);
 
   // ── Camera ───────────────────────────────────────────────────────────────
@@ -132,8 +115,7 @@ export default function CameraView({ exercise, onStop }) {
 
     // ── Update React state for HUD panels
     setLiveJointResults(jointResults);
-    const fs = computeFormScore(jointResults);
-    if (fs !== null) setLiveFormScore(fs);
+    setLiveFormScore(computeFormScore(jointResults));
     // Feed joint results to orchestrator for mastery scoring
     updateJointResults(jointResults);
 
@@ -203,14 +185,13 @@ export default function CameraView({ exercise, onStop }) {
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const session = stopSession(); // full session object from SessionLogger.finalize()
     const summary = session?.summary;
-    const fallbackScore = formScore ?? 0;
     onStop({
       exercise_id:        exercise.id,
       category:           exercise.category || 'strength',
       duration_seconds:   Math.round(elapsed),
-      form_score_overall: summary?.avgScore      ?? fallbackScore,
-      form_score_peak:    summary?.peakScore     ?? fallbackScore,
-      form_score_lowest:  summary?.lowestScore   ?? fallbackScore,
+      form_score_overall: summary?.avgScore      ?? formScore,
+      form_score_peak:    summary?.peakScore     ?? formScore,
+      form_score_lowest:  summary?.lowestScore   ?? formScore,
       movement_score:     summary?.avgScore      ?? 0,
       reps_detected:      repCount,
       alerts:             session?.faultLog      ?? [],
@@ -294,29 +275,27 @@ export default function CameraView({ exercise, onStop }) {
         <div className="px-3 py-1.5 rounded-full border"
           style={{
             background: 'rgba(0,0,0,0.5)',
-            borderColor: formScore == null ? 'rgba(255,255,255,0.2)' : formScore >= 80 ? '#22C55E' : formScore >= 65 ? '#EAB308' : RED,
+            borderColor: formScore >= 80 ? '#22C55E' : formScore >= 65 ? '#EAB308' : RED,
           }}>
           <span className="text-sm font-bold" style={{
             fontFamily: "'DM Mono', monospace",
-            color: formScore == null ? 'rgba(255,255,255,0.3)' : formScore >= 80 ? '#22C55E' : formScore >= 65 ? '#EAB308' : RED,
+            color: formScore >= 80 ? '#22C55E' : formScore >= 65 ? '#EAB308' : RED,
           }}>
-            {formScore == null ? '—' : `${formScore}%`}
+            {formScore}%
           </span>
         </div>
       </div>
 
       {/* ── Rep counter ───────────────────────────────────────────────────── */}
-      {!(sessionActive && lastRepMastery) && (
-        <div className="absolute top-16 left-4 z-50">
-          <div className="px-3 py-2 rounded-xl border"
-            style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
-            <span className="text-[10px] text-white/40 uppercase tracking-widest block"
-              style={{ fontFamily: "'DM Mono', monospace" }}>REPS</span>
-            <span className="text-2xl font-bold text-white"
-              style={{ fontFamily: "'DM Mono', monospace" }}>{repCount}</span>
-          </div>
+      <div className="absolute top-16 left-4 z-50">
+        <div className="px-3 py-2 rounded-xl border"
+          style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
+          <span className="text-[10px] text-white/40 uppercase tracking-widest block"
+            style={{ fontFamily: "'DM Mono', monospace" }}>REPS</span>
+          <span className="text-2xl font-bold text-white"
+            style={{ fontFamily: "'DM Mono', monospace" }}>{repCount}</span>
         </div>
-      )}
+      </div>
 
       {/* ── Mute ─────────────────────────────────────────────────────────── */}
       <div className="absolute top-16 right-4 z-50">
@@ -356,7 +335,7 @@ export default function CameraView({ exercise, onStop }) {
         <div className="absolute bottom-28 left-0 right-0 z-50 flex justify-center pointer-events-none">
           <div className="px-3 py-2 rounded-xl border"
             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderColor: 'rgba(255,255,255,0.08)' }}>
-            <FormStabilityRing score={formScore ?? 0} />
+            <FormStabilityRing score={formScore} />
           </div>
         </div>
       )}
@@ -373,7 +352,7 @@ export default function CameraView({ exercise, onStop }) {
 
       {/* ── Movement State Indicator (top center) ────────────────────────── */}
       {sessionActive && (
-        <div className="absolute top-24 left-0 right-0 z-50 flex justify-center pointer-events-none">
+        <div className="absolute top-16 left-0 right-0 z-50 flex justify-center pointer-events-none">
           <div className="flex items-center gap-3 px-4 py-2 rounded-xl border"
             style={{ background: 'rgba(0,0,0,0.7)', borderColor: `${GOLD}30`, backdropFilter: 'blur(10px)' }}>
             {frameState?.phase && (
@@ -391,22 +370,9 @@ export default function CameraView({ exercise, onStop }) {
         </div>
       )}
 
-      {/* ── System health warning ─────────────────────────────────────────── */}
-      {healthMsg && (
-        <div className="absolute top-32 left-4 right-4 z-50 flex justify-center pointer-events-none">
-          <div className="px-4 py-2 rounded-xl border text-center"
-            style={{ background: 'rgba(0,0,0,0.75)', borderColor: 'rgba(234,179,8,0.4)', backdropFilter: 'blur(8px)' }}>
-            <p className="text-[10px] font-bold tracking-widest uppercase"
-              style={{ color: '#EAB308', fontFamily: "'DM Mono', monospace" }}>
-              {healthMsg}
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* ── Cue banner ────────────────────────────────────────────────────── */}
       {activeCue && sessionActive && (
-        <div className={`absolute ${healthMsg ? 'top-40' : 'top-32'} left-4 right-4 z-50 flex justify-center pointer-events-none`}>
+        <div className="absolute top-32 left-4 right-4 z-50 flex justify-center pointer-events-none">
           <div className="px-4 py-2.5 rounded-xl border text-center max-w-xs"
             style={{ background: 'rgba(0,0,0,0.8)', borderColor: `${RED}40`, backdropFilter: 'blur(8px)' }}>
             <p className="text-sm font-bold tracking-wide uppercase"

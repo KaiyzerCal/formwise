@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 import {
   getAnalyticsOverview,
@@ -17,16 +17,12 @@ import RiskSignalPanel         from "../components/bioneer/analytics/RiskSignalP
 import RecentInsightsPanel     from "../components/bioneer/analytics/RecentInsightsPanel";
 
 export default function Analytics() {
-  // Use a refresh key so data recomputes each time the page mounts
-  const [tick, setTick] = React.useState(0);
-  React.useEffect(() => { setTick(t => t + 1); }, []);
-
-  const overview  = useMemo(() => getAnalyticsOverview(),     [tick]);
-  const trend     = useMemo(() => getFormScoreTrend(),        [tick]);
-  const faults    = useMemo(() => getFaultFrequencyData(),    [tick]);
-  const breakdown = useMemo(() => getMovementBreakdown(),     [tick]);
-  const risk      = useMemo(() => getRiskSignalSummary(),     [tick]);
-  const insights  = useMemo(() => getRecentInsights(),        [tick]);
+  const overview  = useMemo(() => getAnalyticsOverview(),     []);
+  const trend     = useMemo(() => getFormScoreTrend(),        []);
+  const faults    = useMemo(() => getFaultFrequencyData(),    []);
+  const breakdown = useMemo(() => getMovementBreakdown(),     []);
+  const risk      = useMemo(() => getRiskSignalSummary(),     []);
+  const insights  = useMemo(() => getRecentInsights(),        []);
 
   return (
     <div className="h-full overflow-y-auto" style={{ fontFamily: FONT.mono }}>

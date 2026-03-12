@@ -55,7 +55,7 @@ export default function LiveSession() {
   const handleDiscard = () => {
     setSessionData(null);
     setSavedSession(null);
-    // Keep selectedExercise so user can quickly restart the same movement
+    setSelectedExercise(null);
     sessionStartRef.current = null;
     setPhase("select");
   };

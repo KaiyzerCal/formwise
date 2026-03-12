@@ -119,8 +119,7 @@ export function computeJointAngles(landmarks, exercise, phase) {
 
 export function computeFormScore(jointResults) {
   const scored = jointResults.filter((j) => j.state !== null);
-  // Return null when no joints are being tracked — callers should show '—' not '0'
-  if (scored.length === 0) return null;
+  if (scored.length === 0) return 0;
 
   const stateScores = { OPTIMAL: 100, ACCEPTABLE: 75, WARNING: 45, DANGER: 15 };
   const total = scored.reduce((sum, j) => sum + (stateScores[j.state] || 0), 0);
