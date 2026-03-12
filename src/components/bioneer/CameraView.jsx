@@ -289,6 +289,21 @@ export default function CameraView({ exercise, onStop }) {
         </button>
       </div>
 
+      {/* ── Joint Intelligence Rail (left side) ─────────────────────────── */}
+      {sessionActive && liveJointResults.length > 0 && (
+        <JointIntelligenceRail jointResults={liveJointResults} />
+      )}
+
+      {/* ── Form Stability Ring (bottom center) ──────────────────────────── */}
+      {sessionActive && (
+        <div className="absolute bottom-28 left-0 right-0 z-50 flex justify-center pointer-events-none">
+          <div className="px-3 py-2 rounded-xl border"
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderColor: 'rgba(255,255,255,0.08)' }}>
+            <FormStabilityRing score={formScore} />
+          </div>
+        </div>
+      )}
+
       {/* ── HUD (only when session active) ───────────────────────────────── */}
       {sessionActive && (
         <LiveSessionHUD
