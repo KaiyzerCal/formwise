@@ -22,7 +22,6 @@ export default function TechniqueVideoPlayer({
   onTimeUpdate,
   onLoadedMetadata,
   videoRef: externalVideoRef,
-  isMirroredPreview = false,
 }) {
   const internalVideoRef = useRef(null);
   // Use external ref if provided, otherwise use internal
@@ -153,7 +152,6 @@ export default function TechniqueVideoPlayer({
           ref={videoRef}
           src={videoUrl}
           className="absolute inset-0 w-full h-full object-contain"
-          style={{ transform: isMirroredPreview ? 'scaleX(-1)' : 'scaleX(1)' }}
           onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
         />
@@ -172,7 +170,6 @@ export default function TechniqueVideoPlayer({
       <canvas
         ref={overlayCanvasRef}
         className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-        style={{ transform: isMirroredPreview ? 'scaleX(-1)' : 'scaleX(1)' }}
       />
     </div>
   );

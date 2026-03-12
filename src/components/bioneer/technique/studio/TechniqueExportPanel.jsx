@@ -8,140 +8,23 @@ import { Download, X, AlertCircle } from 'lucide-react';
 import { COLORS, FONT } from '../../ui/DesignTokens';
 import { TechniqueExportRenderer } from './techniqueExportRenderer';
 
-/**
- * Create a simple PNG snapshot from session metadata and overlay data
- */
-async function createSnapshotPNG(session) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1280;
-  canvas.height = 720;
-  const ctx = canvas.getContext('2d');
-
-  // Dark background
-  ctx.fillStyle = '#0A0A0A';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Draw grid pattern
-  ctx.strokeStyle = 'rgba(201, 168, 76, 0.1)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i < canvas.width; i += 40) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i, canvas.height);
-    ctx.stroke();
-  }
-  for (let i = 0; i < canvas.height; i += 40) {
-    ctx.beginPath();
-    ctx.moveTo(0, i);
-    ctx.lineTo(canvas.width, i);
-    ctx.stroke();
-  }
-
-  // Draw current pose frame skeleton if available
-  if (session.pose?.frames?.length > 0) {
-    const frame = session.pose.frames[0];
-    if (frame?.landmarks && Array.isArray(frame.landmarks)) {
-      drawSkeletonOnCanvas(ctx, frame.landmarks, canvas.width, canvas.height);
-    }
-  }
-
-  // Draw metadata text
-  ctx.fillStyle = '#C9A84C';
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText(`Movement: ${session.derived?.movementName || 'Unknown'}`, 20, 40);
-  
-  ctx.font = '12px monospace';
-  ctx.fillStyle = 'rgba(201, 168, 76, 0.8)';
-  ctx.fillText(`Frames: ${session.pose?.frames?.length || 0}`, 20, 70);
-  ctx.fillText(`FPS: ${session.video?.fps || 30}`, 20, 95);
-  ctx.fillText(`Exported: ${new Date().toLocaleString()}`, 20, 120);
-
-  // Convert to PNG blob and download
-  return new Promise((resolve) => {
-    canvas.toBlob(
-      (blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `snapshot-${session.id || Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        resolve();
-      },
-      'image/png',
-      0.95
-    );
-  });
-}
-
-/**
- * Draw skeleton on canvas from landmarks
- */
-function drawSkeletonOnCanvas(ctx, landmarks, canvasWidth, canvasHeight) {
-  if (!landmarks || landmarks.length === 0) return;
-
-  // Scale landmarks to canvas
-  const scale = Math.min(canvasWidth, canvasHeight) / 2;
-  const offsetX = canvasWidth / 2;
-  const offsetY = canvasHeight / 2;
-
-  // Draw joints
-  ctx.fillStyle = '#C9A84C';
-  landmarks.forEach((lm) => {
-    if (lm && typeof lm.x === 'number' && typeof lm.y === 'number') {
-      const x = lm.x * scale + offsetX;
-      const y = lm.y * scale + offsetY;
-      ctx.beginPath();
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  });
-
-  // Simple skeleton connections (basic limbs)
-  ctx.strokeStyle = 'rgba(201, 168, 76, 0.6)';
-  ctx.lineWidth = 2;
-  const connections = [
-    [0, 1], [1, 2], [2, 3],  // right arm
-    [0, 4], [4, 5], [5, 6],  // left arm
-    [9, 10],                  // torso
-    [11, 12],                 // legs
-    [12, 14], [14, 16],       // right leg
-    [11, 13], [13, 15],       // left leg
-  ];
-
-  connections.forEach(([i, j]) => {
-    if (landmarks[i] && landmarks[j]) {
-      const x1 = landmarks[i].x * scale + offsetX;
-      const y1 = landmarks[i].y * scale + offsetY;
-      const x2 = landmarks[j].x * scale + offsetX;
-      const y2 = landmarks[j].y * scale + offsetY;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    }
-  });
-}
-
 const EXPORT_FORMATS = [
   {
     id: 'json',
     label: 'JSON Metadata',
-    description: 'Session data, annotations, and metadata for archival',
+    description: 'Session data & annotations as JSON for archival',
     icon: '{ }',
   },
   {
     id: 'snapshot',
     label: 'PNG Snapshot',
-    description: 'Skeleton overlay and metadata as image',
+    description: 'Current frame with annotations as image',
     icon: '📷',
   },
   {
     id: 'package',
     label: 'Session Package',
-    description: 'Complete dataset for reconstruction or backend rendering',
+    description: 'Complete data package for reconstruction or backend rendering',
     icon: '📦',
   },
 ];
@@ -153,7 +36,7 @@ export default function TechniqueExportPanel({ session, onClose }) {
   const [success, setSuccess] = useState(null);
 
   /**
-   * Handle export with real actions
+   * Handle export
    */
   const handleExport = async () => {
     setExporting(true);
@@ -170,9 +53,8 @@ export default function TechniqueExportPanel({ session, onClose }) {
           break;
 
         case 'snapshot':
-          // Create a simple PNG snapshot from session data
-          await createSnapshotPNG(session);
-          setSuccess('PNG snapshot exported');
+          // Note: In full implementation, pass actual canvas/video refs
+          setError('Snapshot export requires active canvas reference. Use Package export instead.');
           break;
 
         case 'package':
@@ -185,7 +67,9 @@ export default function TechniqueExportPanel({ session, onClose }) {
       }
 
       // Auto-close on success after delay
-      setTimeout(onClose, 2000);
+      if (selectedFormat !== 'snapshot') {
+        setTimeout(onClose, 2000);
+      }
     } catch (err) {
       console.error('Export error:', err);
       setError(err.message || 'Export failed');
@@ -219,7 +103,7 @@ export default function TechniqueExportPanel({ session, onClose }) {
           >
             <AlertCircle size={12} className="flex-shrink-0 mt-0.5" style={{ color: COLORS.gold }} />
             <p>
-              Full MP4 rendering with video compositing is available via the backend rendering pipeline. For now, use snapshot or package exports.
+              MP4 video export with rendered annotations is coming soon. For now, export the session package and annotations will be preserved.
             </p>
           </div>
 

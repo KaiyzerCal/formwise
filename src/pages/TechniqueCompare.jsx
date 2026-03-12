@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { COLORS, FONT } from '../components/bioneer/ui/DesignTokens';
 import VideoPanel from '../components/bioneer/compare/VideoPanel';
@@ -48,7 +47,6 @@ export default function TechniqueCompare() {
   const [sourceMode,    setSourceMode]    = useState('manual');
   const [importLabel,   setImportLabel]   = useState('');
   const [draftError,    setDraftError]    = useState(null);
-  const [recordingMode, setRecordingMode] = useState(false);
 
   const videoLeftRef  = useRef(null);
   const videoRightRef = useRef(null);
@@ -185,7 +183,6 @@ export default function TechniqueCompare() {
             <div className="w-px h-4 mx-1" style={{ background: COLORS.border }} />
             <ToggleBtn label="Side by Side" active={mode === 'sidebyside'} onClick={() => setMode('sidebyside')} />
             <ToggleBtn label="Overlay"      active={mode === 'overlay'}    onClick={() => setMode('overlay')} />
-            <ToggleBtn label="Live Capture" active={recordingMode} onClick={() => setRecordingMode(v => !v)} />
           </div>
         </div>
         {draftError && (
@@ -198,11 +195,8 @@ export default function TechniqueCompare() {
       {/* ── Source Controls ──────────────────────────────────────── */}
       <div className="flex-shrink-0 border-b" style={{ borderColor: COLORS.border, background: COLORS.surface }}>
         <SourceSelector
-          userSrc={userSrc}
-          userFilename={userFilename || (sourceMode === 'history-import' ? 'Imported from History' : '')}
-          refClipId={refClipId}
-          onUserUpload={handleUserUpload}
-          onRefSelect={handleRefSelect}
+          userSrc={userSrc} userFilename={userFilename} refClipId={refClipId}
+          onUserUpload={handleUserUpload} onRefSelect={handleRefSelect}
         />
       </div>
 

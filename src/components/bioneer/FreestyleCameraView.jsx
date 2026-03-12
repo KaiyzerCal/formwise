@@ -37,14 +37,7 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
   const [errorMsg, setErrorMsg] = useState(null);
 
   // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError, currentFacing, switchCamera } = useCameraStream(videoRef);
-  const [switchingCamera, setSwitchingCamera] = useState(false);
-
-  const handleSwitchCamera = useCallback(async () => {
-    setSwitchingCamera(true);
-    await switchCamera();
-    setSwitchingCamera(false);
-  }, [switchCamera]);
+  const { camState, camError } = useCameraStream(videoRef);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
@@ -185,7 +178,6 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
           poseFrames: finalized.poseFrames,
           angleFrames: finalized.angleFrames,
           duration: finalized.duration,
-          cameraFacing: currentFacing,
         });
 
         setWorkflowState('idle');
@@ -227,14 +219,12 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
         playsInline
         muted
         className="absolute inset-0 w-full h-full object-cover"
-        style={{ transform: currentFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)' }}
       />
 
       {/* Canvas (video + skeleton overlay) */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        style={{ transform: currentFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)' }}
       />
 
       {/* Camera failed */}
@@ -316,17 +306,8 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
         </div>
       </div>
 
-      {/* Camera + Mute */}
-      <div className="absolute top-16 right-4 z-50 flex gap-2">
-        <button onClick={handleSwitchCamera}
-          disabled={switchingCamera || camState !== 'active'}
-          className="p-2.5 rounded-full border disabled:opacity-50"
-          style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}
-          title={`Switch to ${currentFacing === 'user' ? 'back' : 'front'} camera`}>
-          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
-          </svg>
-        </button>
+      {/* Mute */}
+      <div className="absolute top-16 right-4 z-50">
         <button onClick={() => setMuted(m => !m)}
           className="p-2.5 rounded-full border"
           style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>

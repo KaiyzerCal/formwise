@@ -441,7 +441,6 @@ export default function TechniqueStudio() {
             showAnnotations={showAnnotations}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
-            isMirroredPreview={techniqueSession?.isMirroredPreview || false}
           />
 
           <TechniqueFrameControls
