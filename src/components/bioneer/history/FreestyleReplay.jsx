@@ -127,10 +127,12 @@ export default function FreestyleReplay({ session, onClose }) {
     if (videoRef.current) {
       videoRef.current.currentTime = newTime;
       setCurrentTime(newTime);
-      // Render overlay at new time immediately
-      renderOverlayAtTime(newTime);
+      // Render overlay at new time immediately (only if not composited)
+      if (shouldDrawOverlay) {
+        renderOverlayAtTime(newTime);
+      }
     }
-  }, [renderOverlayAtTime]);
+  }, [renderOverlayAtTime, shouldDrawOverlay]);
 
   useEffect(() => {
     if (isPlaying) {
