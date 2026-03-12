@@ -34,7 +34,8 @@ export default function SessionHistory() {
   const [expandedId, setExpandedId] = useState(null);
 
   // Recompute on each mount so newly saved sessions appear
-  const [tick] = useState(() => Date.now());
+  const [tick, setTick] = useState(0);
+  React.useEffect(() => { setTick(t => t + 1); }, []);
   const rawSessions = useMemo(() => getAllSessions(), [tick]);
   const sessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
   const totalReps = sessions.reduce((a, s) => a + s.reps, 0);
