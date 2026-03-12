@@ -74,7 +74,7 @@ export default function CameraView({ exercise, onStop }) {
   }, []);
 
   // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError } = useCameraStream(videoRef, cameraFacing);
+  const { camState, camError, isSwitching, switchCamera } = useCameraStream(videoRef, cameraFacing);
   useEffect(() => { healthRef.current?.reportCamera(camState); }, [camState]);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
