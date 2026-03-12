@@ -111,6 +111,8 @@ export function useLiveAnalysis(exerciseId, userId = 'local') {
 
     return () => {
       clearTimeout(cueTimerRef.current);
+      // Reset state cleanly so the next exercise starts fresh
+      orchRef.current?.reset();
     };
   }, [exerciseId, userId]);
 
