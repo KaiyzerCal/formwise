@@ -37,7 +37,14 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
   const [errorMsg, setErrorMsg] = useState(null);
 
   // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError } = useCameraStream(videoRef);
+  const { camState, camError, currentFacing, switchCamera } = useCameraStream(videoRef);
+  const [switchingCamera, setSwitchingCamera] = useState(false);
+
+  const handleSwitchCamera = useCallback(async () => {
+    setSwitchingCamera(true);
+    await switchCamera();
+    setSwitchingCamera(false);
+  }, [switchCamera]);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
