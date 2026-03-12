@@ -12,10 +12,11 @@ export class SubjectLockEngine {
     this.lastGoodBox  = null;
     this.stableFrames = 0;
     this.lostMs       = null;
-    this.STABLE_REQ   = 5;
-    this.DEGRADE_CONF = 0.40;
-    this.LOST_MS      = 1000;
-    this.REACQUIRE_MS = 2000;
+    // FIX: Lowered stability requirement and confidence thresholds for real-world use
+    this.STABLE_REQ   = 3;      // was 5 — lock faster
+    this.DEGRADE_CONF = 0.25;   // was 0.40 — more tolerant of low-conf frames
+    this.LOST_MS      = 2000;   // was 1000 — give more time before declaring LOST
+    this.REACQUIRE_MS = 4000;   // was 2000
     this._idCounter   = 0;
   }
 
@@ -28,7 +29,7 @@ export class SubjectLockEngine {
 
     switch (this.state) {
       case 'SEARCHING':
-        if (frameConfidence >= 0.70) {
+        if (frameConfidence >= 0.35) {  // FIX: was 0.70 — too strict for initial detection
           this.stableFrames++;
           if (this.stableFrames >= this.STABLE_REQ) {
             this.trackId      = ++this._idCounter;
@@ -68,7 +69,7 @@ export class SubjectLockEngine {
         return { locked: false, landmarks: null, frozen: true };
 
       case 'LOST':
-        if (frameConfidence >= 0.70) {
+        if (frameConfidence >= 0.35) {  // FIX: was 0.70
           this.stableFrames++;
           if (this.stableFrames >= this.STABLE_REQ) {
             this.trackId      = ++this._idCounter;

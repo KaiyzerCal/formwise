@@ -14,15 +14,17 @@
 
 const LOCK_STATES = { SEARCHING:'SEARCHING', LOCKED:'LOCKED', DEGRADED:'DEGRADED', LOST:'LOST' };
 
+// FIX: Lowered all thresholds significantly so the readiness gate passes in real-world conditions
 const DEFAULTS = {
-  POSE_MIN:          0.55,
-  JOINT_VIS_MIN:     0.50,
-  READY_FRAMES:      3,
-  INSTABILITY_THRESH: 0.08,  // max per-joint displacement (normalized 0–1) per frame
+  POSE_MIN:           0.25,   // was 0.55 — extremely strict for real-world camera
+  JOINT_VIS_MIN:      0.25,   // was 0.50
+  READY_FRAMES:       2,      // was 3 — pass faster
+  INSTABILITY_THRESH: 0.20,   // was 0.08 — motion blur / handheld is fine
   INSTABILITY_JOINTS: ['l_hip','r_hip','l_shoulder','r_shoulder'],
 };
 
-const DEFAULT_REQUIRED = ['l_hip','r_hip','l_knee','r_knee','l_shoulder','r_shoulder'];
+// FIX: Reduce required joints — knees often not visible early
+const DEFAULT_REQUIRED = ['l_hip','r_hip','l_shoulder','r_shoulder'];
 
 export class MotionReadinessManager {
   constructor(requiredJoints = DEFAULT_REQUIRED, opts = {}) {
