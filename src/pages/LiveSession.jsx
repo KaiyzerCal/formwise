@@ -13,6 +13,7 @@ import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 export default function LiveSession() {
   const [phase, setPhase] = useState("select");
   const [selectedExercise, setSelectedExercise] = useState(null);
+  const [selectedMovementId, setSelectedMovementId] = useState(null);
   const [sessionData, setSessionData] = useState(null);
   const [savedSession, setSavedSession] = useState(null);
   const [saving, setSaving] = useState(false);
