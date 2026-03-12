@@ -129,19 +129,19 @@ const EXPORT_FORMATS = [
   {
     id: 'json',
     label: 'JSON Metadata',
-    description: 'Session data & annotations as JSON for archival',
+    description: 'Session data, annotations, and metadata for archival',
     icon: '{ }',
   },
   {
     id: 'snapshot',
     label: 'PNG Snapshot',
-    description: 'Current frame with annotations as image',
+    description: 'Skeleton overlay and metadata as image',
     icon: '📷',
   },
   {
     id: 'package',
     label: 'Session Package',
-    description: 'Complete data package for reconstruction or backend rendering',
+    description: 'Complete dataset for reconstruction or backend rendering',
     icon: '📦',
   },
 ];
