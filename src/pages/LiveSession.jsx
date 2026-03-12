@@ -72,6 +72,7 @@ export default function LiveSession() {
     setSessionData(null);
     setSavedSession(null);
     setSelectedExercise(null);
+    setSelectedMovementId(null);
     sessionStartRef.current = null;
     setPhase("select");
   };
