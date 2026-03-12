@@ -252,9 +252,39 @@ export default function SessionHistory() {
                   </a>
                 </div>
               )}
+
+              {/* Freestyle session controls */}
+              {session._freestyle && (
+                <div className="px-4 py-3 border-t flex items-center gap-2" style={{ borderColor: COLORS.border }}>
+                  <button
+                    onClick={() => setSelectedReplay(session._freestyleData)}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                    style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold }}>
+                    <Play size={10} fill={COLORS.gold} />
+                    REPLAY
+                  </button>
+                  <button
+                    onClick={() => handleDeleteFreestyle(session.id)}
+                    disabled={deleting === session.id}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                    style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', opacity: deleting === session.id ? 0.5 : 1 }}>
+                    <Trash2 size={10} />
+                    {deleting === session.id ? 'DELETING...' : 'DELETE'}
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
+      </div>
+
+      {/* Replay modal */}
+      {selectedReplay && (
+        <FreestyleReplay
+          session={selectedReplay}
+          onClose={() => setSelectedReplay(null)}
+        />
+      )}
       </div>
     </div>
   );
