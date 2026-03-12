@@ -396,6 +396,74 @@ export const MOVEMENT_PROFILES = {
     repVelJoint: 'r_wrist', angleKey: 'elbowR',
     thresholds: { descentVel:0.014, ascentVel:0.010, bottomAngle:85, lockoutAngle:150 },
   },
+
+  // ── Missing strength movements ─────────────────────────────────────────────
+
+  sumo_deadlift: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 170, minRepMs: 1500,
+    visibilityJoints: ['l_hip','r_hip','l_knee'],
+    phases: ['setup','pull','lockout','lower'],
+    phaseMap: { START:'setup', ECCENTRIC:'lower', BOTTOM:'setup', CONCENTRIC:'pull', LOCKOUT:'lockout' },
+    repVelJoint: 'l_hip', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.004, ascentVel:0.003, bottomAngle:70, lockoutAngle:170 },
+  },
+
+  decline_pushup: {
+    category: 'strength', primaryAngleKey: 'elbowL', secondaryAngleKey: 'elbowR',
+    lockoutAngle: 150, minRepMs: 800,
+    visibilityJoints: ['l_elbow','r_elbow','l_wrist','r_wrist'],
+    phases: ['plank','lowering','bottom','press','top'],
+    phaseMap: { START:'plank', ECCENTRIC:'lowering', BOTTOM:'bottom', CONCENTRIC:'press', LOCKOUT:'top' },
+    repVelJoint: 'chest', angleKey: 'elbowL',
+    thresholds: { descentVel:0.005, ascentVel:0.004, bottomAngle:88, lockoutAngle:150 },
+  },
+
+  walking_lunge: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 158, minRepMs: 800,
+    visibilityJoints: ['l_hip','l_knee','l_ankle'],
+    phases: ['step','bottom','drive','recover'],
+    phaseMap: { START:'step', ECCENTRIC:'step', BOTTOM:'bottom', CONCENTRIC:'drive', LOCKOUT:'recover' },
+    repVelJoint: 'pelvis', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.006, ascentVel:0.005, bottomAngle:95, lockoutAngle:158 },
+  },
+
+  step_up: {
+    category: 'strength', primaryAngleKey: 'hipHingeL', secondaryAngleKey: 'kneeL',
+    lockoutAngle: 165, minRepMs: 1000,
+    visibilityJoints: ['l_hip','l_knee','l_ankle'],
+    phases: ['stand','step','drive','top','lower'],
+    phaseMap: { START:'stand', ECCENTRIC:'lower', BOTTOM:'stand', CONCENTRIC:'drive', LOCKOUT:'top' },
+    repVelJoint: 'pelvis', angleKey: 'hipHingeL',
+    thresholds: { descentVel:0.004, ascentVel:0.004, bottomAngle:100, lockoutAngle:165 },
+  },
+
+  // ── Missing athletic movements ─────────────────────────────────────────────
+
+  agility_step: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
+    lockoutAngle: 158, minRepMs: 200,
+    phases: ['ready','step','recover','reset'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.015, ascentVel:0.012, bottomAngle:105, lockoutAngle:158 },
+  },
+
+  defensive_slide: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
+    lockoutAngle: 155, minRepMs: 250,
+    phases: ['set','push','receive','reset'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.012, ascentVel:0.010, bottomAngle:100, lockoutAngle:155 },
+  },
+
+  jump_landing: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: 'kneeR',
+    lockoutAngle: 158, minRepMs: 400,
+    phases: ['flight','contact','absorption','stabilize'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.025, ascentVel:0.020, bottomAngle:90, lockoutAngle:158 },
+  },
 };
 
 export function getProfile(exerciseId) {

@@ -756,6 +756,152 @@ export const SPORTS_MOVEMENTS = [
   },
 ];
 
+  // ── AGILITY STEP ───────────────────────────────────────────────────────────
+  {
+    id: "agility_step",
+    name: "Agility Step",
+    icon: "👣",
+    category: "athletic",
+    muscleGroup: "Legs / Hips / Calves",
+    camera: "front",
+    cameraMode: "motion",
+    phases: ["ready", "step", "recover", "reset"],
+    joints: [
+      {
+        name: "Knee",
+        label: "KNEE",
+        landmarks: [23, 25, 27],
+        altLandmarks: [24, 26, 28],
+        optimal: [115, 145],
+        acceptable: [105, 158],
+        danger: { below: 95, above: null },
+        phaseOptimal: { ready: [115, 145], step: [105, 148], recover: [115, 148], reset: [120, 148] },
+      },
+      {
+        name: "Hip",
+        label: "HIP",
+        landmarks: [12, 24, 26],
+        altLandmarks: [11, 23, 25],
+        optimal: [130, 162],
+        acceptable: [118, 170],
+        danger: { below: 108, above: null },
+        phaseOptimal: { ready: [128, 160], step: [118, 158], recover: [125, 162], reset: [130, 162] },
+      },
+    ],
+    repAngle: null,
+    coaching: {
+      "Knee_WARNING": "Stay lower — maintain athletic knee bend.",
+      "Knee_DANGER": "Too upright — no power base for quick steps.",
+      "Hip_WARNING": "Load hips for faster directional change.",
+      "Hip_DANGER": "Hips too high — agility and power severely limited.",
+    },
+  },
+
+  // ── DEFENSIVE SLIDE ────────────────────────────────────────────────────────
+  {
+    id: "defensive_slide",
+    name: "Defensive Slide",
+    icon: "🛡️",
+    category: "athletic",
+    muscleGroup: "Glutes / Adductors / Quads",
+    camera: "front",
+    cameraMode: "motion",
+    phases: ["set", "push", "receive", "reset"],
+    joints: [
+      {
+        name: "Knee",
+        label: "KNEE",
+        landmarks: [23, 25, 27],
+        altLandmarks: [24, 26, 28],
+        optimal: [110, 140],
+        acceptable: [100, 152],
+        danger: { below: 90, above: null },
+        phaseOptimal: { set: [110, 140], push: [105, 145], receive: [112, 145], reset: [112, 145] },
+      },
+      {
+        name: "Hip",
+        label: "HIP",
+        landmarks: [12, 24, 26],
+        altLandmarks: [11, 23, 25],
+        optimal: [125, 155],
+        acceptable: [115, 165],
+        danger: { below: 105, above: null },
+        phaseOptimal: { set: [122, 152], push: [115, 150], receive: [122, 155], reset: [122, 155] },
+      },
+      {
+        name: "Trunk",
+        label: "TRUNK",
+        landmarks: "spine_lean",
+        optimal: [5, 18],
+        acceptable: [0, 28],
+        danger: { below: null, above: 34 },
+        phaseOptimal: { set: [5, 18], push: [5, 20], receive: [5, 18], reset: [5, 18] },
+      },
+    ],
+    repAngle: null,
+    coaching: {
+      "Knee_WARNING": "Stay in athletic stance — keep knees bent through the slide.",
+      "Knee_DANGER": "Standing upright — completely lost defensive position.",
+      "Hip_WARNING": "Lower hips for better lateral coverage.",
+      "Hip_DANGER": "Hips too high — no defensive control or power.",
+      "Trunk_WARNING": "Keep slight forward lean for balance and quickness.",
+      "Trunk_DANGER": "Over-leaning — balance and recovery will suffer.",
+    },
+  },
+
+  // ── JUMP LANDING ───────────────────────────────────────────────────────────
+  {
+    id: "jump_landing",
+    name: "Jump Landing",
+    icon: "🛬",
+    category: "athletic",
+    muscleGroup: "Quads / Glutes / Calves",
+    camera: "side",
+    cameraMode: "motion",
+    phases: ["flight", "contact", "absorption", "stabilize"],
+    joints: [
+      {
+        name: "Knee",
+        label: "KNEE",
+        landmarks: [23, 25, 27],
+        altLandmarks: [24, 26, 28],
+        optimal: [100, 130],
+        acceptable: [90, 145],
+        danger: { below: 80, above: null },
+        phaseOptimal: { flight: [145, 180], contact: [140, 175], absorption: [85, 135], stabilize: [100, 145] },
+      },
+      {
+        name: "Hip",
+        label: "HIP",
+        landmarks: [12, 24, 26],
+        altLandmarks: [11, 23, 25],
+        optimal: [110, 145],
+        acceptable: [100, 158],
+        danger: { below: 88, above: null },
+        phaseOptimal: { flight: [148, 178], contact: [140, 172], absorption: [100, 148], stabilize: [115, 155] },
+      },
+      {
+        name: "Trunk",
+        label: "TRUNK",
+        landmarks: "spine_lean",
+        optimal: [5, 20],
+        acceptable: [0, 30],
+        danger: { below: null, above: 38 },
+        phaseOptimal: { flight: [5, 25], contact: [8, 25], absorption: [10, 28], stabilize: [5, 20] },
+      },
+    ],
+    repAngle: { jointIndex: 0, downThreshold: 130, upThreshold: 158 },
+    coaching: {
+      "Knee_WARNING": "Soften landing — absorb through the knee.",
+      "Knee_DANGER": "Stiff-legged landing — high ACL injury risk.",
+      "Hip_WARNING": "Push hips back on landing to distribute load.",
+      "Hip_DANGER": "No hip absorption — all stress going to knees.",
+      "Trunk_WARNING": "Stay upright and balanced on landing.",
+      "Trunk_DANGER": "Excessive trunk forward lean — falling out of landing position.",
+    },
+  },
+];
+
 export function getSportsMovementById(id) {
   return SPORTS_MOVEMENTS.find((m) => m.id === id);
 }

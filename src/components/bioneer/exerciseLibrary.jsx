@@ -688,6 +688,156 @@ export const EXERCISES = [
   },
 ];
 
+  // ── SUMO DEADLIFT ─────────────────────────────────────────────────────────
+  {
+    id: "sumo_deadlift",
+    name: "Sumo Deadlift",
+    icon: "🦵",
+    category: "strength",
+    muscleGroup: "Glutes / Hamstrings / Quads",
+    camera: "side",
+    joints: [
+      {
+        name: "Hip",
+        label: "HIP",
+        landmarks: [12, 24, 26],
+        altLandmarks: [11, 23, 25],
+        optimal: [165, 180],
+        acceptable: [150, 180],
+        danger: { below: 135, above: null },
+        phaseOptimal: { setup: [60, 100], pull: [60, 178], lockout: [165, 180], lower: [60, 178] },
+      },
+      {
+        name: "Knee",
+        label: "KNEE",
+        landmarks: [23, 25, 27],
+        altLandmarks: [24, 26, 28],
+        optimal: [155, 175],
+        acceptable: [140, 180],
+        danger: { below: 120, above: null },
+        phaseOptimal: { setup: [100, 145], pull: [110, 178], lockout: [158, 180], lower: [110, 178] },
+      },
+      {
+        name: "Spine",
+        label: "SPINE",
+        landmarks: "spine_lean",
+        optimal: [0, 15],
+        acceptable: [0, 25],
+        danger: { below: null, above: 28 },
+        phaseOptimal: { setup: [0, 30], pull: [0, 30], lockout: [0, 10], lower: [0, 30] },
+      },
+    ],
+    repAngle: { jointIndex: 1, downThreshold: 140, upThreshold: 170 },
+  },
+
+  // ── DECLINE PUSH-UP ────────────────────────────────────────────────────────
+  {
+    id: "decline_pushup",
+    name: "Decline Push-up",
+    icon: "📉",
+    category: "strength",
+    muscleGroup: "Upper Chest / Core",
+    camera: "side",
+    joints: [
+      {
+        name: "Elbow",
+        label: "ELBOW",
+        landmarks: [12, 14, 16],
+        altLandmarks: [11, 13, 15],
+        optimal: [70, 95],
+        acceptable: [60, 110],
+        danger: { below: 50, above: null },
+        phaseOptimal: { plank: [150, 180], lowering: [70, 175], bottom: [65, 100], press: [70, 175], top: [150, 180] },
+      },
+      {
+        name: "Body Line",
+        label: "BODY",
+        landmarks: [12, 24, 28],
+        altLandmarks: [11, 23, 27],
+        optimal: [165, 180],
+        acceptable: [158, 180],
+        danger: { below: 152, above: null },
+        phaseOptimal: { plank: [163, 180], lowering: [160, 180], bottom: [160, 180], press: [160, 180], top: [163, 180] },
+      },
+    ],
+    repAngle: { jointIndex: 0, downThreshold: 85, upThreshold: 148 },
+  },
+
+  // ── WALKING LUNGE ──────────────────────────────────────────────────────────
+  {
+    id: "walking_lunge",
+    name: "Walking Lunge",
+    icon: "🚶",
+    category: "strength",
+    muscleGroup: "Legs / Glutes",
+    camera: "side",
+    joints: [
+      {
+        name: "Front Knee",
+        label: "KNEE",
+        landmarks: [23, 25, 27],
+        altLandmarks: [24, 26, 28],
+        optimal: [85, 100],
+        acceptable: [75, 115],
+        danger: { below: null, above: 120 },
+        phaseOptimal: { step: [85, 175], bottom: [80, 105], drive: [85, 175], recover: [140, 180] },
+      },
+      {
+        name: "Trunk",
+        label: "TRUNK",
+        landmarks: "spine_lean",
+        optimal: [0, 10],
+        acceptable: [0, 20],
+        danger: { below: null, above: 25 },
+        phaseOptimal: { step: [0, 15], bottom: [0, 15], drive: [0, 15], recover: [0, 10] },
+      },
+    ],
+    repAngle: { jointIndex: 0, downThreshold: 95, upThreshold: 155 },
+  },
+
+  // ── STEP UP ────────────────────────────────────────────────────────────────
+  {
+    id: "step_up",
+    name: "Step Up",
+    icon: "🪜",
+    category: "strength",
+    muscleGroup: "Quads / Glutes",
+    camera: "side",
+    joints: [
+      {
+        name: "Drive Knee",
+        label: "KNEE",
+        landmarks: [23, 25, 27],
+        altLandmarks: [24, 26, 28],
+        optimal: [155, 180],
+        acceptable: [140, 180],
+        danger: { below: 120, above: null },
+        phaseOptimal: { stand: [155, 180], step: [90, 175], drive: [140, 180], top: [155, 180], lower: [100, 178] },
+      },
+      {
+        name: "Hip",
+        label: "HIP",
+        landmarks: [12, 24, 26],
+        altLandmarks: [11, 23, 25],
+        optimal: [155, 180],
+        acceptable: [140, 180],
+        danger: { below: 120, above: null },
+        phaseOptimal: { stand: [158, 180], step: [90, 165], drive: [140, 175], top: [158, 180], lower: [90, 172] },
+      },
+      {
+        name: "Trunk",
+        label: "TRUNK",
+        landmarks: "spine_lean",
+        optimal: [0, 10],
+        acceptable: [0, 18],
+        danger: { below: null, above: 22 },
+        phaseOptimal: { stand: [0, 8], step: [0, 15], drive: [0, 12], top: [0, 8], lower: [0, 12] },
+      },
+    ],
+    repAngle: { jointIndex: 0, downThreshold: 130, upThreshold: 162 },
+  },
+];
+
 export function getExerciseById(id) {
   return EXERCISES.find((e) => e.id === id);
 }
