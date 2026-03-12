@@ -2,7 +2,7 @@
  * FreestyleReplay — displays recorded freestyle session with video + skeleton overlay
  * Includes timeline scrubber and playback controls
  */
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Play, Pause, X } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { drawSkeleton } from '../canvasRenderer';
