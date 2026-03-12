@@ -76,9 +76,12 @@ function buildCoachingText(exerciseDef, jointData) {
 }
 
 export default function SessionSummary({ sessionData, onSave, onDiscard, saving, saveOutcome }) {
-  const score = Math.round(sessionData.movement_score ?? sessionData.form_score_overall ?? 0);
+  // Defensive guards — ensure all required data exists
+  if (!sessionData) return null;
+
+  const score = Math.round(Math.max(0, Math.min(100, sessionData.movement_score ?? sessionData.form_score_overall ?? 0)));
   const exerciseDef = sessionData.exercise_def;
-  const jointData = sessionData.joint_data;
+  const jointData = sessionData.joint_data || {};
 
   // Mastery stats from session logger reps array
   const reps = sessionData.reps ?? [];
