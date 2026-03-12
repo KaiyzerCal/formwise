@@ -50,7 +50,7 @@ export default function TechniqueVideoPlayer({
   }, [annotations, currentFrameIndex]);
 
   /**
-   * Render overlay: skeleton + annotations
+   * Render overlay: skeleton + annotations (with null guards)
    */
   const renderOverlay = useCallback(() => {
     const video = videoRef.current;
@@ -65,31 +65,36 @@ export default function TechniqueVideoPlayer({
     setVideoSize({ width: canvas.width, height: canvas.height });
 
     const ctx = canvas.getContext('2d');
+    if (!ctx) return; // Guard against getContext failure
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw skeleton if enabled
+    // Draw skeleton if enabled (with safe frame access)
     if (showSkeleton) {
       const poseFrame = getCurrentPoseFrame();
-      if (poseFrame && poseFrame.landmarks && poseFrame.landmarks.length > 0) {
+      if (poseFrame && poseFrame.landmarks && Array.isArray(poseFrame.landmarks) && poseFrame.landmarks.length > 0) {
         drawSkeleton(ctx, poseFrame.landmarks, [], canvas.width, canvas.height);
 
-        // Draw angle labels if enabled
+        // Draw angle labels if enabled (guard against missing angles)
         if (showAngleLabels && poseFrame.angles) {
           drawAngleLabels(ctx, poseFrame.angles, poseFrame.landmarks);
         }
       }
     }
 
-    // Draw annotations if enabled
+    // Draw annotations if enabled (with safe array access)
     if (showAnnotations) {
       const frameAnnotations = getFrameAnnotations();
-      frameAnnotations.forEach(ann => {
-        renderAnnotation(ctx, ann, canvas.width, canvas.height);
-      });
+      if (Array.isArray(frameAnnotations)) {
+        frameAnnotations.forEach(ann => {
+          renderAnnotation(ctx, ann, canvas.width, canvas.height);
+        });
+      }
     }
 
-    // Draw frame counter
-    drawFrameInfo(ctx, currentFrameIndex, poseFrames?.length || 0, canvas.width);
+    // Draw frame counter (safe totalFrames access)
+    const totalFrames = Array.isArray(poseFrames) ? poseFrames.length : 0;
+    drawFrameInfo(ctx, currentFrameIndex, totalFrames, canvas.width);
   }, [
     showSkeleton,
     showAngleLabels,
