@@ -373,7 +373,7 @@ export default function CameraView({ exercise, onStop }) {
 
       {/* ── Movement State Indicator (top center) ────────────────────────── */}
       {sessionActive && (
-        <div className="absolute top-16 left-0 right-0 z-50 flex justify-center pointer-events-none">
+        <div className="absolute top-24 left-0 right-0 z-50 flex justify-center pointer-events-none">
           <div className="flex items-center gap-3 px-4 py-2 rounded-xl border"
             style={{ background: 'rgba(0,0,0,0.7)', borderColor: `${GOLD}30`, backdropFilter: 'blur(10px)' }}>
             {frameState?.phase && (
