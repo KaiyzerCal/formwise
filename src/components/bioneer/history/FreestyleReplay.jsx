@@ -172,6 +172,7 @@ export default function FreestyleReplay({ session, onClose }) {
           ref={videoRef}
           src={videoUrl}
           className="w-full h-full object-contain"
+          style={{ transform: session.cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }}
           onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onPlay={() => setIsPlaying(true)}
@@ -181,6 +182,7 @@ export default function FreestyleReplay({ session, onClose }) {
           <canvas
             ref={overlayCanvasRef}
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+            style={{ transform: session.cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }}
           />
         )}
 
