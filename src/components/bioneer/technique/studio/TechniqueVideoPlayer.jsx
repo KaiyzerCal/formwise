@@ -54,7 +54,7 @@ export default function TechniqueVideoPlayer({
   }, [annotations, currentFrameIndex]);
 
   /**
-   * Render overlay: skeleton + annotations (with null guards)
+   * Render overlay: skeleton + annotations + draft annotations (with null guards)
    */
   const renderOverlay = useCallback(() => {
     const video = videoRef.current;
@@ -96,6 +96,11 @@ export default function TechniqueVideoPlayer({
       }
     }
 
+    // Draw draft annotation preview while drawing
+    if (isDrawing && draftPoints.length > 0) {
+      drawDraftAnnotation(ctx, draftPoints, activeTool);
+    }
+
     // Draw frame counter (safe totalFrames access)
     const totalFrames = Array.isArray(poseFrames) ? poseFrames.length : 0;
     drawFrameInfo(ctx, currentFrameIndex, totalFrames, canvas.width);
@@ -105,6 +110,9 @@ export default function TechniqueVideoPlayer({
     showAnnotations,
     currentFrameIndex,
     poseFrames,
+    isDrawing,
+    draftPoints,
+    activeTool,
     getCurrentPoseFrame,
     getFrameAnnotations,
   ]);
