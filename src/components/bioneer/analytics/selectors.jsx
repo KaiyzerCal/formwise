@@ -50,8 +50,14 @@ export function getAnalyticsOverview() {
 
   const totalReps   = sessions.reduce((sum, s) => sum + (s.rep_count ?? 0), 0);
   const totalTime   = sessions.reduce((sum, s) => sum + (s.duration_seconds ?? 0), 0);
-  const avgFormScore = avgOf(sessions.map(s => s.average_form_score).filter(v => v != null)) ?? 0;
-  const bestScore   = Math.max(0, ...sessions.map(s => s.highest_form_score ?? s.average_form_score ?? 0));
+  const scores = sessions
+    .map(s => s.average_form_score ?? s.form_score_overall ?? null)
+    .filter(v => v != null && !isNaN(v));
+  const avgFormScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  const bestScores = sessions
+    .map(s => s.highest_form_score ?? s.average_form_score ?? 0)
+    .filter(v => !isNaN(v));
+  const bestScore = bestScores.length ? Math.max(0, Math.max(...bestScores)) : 0;
   const latestDate  = sessions[sessions.length - 1]?.started_at;
 
   // Most-trained movement
