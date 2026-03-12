@@ -12,9 +12,17 @@ export default function ExerciseCard({ exercise, selected, onClick }) {
     window.location.href = createPageUrl(`ProperFormDemo?exercise=${exercise.id}`);
   };
 
+  const handleClick = () => {
+    if (exercise.isFreestyle) {
+      window.location.href = createPageUrl('FreestyleSession');
+    } else {
+      onClick();
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         "relative rounded-xl p-5 text-left transition-all duration-300",
         "bg-white/[0.04] backdrop-blur-md border",
