@@ -176,14 +176,14 @@ export default function TechniqueCompare() {
               </p>
             )}
           </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <ToggleBtn label="Overlay"   active={showOverlay}   onClick={() => setShowOverlay(v => !v)} />
-          <ToggleBtn label="Guides"    active={showGuides}    onClick={() => setShowGuides(v => !v)} />
-          <ToggleBtn label="Alignment" active={showAlignment} onClick={() => setShowAlignment(v => !v)} />
-          <div className="w-px h-4 mx-1" style={{ background: COLORS.border }} />
-          <ToggleBtn label="Side by Side" active={mode === 'sidebyside'} onClick={() => setMode('sidebyside')} />
-          <ToggleBtn label="Overlay"      active={mode === 'overlay'}    onClick={() => setMode('overlay')} />
-        </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <ToggleBtn label="Overlay"   active={showOverlay}   onClick={() => setShowOverlay(v => !v)} />
+            <ToggleBtn label="Guides"    active={showGuides}    onClick={() => setShowGuides(v => !v)} />
+            <ToggleBtn label="Alignment" active={showAlignment} onClick={() => setShowAlignment(v => !v)} />
+            <div className="w-px h-4 mx-1" style={{ background: COLORS.border }} />
+            <ToggleBtn label="Side by Side" active={mode === 'sidebyside'} onClick={() => setMode('sidebyside')} />
+            <ToggleBtn label="Overlay"      active={mode === 'overlay'}    onClick={() => setMode('overlay')} />
+          </div>
         </div>
         {draftError && (
         <div className="px-3 py-2 rounded bg-red-500/10 border border-red-500/30 text-[9px]" style={{ color: '#EF4444' }}>
