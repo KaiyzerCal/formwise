@@ -47,6 +47,9 @@ export default function TechniqueStudio() {
   const [showNotes, setShowNotes] = useState(true);
   const [showExport, setShowExport] = useState(false);
 
+  // Text tool state
+  const [textInputData, setTextInputData] = useState(null);
+
   // Annotation state
   const annotationEditor = useAnnotationEditor();
 
