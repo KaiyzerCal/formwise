@@ -79,7 +79,7 @@ function visibilityBand(conf) {
 /**
  * Main normalizer — call this when a session ends.
  * @param {object} rawData — output from CameraView/handleStop
- * @param {object} meta    — { movementName, category, startedAt }
+ * @param {object} meta    — { movementName, category, startedAt, movementProfileId, movementProfile }
  */
 export function normalizeSession(rawData, meta = {}) {
   const now = new Date().toISOString();
