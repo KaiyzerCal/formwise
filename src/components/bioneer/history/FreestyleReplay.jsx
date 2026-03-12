@@ -89,19 +89,21 @@ export default function FreestyleReplay({ session, onClose }) {
     animationFrameRef.current = requestAnimationFrame(renderOverlay);
   }, [renderOverlayAtTime]);
 
-  const handlePlay = () => {
+  const handlePlay = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
     }
-  };
+  }, []);
 
-  const handlePause = () => {
+  const handlePause = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.pause();
       setIsPlaying(false);
+      // Render overlay for current frame when paused
+      renderOverlayAtTime(videoRef.current.currentTime);
     }
-  };
+  }, [renderOverlayAtTime]);
 
   const handleLoadedMetadata = useCallback(() => {
     const duration = videoRef.current?.duration || 0;
