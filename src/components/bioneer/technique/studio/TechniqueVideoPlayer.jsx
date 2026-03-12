@@ -346,3 +346,78 @@ function drawFrameInfo(ctx, frameIndex, totalFrames, canvasWidth) {
   ctx.fillStyle = 'rgba(201, 168, 76, 0.8)';
   ctx.fillText(text, 10, canvasWidth > 640 ? 25 : 15);
 }
+
+/**
+ * Draw draft annotation preview while drawing
+ */
+function drawDraftAnnotation(ctx, points, tool) {
+  if (points.length === 0) return;
+
+  ctx.strokeStyle = 'rgba(201, 168, 76, 0.6)';
+  ctx.fillStyle = 'rgba(201, 168, 76, 0.1)';
+  ctx.lineWidth = 2;
+
+  if (tool === 'freehand') {
+    // Draw freehand path
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+  } else if (tool === 'line') {
+    // Draw line preview
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+    ctx.stroke();
+  } else if (tool === 'arrow') {
+    // Draw arrow preview (line + head)
+    const start = points[0];
+    const end = points[points.length - 1];
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+    const headlen = 15;
+
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(end.x, end.y);
+    ctx.lineTo(end.x - headlen * Math.cos(angle - Math.PI / 6), end.y - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(end.x, end.y);
+    ctx.lineTo(end.x - headlen * Math.cos(angle + Math.PI / 6), end.y - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.stroke();
+  } else if (tool === 'circle' && points.length >= 1) {
+    // Draw circle preview
+    const center = points[0];
+    const end = points[points.length - 1];
+    const radius = Math.sqrt(Math.pow(end.x - center.x, 2) + Math.pow(end.y - center.y, 2));
+
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (tool === 'rectangle' && points.length >= 1) {
+    // Draw rectangle preview
+    const topLeft = points[0];
+    const end = points[points.length - 1];
+    const width = end.x - topLeft.x;
+    const height = end.y - topLeft.y;
+
+    ctx.strokeRect(topLeft.x, topLeft.y, width, height);
+  } else if (tool === 'angle' && points.length >= 1) {
+    // Draw angle preview
+    ctx.strokeStyle = 'rgba(201, 168, 76, 0.5)';
+    if (points.length === 1) {
+      // Just the vertex point
+      ctx.fillRect(points[0].x - 3, points[0].y - 3, 6, 6);
+    } else if (points.length === 2) {
+      // Draw one leg
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      ctx.lineTo(points[1].x, points[1].y);
+      ctx.stroke();
+    }
+  }
+}
