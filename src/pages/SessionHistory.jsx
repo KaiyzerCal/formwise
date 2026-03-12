@@ -104,7 +104,7 @@ export default function SessionHistory() {
             </div>
           </div>
         )}
-        {sessions.slice().reverse().map(session => {
+        {sessions.map(session => {
           const expanded = expandedId === session.id;
           return (
             <div key={session.id} className="rounded-lg border overflow-hidden" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
