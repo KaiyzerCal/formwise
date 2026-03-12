@@ -113,7 +113,7 @@ export default function CameraView({ exercise, onStop }) {
       );
       ctx.setLineDash([]);
     }
-  }, [exercise.cameraMode, processFrame]);
+  }, [exercise.cameraMode, exercise.joints, processFrame, muted]);
 
   usePoseInferenceLoop({
     videoRef, landmarkerRef,
