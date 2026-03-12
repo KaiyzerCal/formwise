@@ -158,10 +158,11 @@ export default function CameraView({ exercise, onStop }) {
   const readinessChecks = [
     { label: 'Camera active',     ok: camState === 'active' },
     { label: 'Pose engine ready', ok: poseState === 'ready' },
-    { label: 'Body detected',     ok: bodyDetected },
-    { label: 'Tracking stable',   ok: confOk && bodyDetected },
+    { label: 'Full body visible', ok: bodyDetected },
+    { label: 'Confidence stable', ok: confOk },
   ];
-  const allReady = readinessChecks.every(c => c.ok);
+  // All checks must pass for automatic readiness
+  const allReady = readinessChecks.every(c => c.ok) && bodyDetected && confOk;
 
   useEffect(() => {
     if (allReady && !sessionActive) setSessionActive(true);
