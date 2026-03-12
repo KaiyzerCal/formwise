@@ -280,7 +280,13 @@ export default function TechniqueVideoPlayer({
       {/* Overlay Canvas */}
       <canvas
         ref={overlayCanvasRef}
-        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+        className={`absolute inset-0 w-full h-full object-contain ${
+          activeTool && activeTool !== 'pointer' ? 'cursor-crosshair' : 'pointer-events-none'
+        }`}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
       />
     </div>
   );
