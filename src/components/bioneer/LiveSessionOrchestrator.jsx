@@ -259,6 +259,7 @@ export class LiveSessionOrchestrator {
       lockState,
       repCount:   this.repDetector.getRepCount(),
       activeCue:  this.scheduler.getActiveCue(),
+      movementContext: movCtx,       // multi-frame context signals
     });
   }
 
