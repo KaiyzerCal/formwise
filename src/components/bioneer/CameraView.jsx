@@ -5,7 +5,7 @@
  */
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
-import { useCameraStream }       from './live/useCameraStream';
+import { useCameraController }   from './live/useCameraController';
 import { usePoseRuntime }        from './live/usePoseRuntime';
 import { usePoseInferenceLoop }  from './live/usePoseInferenceLoop';
 import SessionReadinessGate      from './live/SessionReadinessGate';
