@@ -1,7 +1,9 @@
 /**
- * TechniqueStudio
+ * TechniqueStudio — PRODUCTION HARDENED
  * Complete coaching environment for reviewing, annotating, and exporting session videos
  * Integrates video playback, frame sync, pose overlay, annotation tools, and export
+ * 
+ * CRITICAL RENDER ORDER: Strict callback ordering prevents ReferenceError crashes
  */
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
@@ -20,6 +22,9 @@ import { saveTechniqueProject } from '../TechniqueProjectStore';
 import { X } from 'lucide-react';
 
 export default function TechniqueStudio() {
+  // ============================================================================
+  // SECTION 1: HOOKS & STATE (in order: router, state, refs)
+  // ============================================================================
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -45,17 +50,26 @@ export default function TechniqueStudio() {
   // Annotation state
   const annotationEditor = useAnnotationEditor();
 
-  // Autosave with debounce
+  // Refs
   const autosaveTimeoutRef = useRef(null);
-
-  // Video and sync
   const videoRef = useRef(null);
-  const frameSync = useFrameSync(techniqueSession?.pose?.frames || [], videoRef, techniqueSession?.video?.fps || 30);
 
-  /**
-   * CRITICAL: Define all callbacks BEFORE useEffect hooks that depend on them
-   * This prevents ReferenceError at runtime
-   */
+  // ============================================================================
+  // SECTION 2: DERIVED SAFE FALLBACKS (computed early, before effects)
+  // ============================================================================
+  const safeVideoUrl = techniqueSession?.video?.url || null;
+  const safePoseFrames = Array.isArray(techniqueSession?.pose?.frames) ? techniqueSession.pose.frames : [];
+  const safeFps = techniqueSession?.video?.fps || 30;
+  const safeCategory = techniqueSession?.derived?.category || 'freestyle';
+  const safeCreatedAt = techniqueSession?.createdAt || new Date().toISOString();
+
+  // Frame sync with safe values (DO NOT depend on frameSync refs in effects before declaration)
+  const frameSync = useFrameSync(safePoseFrames, videoRef, safeFps);
+
+  // ============================================================================
+  // SECTION 3: ALL CALLBACKS (defined BEFORE any useEffect)
+  // CRITICAL: No effect may reference a callback defined after this section
+  // ============================================================================
 
   /**
    * Playback controls
@@ -100,7 +114,7 @@ export default function TechniqueStudio() {
   }, []);
 
   /**
-   * Frame navigation
+   * Frame navigation (with null guards)
    */
   const handleStepForward = useCallback(() => {
     if (frameSync && typeof frameSync.stepForward === 'function') {
@@ -121,8 +135,15 @@ export default function TechniqueStudio() {
   }, [frameSync]);
 
   /**
-   * Annotation handlers
+   * Annotation handlers (with safe frame index)
    */
+  const currentFrameIndex = useMemo(() => {
+    if (frameSync && typeof frameSync.getFrameIndexAtTime === 'function') {
+      return frameSync.getFrameIndexAtTime(currentTime);
+    }
+    return 0;
+  }, [currentTime, frameSync]);
+
   const handleClearFrame = useCallback(() => {
     annotationEditor.clearFrameAnnotations(currentFrameIndex);
   }, [annotationEditor, currentFrameIndex]);
@@ -134,7 +155,7 @@ export default function TechniqueStudio() {
   }, [annotationEditor]);
 
   /**
-   * Autosave annotations and notes (debounced)
+   * Autosave (with null guard on session)
    */
   const triggerAutosave = useCallback(() => {
     if (!techniqueSession) return;
@@ -166,18 +187,22 @@ export default function TechniqueStudio() {
       } catch (error) {
         console.error('Autosave failed:', error);
       }
-    }, 2000); // Debounce 2 seconds
+    }, 2000);
   }, [techniqueSession, annotationEditor.annotations, speed]);
 
+  // ============================================================================
+  // SECTION 4: EFFECTS (now safe to reference all callbacks)
+  // ============================================================================
+
   /**
-   * Trigger autosave on annotation changes
+   * Autosave on annotation changes
    */
   useEffect(() => {
     triggerAutosave();
   }, [annotationEditor.annotations, triggerAutosave]);
 
   /**
-   * Load session from draft ID or history
+   * Load session from draft ID (only effect that touches loading state)
    */
   useEffect(() => {
     const loadSession = async () => {
@@ -205,7 +230,7 @@ export default function TechniqueStudio() {
           return;
         }
 
-        // Normalize the draft into a TechniqueSession
+        // Normalize the draft into a TechniqueSession (always returns valid shape)
         const normalized = normalizeToTechniqueSession(draft);
         console.log('[TechniqueStudio] Session normalized successfully');
         setTechniqueSession(normalized);
@@ -229,7 +254,7 @@ export default function TechniqueStudio() {
   }, [searchParams]);
 
   /**
-   * Keyboard support for studio navigation
+   * Keyboard support (safe because all handlers are already defined)
    */
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -264,15 +289,9 @@ export default function TechniqueStudio() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, handlePlay, handlePause, handleStepBackward, handleStepForward, annotationEditor]);
 
-  /**
-   * Get current frame index from time
-   */
-  const currentFrameIndex = useMemo(() => {
-    if (frameSync && typeof frameSync.getFrameIndexAtTime === 'function') {
-      return frameSync.getFrameIndexAtTime(currentTime);
-    }
-    return 0;
-  }, [currentTime, frameSync]);
+  // ============================================================================
+  // SECTION 5: RENDER STATES (loading → error → empty → main)
+  // ============================================================================
 
   // Loading state
   if (loading) {
@@ -311,6 +330,7 @@ export default function TechniqueStudio() {
     );
   }
 
+  // No session state
   if (!techniqueSession) {
     return (
       <div className="fixed inset-0 flex items-center justify-center" style={{ background: COLORS.bg }}>
@@ -321,12 +341,36 @@ export default function TechniqueStudio() {
     );
   }
 
-  // Safe field extraction to prevent nested undefined crashes
-  const safeVideoUrl = techniqueSession?.video?.url || null;
-  const safePoseFrames = Array.isArray(techniqueSession?.pose?.frames) ? techniqueSession.pose.frames : [];
-  const safeFps = techniqueSession?.video?.fps || 30;
-  const safeCategory = techniqueSession?.derived?.category || 'freestyle';
-  const safeCreatedAt = techniqueSession?.createdAt || new Date().toISOString();
+  // No data state (degraded but visible)
+  if (!safeVideoUrl && safePoseFrames.length === 0) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center p-6" style={{ background: COLORS.bg }}>
+        <div className="max-w-md p-6 rounded-lg border" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
+          <h2 className="text-sm font-bold mb-2" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
+            Degraded Session
+          </h2>
+          <p className="text-[9px] mb-4" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+            This session has no video or pose data available. Session may have been partially recorded or lost.
+          </p>
+          <div className="space-y-2 mb-4 text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+            <div>Category: {safeCategory}</div>
+            <div>Created: {new Date(safeCreatedAt).toLocaleDateString()}</div>
+          </div>
+          <button
+            onClick={() => navigate(-1)}
+            className="w-full py-2 rounded text-[9px] font-bold"
+            style={{ background: COLORS.goldDim, color: COLORS.gold, border: `1px solid ${COLORS.goldBorder}` }}
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // SECTION 6: MAIN RENDER (fully stable, all refs and handlers ready)
+  // ============================================================================
 
   return (
     <div
