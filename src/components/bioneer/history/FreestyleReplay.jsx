@@ -190,6 +190,7 @@ export default function FreestyleReplay({ session, onClose }) {
           <canvas
             ref={overlayCanvasRef}
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+            style={isMirroredPreview ? { transform: 'scaleX(-1)' } : {}}
           />
         )}
 
