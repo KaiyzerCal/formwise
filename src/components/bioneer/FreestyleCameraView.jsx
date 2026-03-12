@@ -227,6 +227,7 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
         playsInline
         muted
         className="absolute inset-0 w-full h-full object-cover"
+        style={{ transform: currentFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)' }}
       />
 
       {/* Canvas (video + skeleton overlay) */}
