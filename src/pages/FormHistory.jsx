@@ -1,121 +1,119 @@
-import React from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import React, { useMemo } from "react";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Trophy, AlertTriangle, Clock, Repeat } from "lucide-react";
-import { format } from "date-fns";
-import { EXERCISES } from "../components/bioneer/exerciseLibrary";
+import { ArrowLeft, Trophy, AlertTriangle, Clock, Repeat, BarChart3 } from "lucide-react";
+import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
+import { getAllSessions } from "../components/bioneer/data/sessionStore";
 
-function getExerciseInfo(id) {
-  return EXERCISES.find((e) => e.id === id) || { name: id, icon: "🏋️" };
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 export default function FormHistory() {
-  const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ["formSessions"],
-    queryFn: () => base44.entities.FormSession.list("-created_date", 50),
-  });
+  const sessions = useMemo(() => getAllSessions().slice(0, 50), []);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <link
-        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
-        rel="stylesheet"
-      />
-
+    <div className="min-h-screen" style={{ background: COLORS.bg, fontFamily: FONT.mono }}>
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-[#0A0A0A]/90 backdrop-blur-lg border-b border-white/5">
+      <div className="sticky top-0 z-30 border-b" style={{ background: `${COLORS.bg}ee`, backdropFilter: 'blur(12px)', borderColor: COLORS.border }}>
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
-          <a
-            href={createPageUrl("FormCheck")}
-            className="p-2 rounded-full hover:bg-white/5 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-white/60" />
+          <a href={createPageUrl("LiveSession")}
+            className="p-2 rounded-full transition-colors"
+            style={{ background: COLORS.surface }}>
+            <ArrowLeft className="w-4 h-4" style={{ color: COLORS.textSecondary }} />
           </a>
-          <h1
-            className="text-sm font-bold tracking-[0.2em] text-[#C9A84C] uppercase"
-            style={{ fontFamily: "'Syne', sans-serif" }}
-          >
+          <h1 className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: COLORS.gold }}>
             Session History
           </h1>
+          <span className="ml-auto text-[9px] tracking-[0.1em] uppercase"
+            style={{ color: COLORS.textTertiary }}>
+            {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}
+          </span>
         </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-3">
-        {isLoading && (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 rounded-xl bg-white/[0.03] animate-pulse" />
-            ))}
-          </div>
-        )}
 
-        {!isLoading && sessions.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto rounded-full bg-white/[0.03] flex items-center justify-center mb-4">
-              <Repeat className="w-7 h-7 text-white/15" />
+        {/* Zero state */}
+        {sessions.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 gap-5">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center"
+              style={{ background: COLORS.goldDim, border: `1px solid ${COLORS.goldBorder}` }}>
+              <BarChart3 size={22} style={{ color: COLORS.gold }} />
             </div>
-            <p className="text-white/30 text-sm">No sessions yet</p>
-            <p className="text-white/15 text-xs mt-1">Complete a form check to see your history</p>
+            <div className="text-center space-y-2 max-w-xs">
+              <p className="text-xs font-medium tracking-[0.12em] uppercase"
+                style={{ color: COLORS.textSecondary }}>
+                No sessions logged yet
+              </p>
+              <p className="text-[10px] leading-relaxed"
+                style={{ color: COLORS.textMuted }}>
+                Complete a live session to start building your form history.
+              </p>
+            </div>
+            <a href={createPageUrl("LiveSession")}
+              className="px-5 py-2.5 rounded-lg text-[10px] font-bold tracking-[0.12em] uppercase border"
+              style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, color: COLORS.gold }}>
+              Start First Session
+            </a>
           </div>
         )}
 
+        {/* Session cards */}
         {sessions.map((session) => {
-          const ex = getExerciseInfo(session.exercise_id);
-          const score = session.form_score_overall || 0;
-          const scoreColor = score >= 80 ? "#22C55E" : score >= 65 ? "#EAB308" : "#EF4444";
+          const score = session.average_form_score ?? 0;
+          const sc    = scoreColor(score);
+          const name  = session.movement_name ?? session.movement_id?.replace(/_/g, ' ') ?? 'Unknown';
+          const alerts = (session.top_faults ?? []).length;
 
           return (
-            <div
-              key={session.id}
-              className="rounded-xl bg-white/[0.04] border border-white/5 p-4 hover:bg-white/[0.06] transition-colors"
-            >
+            <div key={session.session_id}
+              className="rounded-xl border p-4 transition-colors"
+              style={{ background: COLORS.surface, borderColor: COLORS.border }}>
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">{ex.icon}</div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      {ex.name}
-                    </h3>
-                    <p className="text-[10px] text-white/30 mt-0.5" style={{ fontFamily: "'DM Mono', monospace" }}>
-                      {session.created_date
-                        ? format(new Date(session.created_date), "MMM d, yyyy · h:mm a")
-                        : "—"}
-                    </p>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold capitalize" style={{ color: COLORS.textPrimary, fontFamily: FONT.heading }}>
+                    {name}
+                  </h3>
+                  <p className="text-[10px] mt-0.5" style={{ color: COLORS.textTertiary }}>
+                    {fmtDate(session.started_at)}
+                  </p>
                 </div>
-
-                <div className="text-right">
-                  <span
-                    className="text-xl font-bold"
-                    style={{ fontFamily: "'DM Mono', monospace", color: scoreColor }}
-                  >
-                    {score}%
+                <div className="text-right ml-3 flex-shrink-0">
+                  <span className="text-xl font-bold" style={{ fontFamily: FONT.heading, color: sc }}>
+                    {score}
                   </span>
-                  {score >= 80 && <Trophy className="w-3.5 h-3.5 text-[#C9A84C] ml-auto mt-0.5" />}
+                  <span className="text-[10px] ml-0.5" style={{ color: COLORS.textTertiary }}>/100</span>
+                  {score >= 80 && <Trophy className="w-3.5 h-3.5 ml-auto mt-0.5" style={{ color: COLORS.gold }} />}
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-5 mt-3">
                 <div className="flex items-center gap-1.5">
-                  <Repeat className="w-3 h-3 text-white/20" />
-                  <span className="text-[10px] text-white/40" style={{ fontFamily: "'DM Mono', monospace" }}>
-                    {session.reps_detected || 0} reps
+                  <Repeat size={10} style={{ color: COLORS.textMuted }} />
+                  <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                    {session.rep_count ?? 0} reps
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-white/20" />
-                  <span className="text-[10px] text-white/40" style={{ fontFamily: "'DM Mono', monospace" }}>
-                    {session.duration_seconds || 0}s
+                  <Clock size={10} style={{ color: COLORS.textMuted }} />
+                  <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                    {Math.floor((session.duration_seconds ?? 0) / 60)}:{String((session.duration_seconds ?? 0) % 60).padStart(2, '0')}
                   </span>
                 </div>
-                {(session.alerts || []).length > 0 && (
+                {alerts > 0 && (
                   <div className="flex items-center gap-1.5">
-                    <AlertTriangle className="w-3 h-3 text-[#EF4444]/50" />
-                    <span className="text-[10px] text-[#EF4444]/50" style={{ fontFamily: "'DM Mono', monospace" }}>
-                      {session.alerts.length} alerts
+                    <AlertTriangle size={10} style={{ color: '#EF4444' }} />
+                    <span className="text-[10px]" style={{ color: '#EF4444' }}>
+                      {alerts} fault{alerts > 1 ? 's' : ''}
                     </span>
                   </div>
+                )}
+                {session.session_status && session.session_status !== 'complete' && (
+                  <span className="text-[9px] tracking-[0.08em] uppercase ml-auto px-1.5 py-0.5 rounded"
+                    style={{ background: COLORS.goldDim, color: COLORS.gold }}>
+                    {session.session_status}
+                  </span>
                 )}
               </div>
             </div>
