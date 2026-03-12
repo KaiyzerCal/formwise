@@ -276,7 +276,7 @@ export const SPORTS_MOVEMENTS = [
       "Front Knee_DANGER":    "Knee severely bent at contact — losing power base.",
     },
   },
-];
+  ,
 
   // ── SPRINT ──────────────────────────────────────────────────────────────────
   {
