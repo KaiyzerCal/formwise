@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { COLORS, FONT } from '../components/bioneer/ui/DesignTokens';
 import VideoPanel from '../components/bioneer/compare/VideoPanel';
 import SourceSelector, { getRefUrl } from '../components/bioneer/compare/SourceSelector';
 import MetricRail from '../components/bioneer/compare/MetricRail';
 import { useVideoPose } from '../components/bioneer/compare/useVideoPose';
 import { useTechniqueComparison } from '../components/bioneer/compare/useTechniqueComparison';
+import { getTechniqueDraft } from '../components/bioneer/technique/techniqueStorage';
 
 const SPEEDS = [0.25, 0.5, 1, 2];
 
