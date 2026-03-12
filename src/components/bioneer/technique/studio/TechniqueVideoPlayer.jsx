@@ -24,7 +24,17 @@ export default function TechniqueVideoPlayer({
   videoRef: externalVideoRef,
 }) {
   const internalVideoRef = useRef(null);
+  // Use external ref if provided, otherwise use internal
   const videoRef = externalVideoRef || internalVideoRef;
+
+  // Sync external ref if it's a ref object
+  useEffect(() => {
+    if (externalVideoRef && internalVideoRef.current) {
+      if (typeof externalVideoRef === 'object' && externalVideoRef.current) {
+        externalVideoRef.current = internalVideoRef.current;
+      }
+    }
+  }, [externalVideoRef]);
   const overlayCanvasRef = useRef(null);
   const animationFrameRef = useRef(null);
 
