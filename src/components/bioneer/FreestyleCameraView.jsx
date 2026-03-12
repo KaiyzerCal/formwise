@@ -46,7 +46,6 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
     startRecording,
     stopRecording,
     capturePoseFrame,
-    getSessionData,
     reset: resetRecorder,
   } = useSessionRecorder(videoRef, canvasRef);
 
