@@ -686,7 +686,6 @@ export const EXERCISES = [
     ],
     repAngle: { jointIndex: 0, downThreshold: 140, upThreshold: 165 },
   },
-];
 
   // ── SUMO DEADLIFT ─────────────────────────────────────────────────────────
   {
