@@ -292,6 +292,23 @@ export default function CameraView({ exercise, onStop }) {
         </button>
       </div>
 
+      {/* ── Rep Mastery Badge ────────────────────────────────────────────── */}
+      {sessionActive && lastRepMastery && (() => {
+        const { score, repNumber } = lastRepMastery;
+        const color = score >= 90 ? '#C9A84C' : score >= 80 ? '#22C55E' : score >= 70 ? '#EAB308' : '#EF4444';
+        return (
+          <div className="absolute top-16 left-4 z-50">
+            <div className="px-3 py-2 rounded-xl border"
+              style={{ background: 'rgba(0,0,0,0.65)', borderColor: `${color}50`, backdropFilter: 'blur(8px)' }}>
+              <span className="text-[8px] text-white/40 uppercase tracking-widest block"
+                style={{ fontFamily: "'DM Mono', monospace" }}>REP {repNumber} MASTERY</span>
+              <span className="text-xl font-bold tabular-nums"
+                style={{ fontFamily: "'DM Mono', monospace", color }}>{score}</span>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Joint Intelligence Rail (left side) ─────────────────────────── */}
       {sessionActive && liveJointResults.length > 0 && (
         <JointIntelligenceRail jointResults={liveJointResults} />
