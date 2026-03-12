@@ -109,7 +109,7 @@ export default function TechniqueFrameControls({
           disabled={duration === 0 || currentFrameIndex === 0}
           className="p-1.5 rounded border disabled:opacity-30"
           style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}
-          title="Previous frame"
+          title="Previous frame (← Arrow)"
         >
           <SkipBack size={14} />
         </button>
@@ -120,7 +120,7 @@ export default function TechniqueFrameControls({
           disabled={duration === 0 || currentFrameIndex >= (totalFrames || 0) - 1}
           className="p-1.5 rounded border disabled:opacity-30"
           style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}
-          title="Next frame"
+          title="Next frame (→ Arrow)"
         >
           <SkipForward size={14} />
         </button>
