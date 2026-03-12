@@ -36,6 +36,7 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
   const [visibleJoints, setVisibleJoints] = useState(0);
   const [workflowState, setWorkflowState] = useState('idle'); // idle, recording, finalizing, error
   const [errorMsg, setErrorMsg] = useState(null);
+  const [isSecure, setIsSecure] = useState(window.isSecureContext || false);
 
   // Camera facing mode — persisted to localStorage
   const [cameraFacing, setCameraFacing] = useState(() => {
@@ -45,12 +46,17 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
 
   // Persist camera choice to localStorage
   const handleToggleCamera = useCallback(async () => {
+    if (!isSecure) {
+      alert('Camera requires HTTPS or localhost');
+      return;
+    }
+    
     setIsSwitchingCamera(true);
     const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
     setCameraFacing(newFacing);
     localStorage.setItem('bioneer_camera_facing', newFacing);
     setIsSwitchingCamera(false);
-  }, [cameraFacing]);
+  }, [cameraFacing, isSecure]);
 
   // ── Camera ───────────────────────────────────────────────────────────────
   const { camState, camError } = useCameraStream(videoRef, cameraFacing);
