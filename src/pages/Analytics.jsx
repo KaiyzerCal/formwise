@@ -1,83 +1,80 @@
 import React, { useMemo } from "react";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from "recharts";
-import { COLORS, FONT, scoreColor, faultColor } from "../components/bioneer/ui/DesignTokens";
-import { MOCK_SESSIONS, MOCK_ROM_TREND, MOCK_FAULT_FREQ, MOCK_INSIGHTS, MOCK_SYMMETRY, MOCK_BODY_HEATMAP } from "../components/bioneer/ui/mockData";
-import { getAggregateStats, getScoreTrendData, getAllSessions } from "../components/bioneer/data/sessionStore";
-import { TrendingUp, Calendar, Activity, Target } from "lucide-react";
-import StatCard from "../components/bioneer/ui/StatCard";
-import ScoreRing from "../components/bioneer/ui/ScoreRing";
-import AnalyticsCharts from "../components/bioneer/ui/AnalyticsCharts";
-import BodyHeatmap from "../components/bioneer/ui/BodyHeatmap";
+import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
+import {
+  getAnalyticsOverview,
+  getFormScoreTrend,
+  getFaultFrequencyData,
+  getMovementBreakdown,
+  getRiskSignalSummary,
+  getRecentInsights,
+} from "../components/bioneer/analytics/selectors";
+
+import AnalyticsEmptyState    from "../components/bioneer/analytics/AnalyticsEmptyState";
+import OverviewCards           from "../components/bioneer/analytics/OverviewCards";
+import FormTrendChart          from "../components/bioneer/analytics/FormTrendChart";
+import FaultIntelligencePanel  from "../components/bioneer/analytics/FaultIntelligencePanel";
+import MovementBreakdownPanel  from "../components/bioneer/analytics/MovementBreakdownPanel";
+import RiskSignalPanel         from "../components/bioneer/analytics/RiskSignalPanel";
+import RecentInsightsPanel     from "../components/bioneer/analytics/RecentInsightsPanel";
 
 export default function Analytics() {
-  const realStats   = useMemo(() => getAggregateStats(), []);
-  const hasRealData = !!realStats;
+  const overview  = useMemo(() => getAnalyticsOverview(),     []);
+  const trend     = useMemo(() => getFormScoreTrend(),        []);
+  const faults    = useMemo(() => getFaultFrequencyData(),    []);
+  const breakdown = useMemo(() => getMovementBreakdown(),     []);
+  const risk      = useMemo(() => getRiskSignalSummary(),     []);
+  const insights  = useMemo(() => getRecentInsights(),        []);
 
-  // Prefer real data; fall back to mock only when no sessions saved yet
-  const mockSessions = MOCK_SESSIONS;
-  const avgScore    = hasRealData ? realStats.avgScore   : Math.round(mockSessions.reduce((a, s) => a + s.score, 0) / mockSessions.length);
-  const totalReps   = hasRealData ? realStats.totalReps  : mockSessions.reduce((a, s) => a + s.reps, 0);
-  const sessionCount = hasRealData ? realStats.sessionCount : mockSessions.length;
-  const latestRepScores = hasRealData ? [] : mockSessions[mockSessions.length - 1].repScores;
-  const avgRepQ = latestRepScores.length
-    ? Math.round(latestRepScores.reduce((a, b) => a + b, 0) / latestRepScores.length)
-    : avgScore;
+  // Zero sessions — show the welcome/empty state
+  if (!overview) {
+    return (
+      <div className="h-full flex flex-col" style={{ fontFamily: FONT.mono }}>
+        <PageHeader />
+        <AnalyticsEmptyState />
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full overflow-y-auto p-4 lg:p-6 space-y-4" style={{ fontFamily: FONT.mono }}>
-      {/* Top stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Overall Score" icon={Target} color={COLORS.gold}>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <ScoreRing score={avgScore} size={56} strokeWidth={3} fontSize={18} />
-            </div>
-          </div>
-        </StatCard>
-        <StatCard label="Avg Rep Quality" icon={Activity} color={scoreColor(avgRepQ)}>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold" style={{ color: scoreColor(avgRepQ), fontFamily: FONT.heading }}>{avgRepQ}%</span>
-            <TrendingUp size={14} style={{ color: COLORS.correct }} />
-          </div>
-        </StatCard>
-        <StatCard label="Consistency" icon={Activity}>
-          <span className="text-sm font-bold" style={{ color: COLORS.correct, fontFamily: FONT.heading }}>Highly Consistent</span>
-        </StatCard>
-        <StatCard label="Sessions Tracked" icon={Calendar} color={COLORS.gold}>
-          <span className="text-2xl font-bold" style={{ color: COLORS.textPrimary, fontFamily: FONT.heading }}>{sessionCount}</span>
-        </StatCard>
-      </div>
+    <div className="h-full overflow-y-auto" style={{ fontFamily: FONT.mono }}>
+      <PageHeader />
+      <div className="p-4 lg:p-6 space-y-4">
 
-      {/* Charts row */}
-      <AnalyticsCharts
-        romTrend={MOCK_ROM_TREND}
-        repScores={latestRepScores}
-        faultFreq={MOCK_FAULT_FREQ}
-        insights={MOCK_INSIGHTS}
-        symmetry={MOCK_SYMMETRY}
-      />
+        {/* ── Overview stat cards ────────────────────────────────────────── */}
+        <OverviewCards overview={overview} />
 
-      {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div className="rounded-lg border p-4" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
-          <h3 className="text-[9px] tracking-[0.15em] uppercase mb-3" style={{ color: COLORS.textTertiary }}>Rep Symmetry</h3>
-          <SymmetryMiniChart data={MOCK_SYMMETRY} />
+        {/* ── Form trend + Fault intelligence ───────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <FormTrendChart trendData={trend} />
+          <FaultIntelligencePanel faultData={faults} />
         </div>
-        <BodyHeatmap data={MOCK_BODY_HEATMAP} />
+
+        {/* ── Movement breakdown + Risk signals ─────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <MovementBreakdownPanel breakdownData={breakdown} />
+          <RiskSignalPanel riskData={risk} />
+        </div>
+
+        {/* ── Recent insights ────────────────────────────────────────────── */}
+        <RecentInsightsPanel insightData={insights} />
+
       </div>
     </div>
   );
 }
 
-function SymmetryMiniChart({ data }) {
+function PageHeader() {
   return (
-    <ResponsiveContainer width="100%" height={140}>
-      <LineChart data={data}>
-        <CartesianGrid stroke={COLORS.border} strokeDasharray="3 3" />
-        <XAxis dataKey="rep" tick={{ fill: COLORS.textTertiary, fontSize: 9 }} axisLine={{ stroke: COLORS.border }} />
-        <YAxis domain={[60, 100]} tick={{ fill: COLORS.textTertiary, fontSize: 9 }} axisLine={{ stroke: COLORS.border }} />
-        <Line type="monotone" dataKey="score" stroke={COLORS.gold} strokeWidth={2} dot={{ r: 3, fill: COLORS.gold }} />
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="px-5 py-4 border-b flex items-center justify-between flex-shrink-0"
+      style={{ borderColor: COLORS.border }}>
+      <h1 className="text-xs tracking-[0.15em] uppercase font-bold"
+        style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
+        Intelligence
+      </h1>
+      <span className="text-[9px] tracking-[0.1em] uppercase"
+        style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+        Derived from saved sessions
+      </span>
+    </div>
   );
 }
