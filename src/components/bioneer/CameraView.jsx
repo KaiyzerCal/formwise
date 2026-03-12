@@ -49,7 +49,8 @@ export default function CameraView({ exercise, onStop }) {
   // ── Inference loop ────────────────────────────────────────────────────────
   const handleResult = useCallback((result) => {
     setPoseResults(result);
-    processFrame(result, Date.now());
+    // FIX: Use performance.now() to match MediaPipe's timestamp domain
+    processFrame(result, performance.now());
 
     // Canvas render
     const canvas = canvasRef.current;
@@ -205,7 +206,7 @@ export default function CameraView({ exercise, onStop }) {
         </button>
         <span className="text-sm font-bold tracking-[0.2em] uppercase"
           style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
-          {exercise.name}
+          {exercise.displayName || exercise.name}
         </span>
         <div className="px-3 py-1.5 rounded-full border"
           style={{
