@@ -86,6 +86,42 @@ export default function TechniqueStudio() {
   }, [searchParams]);
 
   /**
+   * Keyboard support for studio navigation
+   */
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!videoRef.current) return;
+
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          isPlaying ? handlePause() : handlePlay();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          handleStepBackward();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          handleStepForward();
+          break;
+        case 'z':
+        case 'Z':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            e.shiftKey ? annotationEditor.redo() : annotationEditor.undo();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying, handlePlay, handlePause, handleStepBackward, handleStepForward, annotationEditor]);
+
+  /**
    * Get current frame index from time
    */
   const currentFrameIndex = useMemo(() => {
