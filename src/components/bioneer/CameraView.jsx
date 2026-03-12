@@ -128,7 +128,8 @@ export default function CameraView({ exercise, onStop }) {
 
     // ── Update React state for HUD panels
     setLiveJointResults(jointResults);
-    setLiveFormScore(computeFormScore(jointResults));
+    const fs = computeFormScore(jointResults);
+    if (fs !== null) setLiveFormScore(fs);
     // Feed joint results to orchestrator for mastery scoring
     updateJointResults(jointResults);
 
