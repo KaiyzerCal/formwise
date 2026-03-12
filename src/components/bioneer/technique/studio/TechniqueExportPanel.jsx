@@ -36,7 +36,7 @@ export default function TechniqueExportPanel({ session, onClose }) {
   const [success, setSuccess] = useState(null);
 
   /**
-   * Handle export
+   * Handle export with real actions
    */
   const handleExport = async () => {
     setExporting(true);
@@ -53,8 +53,9 @@ export default function TechniqueExportPanel({ session, onClose }) {
           break;
 
         case 'snapshot':
-          // Note: In full implementation, pass actual canvas/video refs
-          setError('Snapshot export requires active canvas reference. Use Package export instead.');
+          // Create a simple PNG snapshot from session data
+          await createSnapshotPNG(session);
+          setSuccess('PNG snapshot exported');
           break;
 
         case 'package':
@@ -67,9 +68,7 @@ export default function TechniqueExportPanel({ session, onClose }) {
       }
 
       // Auto-close on success after delay
-      if (selectedFormat !== 'snapshot') {
-        setTimeout(onClose, 2000);
-      }
+      setTimeout(onClose, 2000);
     } catch (err) {
       console.error('Export error:', err);
       setError(err.message || 'Export failed');
