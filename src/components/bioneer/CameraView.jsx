@@ -234,6 +234,8 @@ export default function CameraView({ exercise, onStop }) {
       // Additional fields for analytics
       exercise_def:       exercise,
       joint_data:         {},
+      // Camera metadata for history tracking
+      cameraFacing:       cameraFacing,
     });
   }, [stopSession, repCount, formScore, onStop, exercise]);
 
