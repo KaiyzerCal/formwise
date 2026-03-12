@@ -174,7 +174,13 @@ export default function TechniqueCompare() {
           <ToggleBtn label="Side by Side" active={mode === 'sidebyside'} onClick={() => setMode('sidebyside')} />
           <ToggleBtn label="Overlay"      active={mode === 'overlay'}    onClick={() => setMode('overlay')} />
         </div>
-      </div>
+        </div>
+        {draftError && (
+        <div className="px-3 py-2 rounded bg-red-500/10 border border-red-500/30 text-[9px]" style={{ color: '#EF4444' }}>
+          {draftError}
+        </div>
+        )}
+        </div>
 
       {/* ── Source Controls ──────────────────────────────────────── */}
       <div className="flex-shrink-0 border-b" style={{ borderColor: COLORS.border, background: COLORS.surface }}>
