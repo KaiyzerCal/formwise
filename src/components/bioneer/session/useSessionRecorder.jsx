@@ -148,20 +148,6 @@ export function useSessionRecorder(videoRef, canvasRef) {
     frameIntervalRef.current = 1000 / fpsRef.current;
   }, []);
 
-  // Get current session data
-  const getSessionData = useCallback(() => {
-    const duration = recordingStartRef.current
-      ? (Date.now() - recordingStartRef.current) / 1000
-      : 0;
-
-    return {
-      duration: Math.round(duration),
-      videoBlob: recordedBlob,
-      poseFrames: poseFramesRef.current,
-      angleFrames: angleFramesRef.current,
-    };
-  }, [recordedBlob]);
-
   // Reset recording state
   const reset = useCallback(() => {
     recorderRef.current = null;
@@ -170,6 +156,7 @@ export function useSessionRecorder(videoRef, canvasRef) {
     angleFramesRef.current = [];
     frameCountRef.current = 0;
     recordingStartRef.current = null;
+    stopPromiseRef.current = null;
     setIsRecording(false);
     setRecordedBlob(null);
   }, []);
@@ -180,7 +167,6 @@ export function useSessionRecorder(videoRef, canvasRef) {
     startRecording,
     stopRecording,
     capturePoseFrame,
-    getSessionData,
     reduceFPS,
     reset,
   };
