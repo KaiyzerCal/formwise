@@ -20,18 +20,11 @@ export default function FormStabilityRing({ score = 0 }) {
 
   return (
     <div
-      className="flex flex-col items-center gap-0.5"
-      style={{ fontFamily: "'DM Mono', monospace" }}
+      className="relative flex items-center justify-center"
+      style={{ width: 72, height: 72, fontFamily: "'DM Mono', monospace" }}
     >
-      <svg width={72} height={72} style={{ transform: 'rotate(-90deg)' }}>
-        {/* Track */}
-        <circle
-          cx={36} cy={36} r={R}
-          fill="none"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth={5}
-        />
-        {/* Fill */}
+      <svg width={72} height={72} className="absolute inset-0" style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={36} cy={36} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={5} />
         <circle
           cx={36} cy={36} r={R}
           fill="none"
@@ -42,21 +35,11 @@ export default function FormStabilityRing({ score = 0 }) {
           style={{ transition: 'stroke-dasharray 0.4s ease, stroke 0.4s ease' }}
         />
       </svg>
-      {/* Score label inside ring */}
-      <div
-        className="absolute flex flex-col items-center"
-        style={{ marginTop: -68 }}
-      >
-        <span
-          className="text-base font-bold tabular-nums leading-none"
-          style={{ color, fontFamily: "'DM Mono', monospace" }}
-        >
+      <div className="relative flex flex-col items-center leading-none">
+        <span className="text-sm font-bold tabular-nums" style={{ color }}>
           {pct}%
         </span>
-        <span
-          className="text-[7px] tracking-widest uppercase"
-          style={{ color: 'rgba(255,255,255,0.3)', fontFamily: "'DM Mono', monospace" }}
-        >
+        <span className="text-[7px] tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
           FORM
         </span>
       </div>
