@@ -90,7 +90,7 @@ export default function TechniqueFrameControls({
       <div className="flex items-center gap-2 flex-wrap">
         {/* Play/Pause */}
         <button
-          onClick={isPlaying ? onPause : onPlay}
+          onClick={handlePlayPause}
           disabled={duration === 0}
           className="p-1.5 rounded border disabled:opacity-30"
           style={{
@@ -98,7 +98,7 @@ export default function TechniqueFrameControls({
             borderColor: isPlaying ? COLORS.goldBorder : COLORS.border,
             color: isPlaying ? COLORS.gold : COLORS.textTertiary,
           }}
-          title="Play/Pause"
+          title="Play/Pause (Space)"
         >
           {isPlaying ? <Pause size={14} /> : <Play size={14} fill={COLORS.gold} />}
         </button>
