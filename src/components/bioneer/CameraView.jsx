@@ -16,6 +16,7 @@ import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from 
 import { smoothLandmarks, computeJointAngles, computeFormScore } from './poseEngine';
 import { initAudio, destroyAudio, beep } from './audioEngine';
 import { TemporalFilterEngine } from './pipeline/TemporalFilterEngine';
+import { SystemHealthMonitor } from './pipeline/runtime/SystemHealthMonitor';
 import JointIntelligenceRail from './live/JointIntelligenceRail';
 import FormStabilityRing from './live/FormStabilityRing';
 
