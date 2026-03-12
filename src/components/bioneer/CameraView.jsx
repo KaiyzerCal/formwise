@@ -55,7 +55,8 @@ export default function CameraView({ exercise, onStop }) {
 
   // ── Analysis engine ───────────────────────────────────────────────────────
   const {
-    frameState, frameRef, repCount, lockState, activeCue, statusMsg, statusColor, processFrame, stopSession,
+    frameState, frameRef, repCount, lockState, activeCue, statusMsg, statusColor,
+    lastRepMastery, processFrame, updateJointResults, stopSession,
   } = useLiveAnalysis(exercise.id);
 
   // (beep hysteresis is now managed by TemporalFilterEngine.shouldBeep)
@@ -101,6 +102,8 @@ export default function CameraView({ exercise, onStop }) {
     // ── Update React state for HUD panels
     setLiveJointResults(jointResults);
     setLiveFormScore(computeFormScore(jointResults));
+    // Feed joint results to orchestrator for mastery scoring
+    updateJointResults(jointResults);
 
     const ghost = generateGhostPose(smoothed);
     if (ghost) drawGhostSkeleton(ctx, ghost, canvas.width, canvas.height);
