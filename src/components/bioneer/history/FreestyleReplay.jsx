@@ -177,10 +177,12 @@ export default function FreestyleReplay({ session, onClose }) {
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
-        <canvas
-          ref={overlayCanvasRef}
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-        />
+        {shouldDrawOverlay && (
+          <canvas
+            ref={overlayCanvasRef}
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          />
+        )}
 
         {/* Play/Pause Overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
