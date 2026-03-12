@@ -98,7 +98,7 @@ export default function SessionHistory() {
     setSendError(null);
     try {
       const draft = await createTechniqueDraftFromFreestyleSession(session);
-      navigate(`/TechniqueCompare?draft=${draft.techniqueId}`);
+      navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
     } catch (error) {
       console.error('Failed to send to technique:', error);
       setSendError(error.message || 'Failed to send session to Technique');
