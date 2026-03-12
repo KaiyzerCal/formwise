@@ -216,16 +216,17 @@ export default function SessionHistory() {
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setExpandedId(expanded ? null : session.id)} className="w-full text-left px-4 py-3 flex items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-medium" style={{ color: COLORS.textPrimary }}>{session.exercise}</span>
-                      <span className="text-[8px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-full border" style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>{session.category}</span>
-                    </div>
-                    <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
-                      {session.date} · {session.time}
-                    </span>
-                  </div>
+               <button onClick={() => setExpandedId(expanded ? null : session.id)} className="w-full text-left px-4 py-3 flex items-center gap-4">
+                 <div className="flex-1 min-w-0">
+                   <div className="flex items-center gap-2 mb-0.5">
+                     <span className="text-xs font-medium" style={{ color: COLORS.textPrimary }}>{session.exercise}</span>
+                     <span className="text-[8px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-full border" style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>{session.category}</span>
+                     {session.movementProfileId && <SessionMovementBadge movementProfileId={session.movementProfileId} />}
+                   </div>
+                   <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                     {session.date} · {session.time}
+                   </span>
+                 </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5">
                       <Repeat size={10} style={{ color: COLORS.textMuted }} />
