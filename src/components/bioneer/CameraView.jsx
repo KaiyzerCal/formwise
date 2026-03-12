@@ -266,9 +266,10 @@ export default function CameraView({ exercise, onStop }) {
         className="absolute inset-0 w-full h-full object-cover"
         style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
 
-      {/* Canvas */}
+      {/* Canvas — mirror when using front camera (including skeleton/annotations) */}
       <canvas ref={canvasRef}
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
 
       {/* ── Camera failed ──────────────────────────────────────────────────── */}
       {camState === 'failed' && (
