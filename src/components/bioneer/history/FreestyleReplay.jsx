@@ -101,10 +101,12 @@ export default function FreestyleReplay({ session, onClose }) {
     if (videoRef.current) {
       videoRef.current.pause();
       setIsPlaying(false);
-      // Render overlay for current frame when paused
-      renderOverlayAtTime(videoRef.current.currentTime);
+      // Render overlay for current frame when paused (only if not composited)
+      if (shouldDrawOverlay) {
+        renderOverlayAtTime(videoRef.current.currentTime);
+      }
     }
-  }, [renderOverlayAtTime]);
+  }, [renderOverlayAtTime, shouldDrawOverlay]);
 
   const handleLoadedMetadata = useCallback(() => {
     const duration = videoRef.current?.duration || 0;
