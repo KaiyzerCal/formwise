@@ -112,6 +112,16 @@ export class MasteryScoreEngine {
     return Math.round(Math.pow(ratio, 0.7) * 100);
   }
 
+  /** Use MovementContextEngine stability scores directly */
+  _contextStabilityScore(ctx) {
+    const vals = Object.values(ctx.stability ?? {}).filter(v => typeof v === 'number');
+    if (!vals.length) return 80;
+    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    // blend with control score for richer signal
+    const ctrl = ctx.controlScore ?? 80;
+    return Math.round(avg * 0.6 + ctrl * 0.4);
+  }
+
   /** Variance in angle change per frame → stability (lower variance = higher score) */
   _stabilityScore(frameBuffer) {
     if (frameBuffer.length < 4) return 80;
