@@ -111,6 +111,8 @@ export function useLiveAnalysis(exerciseId, userId = 'local') {
 
     return () => {
       clearTimeout(cueTimerRef.current);
+      // Hard cleanup: reset orchestrator state on exercise change or unmount
+      orchRef.current?.reset();
     };
   }, [exerciseId, userId]);
 
