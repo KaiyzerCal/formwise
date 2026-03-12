@@ -75,7 +75,7 @@ function buildCoachingText(exerciseDef, jointData) {
   return lines.length > 0 ? lines.join(" ") : null;
 }
 
-export default function SessionSummary({ sessionData, onSave, onDiscard, saving }) {
+export default function SessionSummary({ sessionData, onSave, onDiscard, saving, saveOutcome }) {
   const score = sessionData.movement_score ?? sessionData.form_score_overall ?? 0;
   const exerciseDef = sessionData.exercise_def;
   const jointData = sessionData.joint_data;
@@ -177,6 +177,15 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving 
           <div className="flex items-center gap-2 justify-center">
             <Trophy className="w-4 h-4 text-[#C9A84C]" />
             <span className="text-xs text-[#C9A84C] font-medium">Gold Form Achieved</span>
+          </div>
+        )}
+
+        {/* Save outcome message */}
+        {saveOutcome && (
+          <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3 text-center">
+            <p className="text-[10px] tracking-wider uppercase" style={{ fontFamily: "'DM Mono', monospace", color: 'rgba(255,255,255,0.4)' }}>
+              {saveOutcome}
+            </p>
           </div>
         )}
 
