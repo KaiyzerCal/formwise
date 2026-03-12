@@ -370,18 +370,23 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
         </div>
       </div>
 
-      {/* Camera Toggle */}
-      <div className="absolute top-16 right-20 z-50">
+      {/* Camera Toggle (Mobile-Safe) */}
+      <div className="absolute top-4 right-4 z-[100]">
         <CameraToggle
           cameraFacing={cameraFacing}
           onToggle={handleToggleCamera}
-          isLoading={isSwitchingCamera}
-          className="px-2 py-1.5 rounded-full border"
+          isLoading={isCameraSwitching || isSwitchingCamera}
+          className="px-3 py-2 rounded-lg border text-sm md:text-xs"
           style={{
-            background: 'rgba(0,0,0,0.5)',
-            borderColor: 'rgba(255,255,255,0.1)',
-            backdropFilter: 'blur(8px)',
-            color: 'white',
+            background: 'rgba(0,0,0,0.7)',
+            borderColor: GOLD,
+            backdropFilter: 'blur(12px)',
+            color: GOLD,
+            minWidth: '44px',
+            minHeight: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         />
       </div>
