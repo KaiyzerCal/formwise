@@ -23,6 +23,7 @@ export default function FreestyleReplay({ session, onClose }) {
   if (!session) return null;
 
   const poseFrames = session.poseFrames || [];
+  const shouldDrawOverlay = !session.compositedVideo;
 
   // Create blob URL once on mount
   useEffect(() => {
