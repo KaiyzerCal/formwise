@@ -97,10 +97,12 @@ export default function SessionHistory() {
     setSending(session.sessionId);
     setSendError(null);
     try {
+      console.log('[SessionHistory] Creating technique draft from freestyle session:', session.sessionId);
       const draft = await createTechniqueDraftFromFreestyleSession(session);
+      console.log('[SessionHistory] Draft created successfully:', draft.techniqueId);
       navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
     } catch (error) {
-      console.error('Failed to send to technique:', error);
+      console.error('[SessionHistory] Failed to send to technique:', error);
       setSendError(error.message || 'Failed to send session to Technique');
     } finally {
       setSending(null);
