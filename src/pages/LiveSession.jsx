@@ -44,15 +44,18 @@ export default function LiveSession() {
   };
 
   const handleStop = (rawData) => {
-    // Normalize into canonical schema
+    // Normalize into canonical schema with movement profile data
+    const movementProfile = selectedMovementId ? getMovementProfile(selectedMovementId) : null;
     const session = normalizeSession(rawData, {
       movementName: selectedExercise?.name,
       category: selectedExercise?.category,
       startedAt: sessionStartRef.current ?? Date.now(),
+      movementProfileId: selectedMovementId,
+      movementProfile: movementProfile,
     });
     setSavedSession(session);
     // Pass raw data to summary for existing UI (joint_data, exercise_def, etc.)
-    setSessionData({ ...rawData, _canonicalSession: session });
+    setSessionData({ ...rawData, _canonicalSession: session, movementProfile });
     setPhase("summary");
   };
 
