@@ -38,6 +38,8 @@ export default function FormCheck() {
   const handleStartAnalysis = (movement) => {
     const ex = movement || selectedExercise;
     if (!ex) return;
+    // Prevent double-start by ensuring clean state
+    setSessionData(null);
     setSelectedExercise(ex);
     setPhase("camera");
   };
