@@ -321,6 +321,13 @@ export default function TechniqueStudio() {
     );
   }
 
+  // Safe field extraction to prevent nested undefined crashes
+  const safeVideoUrl = techniqueSession?.video?.url || null;
+  const safePoseFrames = Array.isArray(techniqueSession?.pose?.frames) ? techniqueSession.pose.frames : [];
+  const safeFps = techniqueSession?.video?.fps || 30;
+  const safeCategory = techniqueSession?.derived?.category || 'freestyle';
+  const safeCreatedAt = techniqueSession?.createdAt || new Date().toISOString();
+
   return (
     <div
       className="fixed inset-0 flex flex-col"
@@ -333,7 +340,7 @@ export default function TechniqueStudio() {
             Technique Studio
           </h1>
           <p className="text-[8px] tracking-[0.1em] mt-0.5" style={{ color: COLORS.textTertiary }}>
-            {techniqueSession.derived.category} • {new Date(techniqueSession.createdAt).toLocaleDateString()}
+            {safeCategory} • {new Date(safeCreatedAt).toLocaleDateString()}
           </p>
         </div>
         <div className="flex items-center gap-2">
