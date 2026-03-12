@@ -50,15 +50,14 @@ export default function FreestyleReplay({ session, onClose }) {
     return closest;
   };
 
-  // Render skeleton overlay on video
-  const renderOverlay = () => {
+  // Render skeleton overlay for current video time (works whether playing or paused)
+  const renderOverlayAtTime = useCallback((time) => {
     const video = videoRef.current;
     const overlay = overlayCanvasRef.current;
-    const canvasElement = canvasRef.current;
 
-    if (!video || !overlay || video.paused) return;
+    if (!video || !overlay) return;
 
-    const frame = getFrameAtTime(video.currentTime);
+    const frame = getFrameAtTime(time);
     if (!frame || !frame.landmarks) {
       setCurrentAngles({});
       return;
@@ -69,21 +68,26 @@ export default function FreestyleReplay({ session, onClose }) {
     overlay.height = video.videoHeight;
 
     const ctx = overlay.getContext('2d');
-    // Clear with transparent background
     ctx.clearRect(0, 0, overlay.width, overlay.height);
 
     // Draw skeleton
-    if (frame.landmarks.length > 0) {
-      // Simplified joint rendering (no movement-specific scoring)
+    if (frame.landmarks && frame.landmarks.length > 0) {
       drawSkeleton(ctx, frame.landmarks, [], overlay.width, overlay.height);
 
       // Extract angles from frame
       const angles = frame.angles || {};
       setCurrentAngles(angles);
     }
+  }, [poseFrames, getFrameAtTime]);
 
+  // When playing, continuously render
+  const renderOverlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || video.paused) return;
+
+    renderOverlayAtTime(video.currentTime);
     animationFrameRef.current = requestAnimationFrame(renderOverlay);
-  };
+  }, [renderOverlayAtTime]);
 
   const handlePlay = () => {
     if (videoRef.current) {
