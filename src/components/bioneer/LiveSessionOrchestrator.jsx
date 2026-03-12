@@ -24,6 +24,7 @@ import { FaultDetector, FaultPersistenceBuffer } from './pipeline/FaultDetector'
 import { ConfidenceEngine }     from './pipeline/ConfidenceEngine';
 import { FeedbackScheduler }    from './pipeline/FeedbackScheduler';
 import { SessionLogger }        from './pipeline/SessionLogger';
+import { MasteryScoreEngine }   from './pipeline/MasteryScoreEngine';
 
 let _sessionIdCounter = 0;
 
@@ -47,6 +48,7 @@ export class LiveSessionOrchestrator {
     this.confidenceEng = new ConfidenceEngine();
     this.scheduler     = new FeedbackScheduler();
     this.logger        = new SessionLogger(this.sessionId, exerciseId, userId);
+    this.mastery       = new MasteryScoreEngine();
 
     // State
     this.currentFaults = [];
@@ -60,6 +62,9 @@ export class LiveSessionOrchestrator {
     this.onRep       = null;
     this.onCue       = null;
     this.onLockState = null;
+
+    // Mastery state
+    this.lastJointResults = [];
 
     // Wire cue callback
     this.scheduler.onCue((cueData) => {
@@ -172,9 +177,15 @@ export class LiveSessionOrchestrator {
       this.scheduler.setRepStartSuppression(tMs, 200);
     }
     if (repEvent?.type === 'REP_COMPLETE' || repEvent?.type === 'EVENT_COMPLETE') {
-      const repScore = this._scoreCurrentRep();
-      this.logger.logRep(repEvent, repScore, this.currentFaults);
-      this.onRep?.({ repNumber: repEvent.repNumber, score: repScore, tMs });
+      const masteryScore = this.mastery.score({
+        jointResults:  this.lastJointResults,
+        frameBuffer:   this.frameBuffer.slice(-60),
+        faults:        confirmedFaults,
+        confidence:    poseConf,
+        repDurationMs: repEvent.durationMs ?? 0,
+      });
+      this.logger.logRep(repEvent, masteryScore, this.currentFaults);
+      this.onRep?.({ repNumber: repEvent.repNumber, score: masteryScore, masteryScore, tMs });
     }
 
     // ── LAYER 6: Fault detection (phase-gated) ─────────────────────────────
@@ -216,6 +227,10 @@ export class LiveSessionOrchestrator {
 
     // ── Frame buffer (for post-session scoring) ──────────────────────────────
     this.frameBuffer.push({ tMs, phase: phaseId, joints: smoothedJoints, angles });
+    // Track latest joint results for mastery scoring
+    if (results?.poseLandmarks && this.lastJointResults !== undefined) {
+      // Will be overwritten by CameraView via setLastJointResults if available
+    }
     if (this.frameBuffer.length > 1800) this.frameBuffer.shift(); // 60s @ 30fps
 
     // ── Emit to UI ───────────────────────────────────────────────────────────
@@ -250,6 +265,11 @@ export class LiveSessionOrchestrator {
     return score;
   }
 
+  /** Called by CameraView to pass latest temporal-filtered joint results for mastery scoring */
+  updateJointResults(jointResults) {
+    this.lastJointResults = jointResults ?? [];
+  }
+
   reset() {
     this.subjectLock.reset();
     this.readiness.reset();
@@ -259,10 +279,12 @@ export class LiveSessionOrchestrator {
     this.phaseClass.reset();
     this.faultBuffer.reset();
     this.scheduler.reset();
-    this.currentFaults = [];
-    this.lastPhaseId   = null;
-    this.baseline      = null;
-    this.frameBuffer   = [];
-    this.frameCount    = 0;
+    this.mastery.reset();
+    this.currentFaults    = [];
+    this.lastPhaseId      = null;
+    this.baseline         = null;
+    this.frameBuffer      = [];
+    this.frameCount       = 0;
+    this.lastJointResults = [];
   }
 }
