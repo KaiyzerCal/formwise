@@ -31,6 +31,7 @@ function ToggleBtn({ label, active, onClick }) {
 }
 
 export default function TechniqueCompare() {
+  const [searchParams] = useSearchParams();
   const [userSrc,       setUserSrc]       = useState(null);
   const [userFilename,  setUserFilename]  = useState('');
   const [refClipId,     setRefClipId]     = useState('');
@@ -43,9 +44,13 @@ export default function TechniqueCompare() {
   const [speed,         setSpeed]         = useState(1);
   const [currentTime,   setCurrentTime]   = useState(0);
   const [duration,      setDuration]      = useState(0);
+  const [sourceMode,    setSourceMode]    = useState('manual');
+  const [importLabel,   setImportLabel]   = useState('');
+  const [draftError,    setDraftError]    = useState(null);
 
   const videoLeftRef  = useRef(null);
   const videoRightRef = useRef(null);
+  const videoUrlRef   = useRef(null);
 
   // ── Dual pose analysis ───────────────────────────────────────────────────
   const { poseState: userPoseState, landmarks: userLandmarks } = useVideoPose({
