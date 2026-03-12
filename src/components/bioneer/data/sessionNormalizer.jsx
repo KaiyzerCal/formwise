@@ -114,6 +114,7 @@ export function normalizeSession(rawData, meta = {}) {
     session_id:          uid(),
     movement_id:         rawData.exercise_id ?? null,
     movement_name:       meta.movementName ?? rawData.exercise_id?.replace(/_/g, ' ') ?? null,
+    movement_profile_id: meta.movementProfileId ?? null,
     session_type:        'live',
     started_at:          startedAt,
     ended_at:            now,
