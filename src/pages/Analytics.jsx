@@ -17,12 +17,16 @@ import RiskSignalPanel         from "../components/bioneer/analytics/RiskSignalP
 import RecentInsightsPanel     from "../components/bioneer/analytics/RecentInsightsPanel";
 
 export default function Analytics() {
-  const overview  = useMemo(() => getAnalyticsOverview(),     []);
-  const trend     = useMemo(() => getFormScoreTrend(),        []);
-  const faults    = useMemo(() => getFaultFrequencyData(),    []);
-  const breakdown = useMemo(() => getMovementBreakdown(),     []);
-  const risk      = useMemo(() => getRiskSignalSummary(),     []);
-  const insights  = useMemo(() => getRecentInsights(),        []);
+  // Use a refresh key so data recomputes each time the page mounts
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => { setTick(t => t + 1); }, []);
+
+  const overview  = useMemo(() => getAnalyticsOverview(),     [tick]);
+  const trend     = useMemo(() => getFormScoreTrend(),        [tick]);
+  const faults    = useMemo(() => getFaultFrequencyData(),    [tick]);
+  const breakdown = useMemo(() => getMovementBreakdown(),     [tick]);
+  const risk      = useMemo(() => getRiskSignalSummary(),     [tick]);
+  const insights  = useMemo(() => getRecentInsights(),        [tick]);
 
   return (
     <div className="h-full overflow-y-auto" style={{ fontFamily: FONT.mono }}>
