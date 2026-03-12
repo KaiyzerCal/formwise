@@ -76,6 +76,10 @@ export default function CameraView({ exercise, onStop }) {
     setPoseResults(result);
     // FIX: Use performance.now() to match MediaPipe's timestamp domain
     processFrame(result, performance.now());
+    // Feed health monitor
+    healthRef.current?.reportPoseFrame();
+    if (result._fps)     healthRef.current?.reportFPS(result._fps);
+    if (result._frameMs) healthRef.current?.reportFrameMs(result._frameMs);
 
     // Canvas render
     const canvas = canvasRef.current;
