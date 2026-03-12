@@ -21,8 +21,10 @@ export default function TechniqueVideoPlayer({
   showAnnotations,
   onTimeUpdate,
   onLoadedMetadata,
+  videoRef: externalVideoRef,
 }) {
-  const videoRef = useRef(null);
+  const internalVideoRef = useRef(null);
+  const videoRef = externalVideoRef || internalVideoRef;
   const overlayCanvasRef = useRef(null);
   const animationFrameRef = useRef(null);
 
