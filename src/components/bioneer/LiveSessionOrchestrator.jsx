@@ -296,6 +296,8 @@ export class LiveSessionOrchestrator {
     this.faultBuffer.reset();
     this.scheduler.reset();
     this.mastery.reset();
+    this.context.reset();
+    this.lastContext      = null;
     this.currentFaults    = [];
     this.lastPhaseId      = null;
     this.baseline         = null;
