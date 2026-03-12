@@ -223,6 +223,8 @@ export default function CameraView({ exercise, onStop }) {
       // Additional fields for analytics
       exercise_def:       exercise,
       joint_data:         {},
+      cameraFacing:       currentFacing,
+      isMirroredPreview:  currentFacing === 'user',
     });
   }, [stopSession, repCount, formScore, onStop, exercise]);
 
