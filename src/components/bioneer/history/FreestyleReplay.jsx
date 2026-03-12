@@ -24,6 +24,7 @@ export default function FreestyleReplay({ session, onClose }) {
 
   const poseFrames = session.poseFrames || [];
   const shouldDrawOverlay = !session.compositedVideo;
+  const isMirroredPreview = session.isMirroredPreview === true;
 
   // Create blob URL once on mount
   useEffect(() => {
