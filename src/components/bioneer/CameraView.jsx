@@ -93,10 +93,11 @@ export default function CameraView({ exercise, onStop }) {
 
   // ── Readiness gate ────────────────────────────────────────────────────────
   const lm = poseResults?.poseLandmarks;
-  const visibleJoints = lm ? lm.filter(p => p.visibility > 0.5).length : 0;
+  // FIX: Lower thresholds — 6 joints at 0.25 visibility is enough to start
+  const visibleJoints = lm ? lm.filter(p => p.visibility > 0.25).length : 0;
   const avgConf       = lm ? lm.reduce((s, p) => s + p.visibility, 0) / lm.length : 0;
-  const bodyDetected  = visibleJoints >= 12;
-  const confOk        = avgConf >= 0.55;
+  const bodyDetected  = visibleJoints >= 6;   // was 12 — too strict
+  const confOk        = avgConf >= 0.25;       // was 0.55 — too strict
 
   const readinessChecks = [
     { label: 'Camera active',     ok: camState === 'active' },
