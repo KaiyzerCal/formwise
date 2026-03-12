@@ -250,7 +250,7 @@ export default function TechniqueStudio() {
   // Loading state
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center" style={{ background: COLORS.bg }}>
+      <div className="fixed inset-0 flex items-center justify-center" style={{ background: COLORS.bg }}>
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin mx-auto" />
           <p className="text-sm" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
@@ -264,12 +264,12 @@ export default function TechniqueStudio() {
   // Error state
   if (loadError) {
     return (
-      <div className="w-full h-full flex items-center justify-center p-6" style={{ background: COLORS.bg }}>
+      <div className="fixed inset-0 flex items-center justify-center p-6" style={{ background: COLORS.bg }}>
         <div className="max-w-md p-6 rounded-lg border" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
           <h2 className="text-sm font-bold mb-2" style={{ color: '#EF4444', fontFamily: FONT.mono }}>
             Error Loading Session
           </h2>
-          <p className="text-[9px] mb-4" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+          <p className="text-[9px] mb-4 whitespace-pre-wrap" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
             {loadError}
           </p>
           <button
@@ -286,7 +286,7 @@ export default function TechniqueStudio() {
 
   if (!techniqueSession) {
     return (
-      <div className="w-full h-full flex items-center justify-center" style={{ background: COLORS.bg }}>
+      <div className="fixed inset-0 flex items-center justify-center" style={{ background: COLORS.bg }}>
         <p className="text-sm" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
           No session to display
         </p>
