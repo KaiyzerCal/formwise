@@ -7,7 +7,9 @@ import { ArrowLeft, Scan } from "lucide-react";
 export default function MovementLibrary({ onSelect, selectedId }) {
   const [activeTab, setActiveTab] = useState("strength");
 
-  const movements = activeTab === "strength" ? EXERCISES : SPORTS_MOVEMENTS;
+  const movements = activeTab === "strength"
+    ? EXERCISES
+    : SPORTS_MOVEMENTS.filter(m => m.category === "sports" || m.category === "athletic" || !m.category);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
