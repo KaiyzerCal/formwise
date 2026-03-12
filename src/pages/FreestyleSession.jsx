@@ -31,6 +31,19 @@ export default function FreestyleSession() {
   }, []);
 
   const handleCameraStop = useCallback((freestyleSession) => {
+    // If no session (user exited without recording), go back to select
+    if (!freestyleSession) {
+      setPhase('select');
+      return;
+    }
+
+    // Validate session has required data
+    if (!freestyleSession.videoBlob || !(freestyleSession.videoBlob instanceof Blob)) {
+      setSaveError('Recording failed to finalize. Please try again.');
+      setPhase('select');
+      return;
+    }
+
     setRecordedSession(freestyleSession);
     setPhase('replay');
   }, []);
