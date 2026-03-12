@@ -153,11 +153,19 @@ export default function TechniqueCompare() {
     <div className="h-full flex flex-col" style={{ fontFamily: FONT.mono, background: COLORS.bg }}>
 
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b flex-shrink-0 flex-wrap gap-2"
+      <div className="flex flex-col gap-2 px-5 py-3 border-b flex-shrink-0"
         style={{ borderColor: COLORS.border, background: COLORS.surface }}>
-        <h1 className="text-xs tracking-[0.18em] uppercase font-bold" style={{ color: COLORS.gold }}>
-          Technique Compare
-        </h1>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h1 className="text-xs tracking-[0.18em] uppercase font-bold" style={{ color: COLORS.gold }}>
+              Technique Compare
+            </h1>
+            {importLabel && (
+              <p className="text-[9px] tracking-[0.1em] mt-0.5" style={{ color: COLORS.textTertiary }}>
+                {importLabel}
+              </p>
+            )}
+          </div>
         <div className="flex items-center gap-1.5 flex-wrap">
           <ToggleBtn label="Overlay"   active={showOverlay}   onClick={() => setShowOverlay(v => !v)} />
           <ToggleBtn label="Guides"    active={showGuides}    onClick={() => setShowGuides(v => !v)} />
