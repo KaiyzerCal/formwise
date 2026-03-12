@@ -1,17 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
 import { MOCK_SESSIONS } from "../components/bioneer/ui/mockData";
+import { getAllSessions } from "../components/bioneer/data/sessionStore";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { createPageUrl } from "@/utils";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
 
+// Adapt canonical session → legacy shape expected by this UI
+function adaptSession(s) {
+  return {
+    id:         s.session_id,
+    exercise:   s.movement_name ?? s.movement_id ?? 'Unknown',
+    category:   'strength',
+    date:       s.started_at ? new Date(s.started_at).toLocaleDateString() : '—',
+    time:       s.started_at ? new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
+    duration:   s.duration_seconds ?? 0,
+    reps:       s.rep_count ?? 0,
+    score:      s.average_form_score ?? 0,
+    topFault:   s.top_faults?.[0]?.replace(/_/g, ' ') ?? '—',
+    repScores:  s.rep_summaries?.map(r => r.form_score ?? 0) ?? [],
+    insights:   [
+      s.session_status === 'partial'        ? 'Partial session — limited tracking' : null,
+      s.session_status === 'low_confidence' ? 'Low tracking confidence this session' : null,
+      s.top_faults?.[0] ? `Top fault: ${s.top_faults[0].replace(/_/g, ' ')}` : null,
+    ].filter(Boolean),
+    _real: true,
+  };
+}
+
 export default function SessionHistory() {
   const [filter, setFilter] = useState('All Time');
   const [expandedId, setExpandedId] = useState(null);
 
-  const sessions = MOCK_SESSIONS;
+  const realRaw = useMemo(() => getAllSessions(), []);
+  const realSessions = useMemo(() => realRaw.map(adaptSession), [realRaw]);
+  // Use real sessions if any exist, otherwise fall back to mock
+  const sessions = realSessions.length > 0 ? realSessions : MOCK_SESSIONS;
   const totalReps = sessions.reduce((a, s) => a + s.reps, 0);
   const totalTime = sessions.reduce((a, s) => a + s.duration, 0);
   const avgScore = Math.round(sessions.reduce((a, s) => a + s.score, 0) / sessions.length);

@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from "recharts";
 import { COLORS, FONT, scoreColor, faultColor } from "../components/bioneer/ui/DesignTokens";
 import { MOCK_SESSIONS, MOCK_ROM_TREND, MOCK_FAULT_FREQ, MOCK_INSIGHTS, MOCK_SYMMETRY, MOCK_BODY_HEATMAP } from "../components/bioneer/ui/mockData";
+import { getAggregateStats, getScoreTrendData, getAllSessions } from "../components/bioneer/data/sessionStore";
 import { TrendingUp, Calendar, Activity, Target } from "lucide-react";
 import StatCard from "../components/bioneer/ui/StatCard";
 import ScoreRing from "../components/bioneer/ui/ScoreRing";
@@ -9,11 +10,18 @@ import AnalyticsCharts from "../components/bioneer/ui/AnalyticsCharts";
 import BodyHeatmap from "../components/bioneer/ui/BodyHeatmap";
 
 export default function Analytics() {
-  const sessions = MOCK_SESSIONS;
-  const avgScore = Math.round(sessions.reduce((a, s) => a + s.score, 0) / sessions.length);
-  const latestRepScores = sessions[sessions.length - 1].repScores;
-  const avgRepQ = Math.round(latestRepScores.reduce((a, b) => a + b, 0) / latestRepScores.length);
-  const totalReps = sessions.reduce((a, s) => a + s.reps, 0);
+  const realStats   = useMemo(() => getAggregateStats(), []);
+  const hasRealData = !!realStats;
+
+  // Prefer real data; fall back to mock only when no sessions saved yet
+  const mockSessions = MOCK_SESSIONS;
+  const avgScore    = hasRealData ? realStats.avgScore   : Math.round(mockSessions.reduce((a, s) => a + s.score, 0) / mockSessions.length);
+  const totalReps   = hasRealData ? realStats.totalReps  : mockSessions.reduce((a, s) => a + s.reps, 0);
+  const sessionCount = hasRealData ? realStats.sessionCount : mockSessions.length;
+  const latestRepScores = hasRealData ? [] : mockSessions[mockSessions.length - 1].repScores;
+  const avgRepQ = latestRepScores.length
+    ? Math.round(latestRepScores.reduce((a, b) => a + b, 0) / latestRepScores.length)
+    : avgScore;
 
   return (
     <div className="h-full overflow-y-auto p-4 lg:p-6 space-y-4" style={{ fontFamily: FONT.mono }}>
