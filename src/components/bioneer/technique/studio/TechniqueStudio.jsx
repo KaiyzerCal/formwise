@@ -47,9 +47,6 @@ export default function TechniqueStudio() {
   const [showNotes, setShowNotes] = useState(true);
   const [showExport, setShowExport] = useState(false);
 
-  // Text tool state
-  const [textInputData, setTextInputData] = useState(null);
-
   // Annotation state
   const annotationEditor = useAnnotationEditor();
 
@@ -156,56 +153,6 @@ export default function TechniqueStudio() {
       annotationEditor.clearAllAnnotations();
     }
   }, [annotationEditor]);
-
-  /**
-   * Handle annotation creation from drawing tools
-   */
-  const handleAnnotationCreate = useCallback((annotation) => {
-    switch (annotation.type) {
-      case 'line':
-        annotationEditor.createLine(annotation.frameIndex, annotation.startPoint, annotation.endPoint);
-        break;
-      case 'arrow': {
-        // Create arrow as ARROW type in annotation system
-        const arrowAnnotation = annotationEditor.addAnnotation({
-          type: 'arrow',
-          frameIndex: annotation.frameIndex,
-          startPoint: annotation.startPoint,
-          endPoint: annotation.endPoint,
-          style: { color: '#C9A84C', thickness: 2 },
-        });
-        break;
-      }
-      case 'circle':
-        annotationEditor.createCircle(annotation.frameIndex, annotation.center, annotation.radius);
-        break;
-      case 'rectangle':
-        annotationEditor.createRectangle(annotation.frameIndex, annotation.topLeft, annotation.bottomRight);
-        break;
-      case 'freehand':
-        annotationEditor.createFreehand(annotation.frameIndex, annotation.points);
-        break;
-      case 'angle_marker':
-        annotationEditor.createAngleMeasurement(annotation.frameIndex, annotation.points);
-        break;
-      case 'text':
-        // Show text input modal for text annotations
-        setTextInputData({
-          frameIndex: annotation.frameIndex,
-          position: annotation.position,
-        });
-        break;
-      default:
-        break;
-    }
-  }, [annotationEditor]);
-
-  const handleTextSubmit = useCallback((text) => {
-    if (textInputData && text.trim()) {
-      annotationEditor.createTextLabel(textInputData.frameIndex, text, textInputData.position);
-    }
-    setTextInputData(null);
-  }, [textInputData, annotationEditor]);
 
   /**
    * Autosave (with null guard on session)
@@ -494,8 +441,6 @@ export default function TechniqueStudio() {
             showAnnotations={showAnnotations}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
-            activeTool={annotationEditor.activeTool}
-            onAnnotationCreate={handleAnnotationCreate}
           />
 
           <TechniqueFrameControls
@@ -535,65 +480,6 @@ export default function TechniqueStudio() {
           onClose={() => setShowExport(false)}
         />
       )}
-
-      {/* Text input modal */}
-      {textInputData && (
-        <TextInputModal
-          onSubmit={handleTextSubmit}
-          onCancel={() => setTextInputData(null)}
-        />
-      )}
-    </div>
-  );
-}
-
-/**
- * Simple text input modal for placing text annotations
- */
-function TextInputModal({ onSubmit, onCancel }) {
-  const [text, setText] = useState('');
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const handleSubmit = () => {
-    onSubmit(text);
-    setText('');
-  };
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm">
-        <p className="text-sm font-bold mb-4">Add text annotation</p>
-        <input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleSubmit();
-            if (e.key === 'Escape') onCancel();
-          }}
-          placeholder="Enter text..."
-          className="w-full px-3 py-2 border rounded mb-4 text-sm"
-        />
-        <div className="flex gap-2 justify-end">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 border rounded text-sm hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-          >
-            Add
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

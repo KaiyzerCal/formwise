@@ -6,14 +6,13 @@
  */
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
-import { useCameraController } from './live/useCameraController';
+import { useCameraStream } from './live/useCameraStream';
 import { usePoseRuntime } from './live/usePoseRuntime';
 import { usePoseInferenceLoop } from './live/usePoseInferenceLoop';
 import SessionReadinessGate from './live/SessionReadinessGate';
 import PoseErrorCard from './live/PoseErrorCard';
 import { useSessionRecorder } from './session/useSessionRecorder';
 import { createFreestyleSession, SESSION_CATEGORIES } from './session/sessionTypes';
-import CameraToggleButton from './ui/CameraToggleButton';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles } from './poseEngine';
 import { COLORS, FONT } from './ui/DesignTokens';
@@ -38,7 +37,7 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
   const [errorMsg, setErrorMsg] = useState(null);
 
   // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError, cameraFacing, isMirrored, isSwitching, switchCamera } = useCameraController(videoRef);
+  const { camState, camError } = useCameraStream(videoRef);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
@@ -88,33 +87,14 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
 
     // Composite: draw video frame first
     if (video.readyState >= 2) {
-      if (isMirrored) {
-        // Mirror for front camera
-        ctx.save();
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
-      } else {
-        // Normal draw for back camera
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     } else {
       clearCanvas(ctx, canvas.width, canvas.height);
     }
 
     if (!result.poseLandmarks) return;
 
-    // Mirror pose landmarks for front camera display
-    let landmarksToRender = result.poseLandmarks;
-    if (isMirrored) {
-      landmarksToRender = result.poseLandmarks.map(lm => ({
-        ...lm,
-        x: 1 - lm.x, // Mirror horizontally
-      }));
-    }
-
-    const smoothed = smoothLandmarks(landmarksToRender, prevLandmarksRef.current);
+    const smoothed = smoothLandmarks(result.poseLandmarks, prevLandmarksRef.current);
     prevLandmarksRef.current = smoothed;
 
     // Track confidence and visible joints
@@ -198,8 +178,6 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
           poseFrames: finalized.poseFrames,
           angleFrames: finalized.angleFrames,
           duration: finalized.duration,
-          cameraFacing,
-          isMirroredPreview: isMirrored,
         });
 
         setWorkflowState('idle');
@@ -330,21 +308,13 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
 
       {/* Mute */}
       <div className="absolute top-16 right-4 z-50">
-        <div className="flex gap-2">
-          <CameraToggleButton
-            cameraFacing={cameraFacing}
-            isSwitching={isSwitching}
-            onSwitch={switchCamera}
-            disabled={camState !== 'active'}
-          />
-          <button onClick={() => setMuted(m => !m)}
-            className="p-2.5 rounded-full border"
-            style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
-            {muted
-              ? <VolumeX className="w-4 h-4 text-white/50" />
-              : <Volume2 className="w-4 h-4 text-white" />}
-          </button>
-        </div>
+        <button onClick={() => setMuted(m => !m)}
+          className="p-2.5 rounded-full border"
+          style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
+          {muted
+            ? <VolumeX className="w-4 h-4 text-white/50" />
+            : <Volume2 className="w-4 h-4 text-white" />}
+        </button>
       </div>
 
       {/* Confidence + Joints indicator */}

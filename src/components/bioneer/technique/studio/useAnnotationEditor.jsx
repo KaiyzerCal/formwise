@@ -308,12 +308,10 @@ export function renderAnnotation(ctx, annotation, canvasWidth, canvasHeight) {
 
   switch (type) {
     case ANNOTATION_TYPES.LINE:
-    case 'line':
       drawLine(ctx, annotation.startPoint, annotation.endPoint);
       break;
 
     case ANNOTATION_TYPES.ARROW:
-    case 'arrow':
       drawArrow(ctx, annotation.startPoint, annotation.endPoint, thickness);
       break;
 

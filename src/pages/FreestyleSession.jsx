@@ -68,8 +68,6 @@ export default function FreestyleSession() {
         videoBlob: recordedSession.videoBlob,
         poseFrames: recordedSession.poseFrames || [],
         angleFrames: recordedSession.angleFrames || [],
-        cameraFacing: recordedSession.cameraFacing || 'environment',
-        isMirroredPreview: recordedSession.isMirroredPreview || false,
       });
 
       // Reset to library after successful save

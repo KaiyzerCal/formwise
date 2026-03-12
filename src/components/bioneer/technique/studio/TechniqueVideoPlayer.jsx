@@ -22,8 +22,6 @@ export default function TechniqueVideoPlayer({
   onTimeUpdate,
   onLoadedMetadata,
   videoRef: externalVideoRef,
-  activeTool,
-  onAnnotationCreate,
 }) {
   const internalVideoRef = useRef(null);
   // Use external ref if provided, otherwise use internal
@@ -32,8 +30,6 @@ export default function TechniqueVideoPlayer({
   const animationFrameRef = useRef(null);
 
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [draftPoints, setDraftPoints] = useState([]);
 
   /**
    * Get pose frame closest to current frame index
@@ -54,7 +50,7 @@ export default function TechniqueVideoPlayer({
   }, [annotations, currentFrameIndex]);
 
   /**
-   * Render overlay: skeleton + annotations + draft annotations (with null guards)
+   * Render overlay: skeleton + annotations (with null guards)
    */
   const renderOverlay = useCallback(() => {
     const video = videoRef.current;
@@ -96,11 +92,6 @@ export default function TechniqueVideoPlayer({
       }
     }
 
-    // Draw draft annotation preview while drawing
-    if (isDrawing && draftPoints.length > 0) {
-      drawDraftAnnotation(ctx, draftPoints, activeTool);
-    }
-
     // Draw frame counter (safe totalFrames access)
     const totalFrames = Array.isArray(poseFrames) ? poseFrames.length : 0;
     drawFrameInfo(ctx, currentFrameIndex, totalFrames, canvas.width);
@@ -110,9 +101,6 @@ export default function TechniqueVideoPlayer({
     showAnnotations,
     currentFrameIndex,
     poseFrames,
-    isDrawing,
-    draftPoints,
-    activeTool,
     getCurrentPoseFrame,
     getFrameAnnotations,
   ]);
@@ -156,123 +144,6 @@ export default function TechniqueVideoPlayer({
     }
   }, [onTimeUpdate]);
 
-  /**
-   * Get normalized coordinates relative to overlay
-   */
-  const getNormalizedCoords = useCallback((e) => {
-    const canvas = overlayCanvasRef.current;
-    if (!canvas) return null;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * canvas.width;
-    const y = ((e.clientY - rect.top) / rect.height) * canvas.height;
-
-    return { x, y };
-  }, []);
-
-  /**
-   * Handle pointer down (start drawing or place text)
-   */
-  const handlePointerDown = useCallback((e) => {
-    if (activeTool === 'pointer' || !activeTool || isPlaying) return;
-
-    const coords = getNormalizedCoords(e);
-    if (!coords) return;
-
-    // Text tool: create annotation immediately
-    if (activeTool === 'text') {
-      onAnnotationCreate?.({
-        type: 'text',
-        frameIndex: currentFrameIndex,
-        position: coords,
-      });
-      return;
-    }
-
-    setIsDrawing(true);
-    setDraftPoints([coords]);
-  }, [activeTool, isPlaying, currentFrameIndex, getNormalizedCoords, onAnnotationCreate]);
-
-  /**
-   * Handle pointer move (draw)
-   */
-  const handlePointerMove = useCallback((e) => {
-    if (!isDrawing) return;
-
-    const coords = getNormalizedCoords(e);
-    if (!coords) return;
-
-    if (activeTool === 'freehand') {
-      setDraftPoints(prev => [...prev, coords]);
-    }
-  }, [isDrawing, activeTool, getNormalizedCoords]);
-
-  /**
-   * Handle pointer up (finish drawing)
-   */
-  const handlePointerUp = useCallback(() => {
-    if (!isDrawing || draftPoints.length === 0) {
-      setIsDrawing(false);
-      setDraftPoints([]);
-      return;
-    }
-
-    if (activeTool === 'line' && draftPoints.length >= 2) {
-      onAnnotationCreate?.({
-        type: 'line',
-        frameIndex: currentFrameIndex,
-        startPoint: draftPoints[0],
-        endPoint: draftPoints[draftPoints.length - 1],
-      });
-    } else if (activeTool === 'arrow' && draftPoints.length >= 2) {
-      onAnnotationCreate?.({
-        type: 'arrow',
-        frameIndex: currentFrameIndex,
-        startPoint: draftPoints[0],
-        endPoint: draftPoints[draftPoints.length - 1],
-      });
-    } else if (activeTool === 'circle' && draftPoints.length >= 2) {
-      const center = draftPoints[0];
-      const end = draftPoints[draftPoints.length - 1];
-      const radius = Math.sqrt(Math.pow(end.x - center.x, 2) + Math.pow(end.y - center.y, 2));
-      onAnnotationCreate?.({
-        type: 'circle',
-        frameIndex: currentFrameIndex,
-        center,
-        radius,
-      });
-    } else if (activeTool === 'rectangle' && draftPoints.length >= 2) {
-      const topLeft = draftPoints[0];
-      const bottomRight = draftPoints[draftPoints.length - 1];
-      onAnnotationCreate?.({
-        type: 'rectangle',
-        frameIndex: currentFrameIndex,
-        topLeft,
-        bottomRight,
-      });
-    } else if (activeTool === 'freehand' && draftPoints.length > 2) {
-      onAnnotationCreate?.({
-        type: 'freehand',
-        frameIndex: currentFrameIndex,
-        points: draftPoints,
-      });
-    } else if (activeTool === 'angle' && draftPoints.length >= 2) {
-      // Store for potential 3-point angle (simplified: use 2 points as angle visualization)
-      onAnnotationCreate?.({
-        type: 'angle_marker',
-        frameIndex: currentFrameIndex,
-        points: {
-          p1: draftPoints[0],
-          p2: draftPoints[Math.floor(draftPoints.length / 2)],
-          p3: draftPoints[draftPoints.length - 1],
-        },
-      });
-    }
-
-    setIsDrawing(false);
-    setDraftPoints([]);
-  }, [isDrawing, draftPoints, activeTool, currentFrameIndex, onAnnotationCreate]);
-
   return (
     <div className="relative w-full h-full bg-black overflow-hidden">
       {/* Video */}
@@ -298,13 +169,7 @@ export default function TechniqueVideoPlayer({
       {/* Overlay Canvas */}
       <canvas
         ref={overlayCanvasRef}
-        className={`absolute inset-0 w-full h-full object-contain ${
-          activeTool && activeTool !== 'pointer' ? 'cursor-crosshair' : 'pointer-events-none'
-        }`}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
+        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
       />
     </div>
   );
@@ -345,79 +210,4 @@ function drawFrameInfo(ctx, frameIndex, totalFrames, canvasWidth) {
   ctx.font = '11px monospace';
   ctx.fillStyle = 'rgba(201, 168, 76, 0.8)';
   ctx.fillText(text, 10, canvasWidth > 640 ? 25 : 15);
-}
-
-/**
- * Draw draft annotation preview while drawing
- */
-function drawDraftAnnotation(ctx, points, tool) {
-  if (points.length === 0) return;
-
-  ctx.strokeStyle = 'rgba(201, 168, 76, 0.6)';
-  ctx.fillStyle = 'rgba(201, 168, 76, 0.1)';
-  ctx.lineWidth = 2;
-
-  if (tool === 'freehand') {
-    // Draw freehand path
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-      ctx.lineTo(points[i].x, points[i].y);
-    }
-    ctx.stroke();
-  } else if (tool === 'line') {
-    // Draw line preview
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
-    ctx.stroke();
-  } else if (tool === 'arrow') {
-    // Draw arrow preview (line + head)
-    const start = points[0];
-    const end = points[points.length - 1];
-    const angle = Math.atan2(end.y - start.y, end.x - start.x);
-    const headlen = 15;
-
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    ctx.lineTo(end.x, end.y);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(end.x, end.y);
-    ctx.lineTo(end.x - headlen * Math.cos(angle - Math.PI / 6), end.y - headlen * Math.sin(angle - Math.PI / 6));
-    ctx.moveTo(end.x, end.y);
-    ctx.lineTo(end.x - headlen * Math.cos(angle + Math.PI / 6), end.y - headlen * Math.sin(angle + Math.PI / 6));
-    ctx.stroke();
-  } else if (tool === 'circle' && points.length >= 1) {
-    // Draw circle preview
-    const center = points[0];
-    const end = points[points.length - 1];
-    const radius = Math.sqrt(Math.pow(end.x - center.x, 2) + Math.pow(end.y - center.y, 2));
-
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (tool === 'rectangle' && points.length >= 1) {
-    // Draw rectangle preview
-    const topLeft = points[0];
-    const end = points[points.length - 1];
-    const width = end.x - topLeft.x;
-    const height = end.y - topLeft.y;
-
-    ctx.strokeRect(topLeft.x, topLeft.y, width, height);
-  } else if (tool === 'angle' && points.length >= 1) {
-    // Draw angle preview
-    ctx.strokeStyle = 'rgba(201, 168, 76, 0.5)';
-    if (points.length === 1) {
-      // Just the vertex point
-      ctx.fillRect(points[0].x - 3, points[0].y - 3, 6, 6);
-    } else if (points.length === 2) {
-      // Draw one leg
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      ctx.lineTo(points[1].x, points[1].y);
-      ctx.stroke();
-    }
-  }
 }
