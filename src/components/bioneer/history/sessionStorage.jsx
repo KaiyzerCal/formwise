@@ -89,6 +89,7 @@ async function generateThumbnail(videoBlob) {
 
 /**
  * Save freestyle session to IndexedDB
+ * Validates session data integrity before saving
  */
 export async function saveFreestyleSession({
   sessionId,
@@ -99,9 +100,22 @@ export async function saveFreestyleSession({
   poseFrames,
   angleFrames,
 }) {
+  // Validate required fields
+  if (!sessionId) {
+    throw new Error('Unable to save freestyle session: sessionId is missing.');
+  }
+
+  if (!videoBlob || !(videoBlob instanceof Blob) || videoBlob.size === 0) {
+    throw new Error('Unable to save freestyle session: recording file was not finalized.');
+  }
+
+  if (!Array.isArray(poseFrames)) {
+    throw new Error('Unable to save freestyle session: pose data is missing.');
+  }
+
   const db = await initDB();
 
-  // Generate thumbnail from video
+  // Generate thumbnail from video (optional — save continues even if thumbnail fails)
   const thumbnail = await generateThumbnail(videoBlob);
 
   const session = {
