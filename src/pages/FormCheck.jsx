@@ -87,6 +87,8 @@ export default function FormCheck() {
   const handleDiscard = () => {
     setPhase("select");
     setSessionData(null);
+    // Clear any stale refs
+    setSelectedExercise(null);
   };
 
   if (showDisclaimer) {
