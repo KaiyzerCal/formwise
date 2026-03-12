@@ -34,16 +34,59 @@ function adaptSession(s) {
 export default function SessionHistory() {
   const [filter, setFilter] = useState('All Time');
   const [expandedId, setExpandedId] = useState(null);
+  const [freestyleSessions, setFreestyleSessions] = useState([]);
+  const [selectedReplay, setSelectedReplay] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+
+  // Load freestyle sessions
+  useEffect(() => {
+    getAllFreestyleSessions()
+      .then(sessions => setFreestyleSessions(sessions || []))
+      .catch(err => console.error('Failed to load freestyle sessions:', err));
+  }, []);
 
   const rawSessions = useMemo(() => getAllSessions(), []);
   const sessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
+  
+  // Combine exercise and freestyle sessions
+  const allSessions = [
+    ...sessions,
+    ...freestyleSessions.map(fs => ({
+      id: fs.sessionId,
+      exercise: 'Freestyle Capture',
+      category: fs.category || 'freestyle',
+      date: fs.createdAt ? new Date(fs.createdAt).toLocaleDateString() : '—',
+      time: fs.createdAt ? new Date(fs.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
+      duration: fs.duration || 0,
+      reps: 0,
+      score: 0,
+      topFault: '—',
+      repScores: [],
+      insights: [],
+      _freestyle: true,
+      _freestyleData: fs,
+    })),
+  ];
+
   const totalReps = sessions.reduce((a, s) => a + s.reps, 0);
-  const totalTime = sessions.reduce((a, s) => a + s.duration, 0);
+  const totalTime = allSessions.reduce((a, s) => a + s.duration, 0);
   const avgScore = sessions.length > 0
     ? Math.round(sessions.reduce((a, s) => a + s.score, 0) / sessions.length)
     : 0;
 
   const mm = Math.floor(totalTime / 60);
+
+  const handleDeleteFreestyle = async (sessionId) => {
+    setDeleting(sessionId);
+    try {
+      await deleteFreestyleSession(sessionId);
+      setFreestyleSessions(prev => prev.filter(s => s.sessionId !== sessionId));
+    } catch (error) {
+      console.error('Failed to delete freestyle session:', error);
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col" style={{ fontFamily: FONT.mono }}>
