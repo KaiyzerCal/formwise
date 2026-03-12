@@ -15,6 +15,7 @@ import { useSessionRecorder } from './session/useSessionRecorder';
 import { createFreestyleSession, SESSION_CATEGORIES } from './session/sessionTypes';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles } from './poseEngine';
+import { COLORS, FONT } from './ui/DesignTokens';
 
 const GOLD = '#C9A84C';
 const RED = '#EF4444';
