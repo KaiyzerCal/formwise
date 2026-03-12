@@ -165,9 +165,17 @@ export default function TechniqueStudio() {
       case 'line':
         annotationEditor.createLine(annotation.frameIndex, annotation.startPoint, annotation.endPoint);
         break;
-      case 'arrow':
-        annotationEditor.createLine(annotation.frameIndex, annotation.startPoint, annotation.endPoint, { arrowhead: true });
+      case 'arrow': {
+        // Create arrow as ARROW type in annotation system
+        const arrowAnnotation = annotationEditor.addAnnotation({
+          type: 'arrow',
+          frameIndex: annotation.frameIndex,
+          startPoint: annotation.startPoint,
+          endPoint: annotation.endPoint,
+          style: { color: '#C9A84C', thickness: 2 },
+        });
         break;
+      }
       case 'circle':
         annotationEditor.createCircle(annotation.frameIndex, annotation.center, annotation.radius);
         break;
