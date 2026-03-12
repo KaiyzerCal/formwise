@@ -30,6 +30,13 @@ export default function CameraView({ exercise, onStop }) {
   const [poseResults, setPoseResults] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
 
+  // Temporal filter engine — persists for the lifetime of this exercise session
+  const temporalFilterRef = useRef(null);
+  useEffect(() => {
+    temporalFilterRef.current = new TemporalFilterEngine(exercise.category || 'strength');
+    return () => temporalFilterRef.current?.reset();
+  }, [exercise.id, exercise.category]);
+
   // ── Camera ───────────────────────────────────────────────────────────────
   const { camState, camError } = useCameraStream(videoRef);
 
