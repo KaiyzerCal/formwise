@@ -49,6 +49,14 @@ export default function TechniqueFrameControls({
     return `${currentFrameIndex + 1}/${totalFrames || '?'} @ ${formatTime(currentTime)}`;
   };
 
+  const handlePlayPause = useCallback(() => {
+    if (isPlaying) {
+      onPause?.();
+    } else {
+      onPlay?.();
+    }
+  }, [isPlaying, onPlay, onPause]);
+
   return (
     <div className="flex flex-col gap-3 px-4 py-3 border-t flex-shrink-0" style={{ borderColor: COLORS.border, background: COLORS.surface }}>
       {/* Timeline scrubber */}
