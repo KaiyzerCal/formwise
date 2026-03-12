@@ -39,6 +39,10 @@ export default function CameraView({ exercise, onStop }) {
   const temporalFilterRef = useRef(null);
   useEffect(() => {
     temporalFilterRef.current = new TemporalFilterEngine(exercise.category || 'strength');
+    // Reset dependent state so stale angles don't persist on exercise change
+    prevLandmarksRef.current = null;
+    setLiveFormScore(null);
+    setLiveJointResults([]);
     return () => temporalFilterRef.current?.reset();
   }, [exercise.id, exercise.category]);
 
