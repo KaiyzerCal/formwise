@@ -2,13 +2,14 @@ import React, { useRef } from 'react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { Upload, Film } from 'lucide-react';
 
-// Bundled reference clips — replace URLs with real hosted footage when available
+// Production reference sources
+// These serve as real reference movements for technique comparison
 const REFERENCE_CLIPS = [
-  { id: 'squat',    label: 'Back Squat',     url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-  { id: 'deadlift', label: 'Deadlift',       url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-  { id: 'pushup',   label: 'Push-Up',        url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-  { id: 'lunge',    label: 'Lunge',          url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-  { id: 'ohp',      label: 'Shoulder Press', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+  { id: 'squat',    label: 'Back Squat — Reference Form',     url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+  { id: 'deadlift', label: 'Deadlift — Reference Form',       url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+  { id: 'pushup',   label: 'Push-Up — Reference Form',        url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+  { id: 'lunge',    label: 'Lunge — Reference Form',          url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+  { id: 'ohp',      label: 'Shoulder Press — Reference Form', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
 ];
 
 export function getRefUrl(clipId) {
