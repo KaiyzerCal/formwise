@@ -252,7 +252,8 @@ export default function CameraView({ exercise, onStop }) {
 
       {/* Video */}
       <video ref={videoRef} playsInline muted
-        className="absolute inset-0 w-full h-full object-cover" />
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ transform: currentFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)' }} />
 
       {/* Canvas */}
       <canvas ref={canvasRef}
