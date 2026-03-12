@@ -55,6 +55,7 @@ export default function CameraView({ exercise, onStop }) {
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
+  useEffect(() => { healthRef.current?.reportPose(poseState); }, [poseState]);
 
   // ── Audio ────────────────────────────────────────────────────────────────
   useEffect(() => {
