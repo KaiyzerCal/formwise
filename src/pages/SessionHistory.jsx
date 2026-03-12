@@ -93,6 +93,20 @@ export default function SessionHistory() {
     }
   };
 
+  const handleSendToTechnique = async (session) => {
+    setSending(session.sessionId);
+    setSendError(null);
+    try {
+      const draft = await createTechniqueDraftFromFreestyleSession(session);
+      navigate(`/TechniqueCompare?draft=${draft.techniqueId}`);
+    } catch (error) {
+      console.error('Failed to send to technique:', error);
+      setSendError(error.message || 'Failed to send session to Technique');
+    } finally {
+      setSending(null);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col" style={{ fontFamily: FONT.mono }}>
       {/* Header */}
