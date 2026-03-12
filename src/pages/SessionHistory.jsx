@@ -24,6 +24,7 @@ function adaptSession(s) {
     score:      s.average_form_score ?? 0,
     topFault:   s.top_faults?.[0]?.replace(/_/g, ' ') ?? '—',
     repScores:  s.rep_summaries?.map(r => r.form_score ?? 0) ?? [],
+    movementProfileId: s.movement_profile_id ?? null,
     insights:   [
       s.session_status === 'partial'        ? 'Partial session — limited tracking' : null,
       s.session_status === 'low_confidence' ? 'Low tracking confidence this session' : null,
