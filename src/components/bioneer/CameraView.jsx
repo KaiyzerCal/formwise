@@ -257,7 +257,8 @@ export default function CameraView({ exercise, onStop }) {
 
       {/* Canvas */}
       <canvas ref={canvasRef}
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ transform: currentFacing === 'user' ? 'scaleX(-1)' : 'scaleX(1)' }} />
 
       {/* ── Camera failed ──────────────────────────────────────────────────── */}
       {camState === 'failed' && (
