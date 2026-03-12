@@ -314,14 +314,21 @@ export default function CameraView({ exercise, onStop }) {
         />
       )}
 
-      {/* ── Phase badge ───────────────────────────────────────────────────── */}
-      {frameState?.phase && sessionActive && (
-        <div className="absolute top-20 left-0 right-0 z-50 flex justify-center pointer-events-none">
-          <div className="px-3 py-1 rounded-full border"
-            style={{ background: 'rgba(0,0,0,0.6)', borderColor: `${GOLD}30`, backdropFilter: 'blur(8px)' }}>
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em]"
-              style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
-              {frameState.phase.replace(/_/g, ' ')}
+      {/* ── Movement State Indicator (top center) ────────────────────────── */}
+      {sessionActive && (
+        <div className="absolute top-16 left-0 right-0 z-50 flex justify-center pointer-events-none">
+          <div className="flex items-center gap-3 px-4 py-2 rounded-xl border"
+            style={{ background: 'rgba(0,0,0,0.7)', borderColor: `${GOLD}30`, backdropFilter: 'blur(10px)' }}>
+            {frameState?.phase && (
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em]"
+                style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
+                {frameState.phase.replace(/_/g, ' ')}
+              </span>
+            )}
+            {frameState?.phase && <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>|</span>}
+            <span className="text-[10px] uppercase tracking-widest"
+              style={{ color: 'rgba(255,255,255,0.4)', fontFamily: "'DM Mono', monospace" }}>
+              {avgConf > 0.7 ? 'HIGH CONF' : avgConf > 0.45 ? 'MED CONF' : 'LOW CONF'}
             </span>
           </div>
         </div>
