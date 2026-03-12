@@ -103,21 +103,29 @@ export default function FreestyleReplay({ session, onClose }) {
     }
   };
 
-  const handleLoadedMetadata = () => {
-    setDuration(videoRef.current?.duration || 0);
-  };
+  const handleLoadedMetadata = useCallback(() => {
+    const duration = videoRef.current?.duration || 0;
+    setDuration(duration);
+    // Render first frame immediately
+    if (videoRef.current) {
+      renderOverlayAtTime(0);
+    }
+  }, [renderOverlayAtTime]);
 
-  const handleTimeUpdate = () => {
-    setCurrentTime(videoRef.current?.currentTime || 0);
-  };
+  const handleTimeUpdate = useCallback(() => {
+    const currentTime = videoRef.current?.currentTime || 0;
+    setCurrentTime(currentTime);
+  }, []);
 
-  const handleSeek = (e) => {
+  const handleSeek = useCallback((e) => {
     const newTime = parseFloat(e.target.value);
     if (videoRef.current) {
       videoRef.current.currentTime = newTime;
       setCurrentTime(newTime);
+      // Render overlay at new time immediately
+      renderOverlayAtTime(newTime);
     }
-  };
+  }, [renderOverlayAtTime]);
 
   useEffect(() => {
     if (isPlaying) {
