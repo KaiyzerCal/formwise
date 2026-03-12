@@ -386,8 +386,8 @@ export default function TechniqueStudio() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <TechniqueVideoPlayer
             videoRef={videoRef}
-            videoUrl={techniqueSession.video.url}
-            poseFrames={techniqueSession.pose.frames}
+            videoUrl={safeVideoUrl}
+            poseFrames={safePoseFrames}
             annotations={annotationEditor.annotations}
             currentFrameIndex={currentFrameIndex}
             isPlaying={isPlaying}
@@ -407,13 +407,13 @@ export default function TechniqueStudio() {
             duration={duration}
             onSeek={handleSeek}
             currentFrameIndex={currentFrameIndex}
-            totalFrames={frameSync.frameCount}
+            totalFrames={frameSync?.frameCount || safePoseFrames.length}
             onStepForward={handleStepForward}
             onStepBackward={handleStepBackward}
             onJumpFrames={handleJumpFrames}
             speed={speed}
             onSpeedChange={handleSpeedChange}
-            fps={techniqueSession.video.fps || 30}
+            fps={safeFps}
           />
         </div>
 
