@@ -46,7 +46,7 @@ export default function TechniqueStudio() {
 
   // Video and sync
   const videoRef = useRef(null);
-  const frameSync = useFrameSync(techniqueSession?.pose?.frames || [], videoRef);
+  const frameSync = useFrameSync(techniqueSession?.pose?.frames || [], videoRef, techniqueSession?.video?.fps || 30);
 
   /**
    * Load session from draft ID or history
