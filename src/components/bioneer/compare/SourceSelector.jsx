@@ -1,94 +1,82 @@
-/**
- * SourceSelector — upload or select video sources for Technique Compare.
- * Shown when either clip is not yet loaded.
- */
-
 import React, { useRef } from 'react';
-import { Upload, Play } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
+import { Upload, Film } from 'lucide-react';
 
-// Bundled reference clips — hosted Unsplash/public demo videos matched to movements
-// These are short royalty-free demo clips; replace with real reference footage per movement.
-export const REFERENCE_CLIPS = {
-  back_squat:      'https://storage.googleapis.com/bioneer-demo/squat_ref.mp4',
-  deadlift:        'https://storage.googleapis.com/bioneer-demo/deadlift_ref.mp4',
-  push_up:         'https://storage.googleapis.com/bioneer-demo/pushup_ref.mp4',
-  lunge:           'https://storage.googleapis.com/bioneer-demo/lunge_ref.mp4',
-  overhead_press:  'https://storage.googleapis.com/bioneer-demo/ohp_ref.mp4',
-  vertical_jump:   'https://storage.googleapis.com/bioneer-demo/jump_ref.mp4',
-};
+const REFERENCE_CLIPS = [
+  { id: 'squat',    label: 'Back Squat',      url: null },
+  { id: 'deadlift', label: 'Deadlift',        url: null },
+  { id: 'pushup',   label: 'Push-Up',         url: null },
+  { id: 'lunge',    label: 'Lunge',           url: null },
+  { id: 'ohp',      label: 'Shoulder Press',  url: null },
+];
 
-// Public fallback demo clip (used when no movement-specific clip exists)
-export const FALLBACK_DEMO_CLIP = 'https://www.w3schools.com/html/mov_bbb.mp4';
-
-export function getReferenceClip(exerciseId) {
-  return REFERENCE_CLIPS[exerciseId] || FALLBACK_DEMO_CLIP;
-}
-
-export default function SourceSelector({ onUserClip, onMovementChange, movements, selectedMovement }) {
+export default function SourceSelector({ userSrc, userFilename, refClipId, onUserUpload, onRefSelect }) {
   const fileRef = useRef(null);
 
   const handleFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    onUserClip(url);
+    onUserUpload(url, file.name);
   };
 
   return (
-    <div className="h-full flex flex-col items-center justify-center gap-8 px-6" style={{ fontFamily: FONT.mono }}>
-      <div className="text-center space-y-2">
-        <h2 className="text-sm font-bold tracking-[0.2em] uppercase" style={{ color: COLORS.gold }}>
-          Load Your Clip
-        </h2>
-        <p className="text-[11px]" style={{ color: COLORS.textTertiary }}>
-          Upload a video of your movement to compare against the reference
-        </p>
+    <div className="flex flex-col gap-4 p-4" style={{ fontFamily: FONT.mono }}>
+      {/* Row */}
+      <div className="flex flex-col sm:flex-row gap-3">
+
+        {/* User upload */}
+        <div className="flex-1 space-y-2">
+          <label className="text-[9px] tracking-[0.2em] uppercase block" style={{ color: COLORS.textTertiary }}>
+            Your Clip
+          </label>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed transition-colors"
+            style={{
+              borderColor: userSrc ? COLORS.correct + '60' : COLORS.goldBorder,
+              background: userSrc ? `${COLORS.correct}10` : COLORS.goldDim,
+            }}>
+            <Upload size={14} strokeWidth={1.5} style={{ color: userSrc ? COLORS.correct : COLORS.gold, flexShrink: 0 }} />
+            <span className="text-[10px] truncate text-left"
+              style={{ color: userSrc ? COLORS.correct : COLORS.gold }}>
+              {userFilename || 'Upload your video'}
+            </span>
+          </button>
+          <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={handleFile} />
+        </div>
+
+        {/* Reference selector */}
+        <div className="flex-1 space-y-2">
+          <label className="text-[9px] tracking-[0.2em] uppercase block" style={{ color: COLORS.textTertiary }}>
+            Reference Clip
+          </label>
+          <div className="relative">
+            <Film size={12} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: COLORS.textTertiary }} />
+            <select
+              value={refClipId}
+              onChange={e => onRefSelect(e.target.value)}
+              className="w-full pl-8 pr-3 py-3 rounded-xl border text-[10px] appearance-none outline-none"
+              style={{
+                background: COLORS.surface,
+                borderColor: COLORS.borderLight,
+                color: COLORS.textPrimary,
+                fontFamily: FONT.mono,
+              }}>
+              <option value="">— Select movement —</option>
+              {REFERENCE_CLIPS.map(c => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+          {refClipId && (
+            <p className="text-[9px] px-1" style={{ color: COLORS.textTertiary }}>
+              Reference clips coming in next pass
+            </p>
+          )}
+        </div>
       </div>
-
-      {/* Movement selector */}
-      <div className="space-y-2 w-full max-w-xs">
-        <label className="text-[9px] tracking-[0.2em] uppercase block" style={{ color: COLORS.textTertiary }}>
-          Movement
-        </label>
-        <select
-          value={selectedMovement}
-          onChange={e => onMovementChange(e.target.value)}
-          className="w-full px-3 py-2 rounded text-xs border outline-none"
-          style={{
-            background: COLORS.surface, borderColor: COLORS.borderLight,
-            color: COLORS.textPrimary, fontFamily: FONT.mono,
-          }}
-        >
-          {movements.map(m => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Upload area */}
-      <button
-        onClick={() => fileRef.current?.click()}
-        className="flex flex-col items-center gap-3 px-8 py-6 rounded-xl border border-dashed w-full max-w-xs transition-colors"
-        style={{ borderColor: COLORS.goldBorder, background: COLORS.goldDim, color: COLORS.gold }}
-      >
-        <Upload size={24} strokeWidth={1.5} />
-        <span className="text-[10px] tracking-[0.15em] uppercase">Upload your video clip</span>
-        <span className="text-[9px]" style={{ color: COLORS.textTertiary }}>
-          MP4 · MOV · WebM
-        </span>
-      </button>
-      <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={handleFile} />
-
-      {/* Or use demo */}
-      <button
-        onClick={() => onUserClip(FALLBACK_DEMO_CLIP)}
-        className="flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase"
-        style={{ color: COLORS.textSecondary }}
-      >
-        <Play size={12} strokeWidth={1.5} />
-        Use demo clip instead
-      </button>
     </div>
   );
 }
