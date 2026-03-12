@@ -269,8 +269,29 @@ export default function CameraView({ exercise, onStop }) {
   return (
     <div className="fixed inset-0 z-40 bg-black">
 
-      {/* Video — mirror when using front camera */}
-      <video ref={videoRef} playsInline muted
+      {/* Secure context error — shown before camera attempt */}
+      {!isSecure && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.92)' }}>
+          <div className="w-80 rounded-2xl border p-6 space-y-4 text-center"
+            style={{ background: '#0c0c0c', borderColor: `${RED}40` }}>
+            <p className="text-sm font-bold" style={{ color: RED, fontFamily: "'DM Mono', monospace" }}>
+              Insecure Context
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)', fontFamily: "'DM Mono', monospace" }}>
+              Camera requires HTTPS or localhost. Please access this app from a secure connection.
+            </p>
+            <button onClick={handleStop}
+              className="w-full py-3 rounded-xl text-sm font-bold"
+              style={{ background: 'rgba(255,255,255,0.08)', color: 'white', fontFamily: "'DM Mono', monospace" }}>
+              Go Back
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Video — mirror when using front camera, playsInline for iOS */}
+      <video ref={videoRef} playsInline muted autoPlay
         className="absolute inset-0 w-full h-full object-cover"
         style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
 
@@ -280,7 +301,7 @@ export default function CameraView({ exercise, onStop }) {
         style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
 
       {/* ── Camera failed ──────────────────────────────────────────────────── */}
-      {camState === 'failed' && (
+      {camState === 'failed' && isSecure && (
         <div className="absolute inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.92)' }}>
           <div className="w-80 rounded-2xl border p-6 space-y-4 text-center"
@@ -291,11 +312,27 @@ export default function CameraView({ exercise, onStop }) {
             <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)', fontFamily: "'DM Mono', monospace" }}>
               {camError}
             </p>
-            <button onClick={handleStop}
-              className="w-full py-3 rounded-xl text-sm font-bold"
-              style={{ background: 'rgba(255,255,255,0.08)', color: 'white', fontFamily: "'DM Mono', monospace" }}>
-              Go Back
-            </button>
+            <div className="space-y-2">
+              <button onClick={() => window.location.reload()}
+                className="w-full py-2 rounded-lg text-xs font-bold"
+                style={{ background: 'rgba(201,168,76,0.2)', color: GOLD, border: `1px solid ${GOLD}40` }}>
+                Retry
+              </button>
+              <button onClick={() => {
+                const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+                setCameraFacing(newFacing);
+                localStorage.setItem('bioneer_camera_facing', newFacing);
+              }}
+                className="w-full py-2 rounded-lg text-xs font-bold"
+                style={{ background: 'rgba(201,168,76,0.2)', color: GOLD, border: `1px solid ${GOLD}40` }}>
+                Switch Camera
+              </button>
+              <button onClick={handleStop}
+                className="w-full py-2 rounded-lg text-xs font-bold"
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'white' }}>
+                Go Back
+              </button>
+            </div>
           </div>
         </div>
       )}
