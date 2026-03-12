@@ -151,9 +151,12 @@ export default function TechniqueVideoPlayer({
           onTimeUpdate={handleTimeUpdate}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ background: '#1a1a1a' }}>
-          <p className="text-sm" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+        <div className="absolute inset-0 flex items-center justify-center flex-col gap-3" style={{ background: '#1a1a1a' }}>
+          <p className="text-sm font-medium" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
             No video available
+          </p>
+          <p className="text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+            Session may not have video data
           </p>
         </div>
       )}
