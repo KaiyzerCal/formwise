@@ -219,6 +219,16 @@ export default function CameraView({ exercise, onStop }) {
     });
   }, [stopSession, repCount, formScore, onStop, exercise]);
 
+  // ── Cleanup on unmount ───────────────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      // Clear all timers, listeners, raf loops
+      if (temporalFilterRef.current) temporalFilterRef.current.reset();
+      if (healthRef.current) healthRef.current.destroy();
+      // Audio cleanup is already in the audio effect
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 z-40 bg-black">
 
