@@ -296,7 +296,7 @@ export default function TechniqueStudio() {
 
   return (
     <div
-      className="h-full flex flex-col"
+      className="fixed inset-0 flex flex-col"
       style={{ fontFamily: FONT.mono, background: COLORS.bg, color: COLORS.textPrimary }}
     >
       {/* Header */}
