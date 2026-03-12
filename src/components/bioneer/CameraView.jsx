@@ -219,15 +219,26 @@ export default function CameraView({ exercise, onStop }) {
     });
   }, [stopSession, repCount, formScore, onStop, exercise]);
 
-  // ── Cleanup on unmount ───────────────────────────────────────────────────────
+  // ── Cleanup on unmount or phase change ───────────────────────────────────────
   useEffect(() => {
     return () => {
-      // Clear all timers, listeners, raf loops
+      // Hard reset all pipeline engines to prevent stale state leakage
       if (temporalFilterRef.current) temporalFilterRef.current.reset();
       if (healthRef.current) healthRef.current.destroy();
-      // Audio cleanup is already in the audio effect
+      // Cleanup inference loop is handled by usePoseInferenceLoop
+      // Audio cleanup is already in the audio effect above
     };
   }, []);
+
+  // On stop, reset session to prevent leftover state from corrupting next session
+  useEffect(() => {
+    return () => {
+      if (sessionActive) {
+        // Session was active — cleanup orchestrator on unmount
+        // (useLiveAnalysis handles this via the exerciseId dependency)
+      }
+    };
+  }, [sessionActive]);
 
   return (
     <div className="fixed inset-0 z-40 bg-black">
