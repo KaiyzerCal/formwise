@@ -37,53 +37,116 @@ function buildConstraints(facingMode) {
   ];
 }
 
+/**
+ * Acquire media stream with mobile-safe constraints and error handling
+ * Stops all tracks on error for clean state
+ */
 async function acquireStream(facingMode = 'environment') {
+  if (!isSecureContext()) {
+    throw new Error('Camera requires HTTPS or localhost');
+  }
+
   let lastErr = null;
   const constraints = buildConstraints(facingMode);
+  
   for (const c of constraints) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia(c);
       return stream;
     } catch (err) {
       lastErr = err;
-      // NotAllowedError → no point retrying other constraints
+      // NotAllowedError means user denied permission — no point retrying
       if (err?.name === 'NotAllowedError') throw err;
+      // NotFoundError means no camera available
+      if (err?.name === 'NotFoundError') throw err;
+      // SecurityError likely means insecure context
+      if (err?.name === 'SecurityError') throw err;
+      // Otherwise try next constraint
     }
   }
-  throw lastErr;
+  
+  throw lastErr || new Error('Unable to acquire camera stream');
 }
 
 export function useCameraStream(videoRef, facingMode = 'environment') {
   const [camState, setCamState] = useState('idle');
   const [camError, setCamError] = useState(null);
-  const streamRef               = useRef(null);
+  const streamRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
+    
+    // Don't request permission on mount — only on explicit user interaction
+    // Parent component should call this hook only when user clicks a button
+    if (!videoRef.current) {
+      setCamState('idle');
+      return;
+    }
+
     setCamState('requesting');
     setCamError(null);
 
     acquireStream(facingMode)
       .then((stream) => {
-        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
+        if (cancelled) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+
+        // Stop previous stream's tracks before binding new stream
+        if (streamRef.current && streamRef.current !== stream) {
+          streamRef.current.getTracks().forEach(t => t.stop());
+        }
+
         streamRef.current = stream;
         const video = videoRef.current;
-        if (!video) return;
+        if (!video) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
 
+        // Bind stream to video element (iOS requires playsInline + muted)
         video.srcObject = stream;
         video.setAttribute('playsinline', 'true');
+        video.setAttribute('autoplay', 'true');
         video.setAttribute('muted', 'true');
         video.muted = true;
 
         return new Promise((resolve, reject) => {
-          video.onloadedmetadata = () => {
-            video.play().then(resolve).catch(reject);
+          const onMetadata = () => {
+            video.removeEventListener('loadedmetadata', onMetadata);
+            // Play with error handling for promise-based play()
+            const playPromise = video.play();
+            if (playPromise && typeof playPromise.then === 'function') {
+              playPromise.then(resolve).catch((err) => {
+                // play() can fail if video paused before it started
+                // Try again or resolve with warning
+                console.warn('Initial play() failed, will retry', err);
+                resolve(); // Still continue — video may auto-play
+              });
+            } else {
+              resolve();
+            }
           };
-          // Safety timeout if metadata never fires
-          setTimeout(() => {
-            if (video.readyState >= 1) video.play().then(resolve).catch(reject);
-            else reject(new Error('Video metadata timeout'));
+
+          video.addEventListener('loadedmetadata', onMetadata);
+
+          // Safety timeout if metadata never fires (5 seconds)
+          const timeoutId = setTimeout(() => {
+            video.removeEventListener('loadedmetadata', onMetadata);
+            if (video.readyState >= 1) {
+              const playPromise = video.play();
+              if (playPromise && typeof playPromise.then === 'function') {
+                playPromise.then(resolve).catch(() => resolve());
+              } else {
+                resolve();
+              }
+            } else {
+              reject(new Error('Video metadata timeout'));
+            }
           }, 5000);
+
+          return () => clearTimeout(timeoutId);
         });
       })
       .then(() => {
@@ -91,15 +154,33 @@ export function useCameraStream(videoRef, facingMode = 'environment') {
       })
       .catch((err) => {
         if (cancelled) return;
-        const msg = err?.name === 'NotAllowedError'
-          ? 'Camera permission denied. Please allow camera access and retry.'
-          : err?.name === 'NotFoundError'
-          ? 'No camera found on this device.'
-          : `Camera error: ${err?.message || 'unknown'}`;
+        
+        // Stop any partial stream on error
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(t => t.stop());
+          streamRef.current = null;
+        }
+
+        // User-friendly error messages for mobile
+        let msg = `Camera error: ${err?.message || 'unknown'}`;
+        
+        if (err?.name === 'NotAllowedError') {
+          msg = 'Camera permission denied. Tap Settings > Camera to allow.';
+        } else if (err?.name === 'NotFoundError') {
+          msg = 'No camera found on this device.';
+        } else if (err?.name === 'SecurityError' || err?.message?.includes('HTTPS')) {
+          msg = 'Camera requires HTTPS or localhost.';
+        } else if (err?.name === 'NotReadableError') {
+          msg = 'Camera is in use by another app. Close it and try again.';
+        } else if (err?.message?.includes('facingMode')) {
+          msg = 'Requested camera facing not available. Try switching.';
+        }
+        
         setCamError(msg);
         setCamState('failed');
       });
 
+    // Cleanup on unmount or facingMode change
     return () => {
       cancelled = true;
       if (streamRef.current) {
@@ -109,5 +190,5 @@ export function useCameraStream(videoRef, facingMode = 'environment') {
     };
   }, [videoRef, facingMode]);
 
-  return { camState, camError };
+  return { camState, camError, streamRef };
 }
