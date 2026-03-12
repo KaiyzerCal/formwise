@@ -400,7 +400,7 @@ export default function CameraView({ exercise, onStop }) {
 
       {/* ── Cue banner ────────────────────────────────────────────────────── */}
       {activeCue && sessionActive && (
-        <div className="absolute top-32 left-4 right-4 z-50 flex justify-center pointer-events-none">
+        <div className={`absolute ${healthMsg ? 'top-40' : 'top-32'} left-4 right-4 z-50 flex justify-center pointer-events-none`}>
           <div className="px-4 py-2.5 rounded-xl border text-center max-w-xs"
             style={{ background: 'rgba(0,0,0,0.8)', borderColor: `${RED}40`, backdropFilter: 'blur(8px)' }}>
             <p className="text-sm font-bold tracking-wide uppercase"
