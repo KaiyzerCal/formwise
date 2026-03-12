@@ -180,10 +180,24 @@ export default function TechniqueStudio() {
       case 'angle_marker':
         annotationEditor.createAngleMeasurement(annotation.frameIndex, annotation.points);
         break;
+      case 'text':
+        // Show text input modal for text annotations
+        setTextInputData({
+          frameIndex: annotation.frameIndex,
+          position: annotation.position,
+        });
+        break;
       default:
         break;
     }
   }, [annotationEditor]);
+
+  const handleTextSubmit = useCallback((text) => {
+    if (textInputData && text.trim()) {
+      annotationEditor.createTextLabel(textInputData.frameIndex, text, textInputData.position);
+    }
+    setTextInputData(null);
+  }, [textInputData, annotationEditor]);
 
   /**
    * Autosave (with null guard on session)
