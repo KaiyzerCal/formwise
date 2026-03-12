@@ -47,6 +47,8 @@ const AuthenticatedApp = () => {
           <MainPage />
         </LayoutWrapper>
       } />
+      {/* Freestyle session route (no layout) */}
+      <Route path="/FreestyleSession" element={<FreestyleSession />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
