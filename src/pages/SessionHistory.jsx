@@ -37,7 +37,20 @@ export default function SessionHistory() {
   const [tick, setTick] = useState(0);
   React.useEffect(() => { setTick(t => t + 1); }, []);
   const rawSessions = useMemo(() => getAllSessions(), [tick]);
-  const sessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
+  const allSessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
+
+  const sessions = useMemo(() => {
+    if (filter === 'All Time') return allSessions;
+    const now = new Date();
+    const cutoff = new Date(now);
+    if (filter === 'This Week') cutoff.setDate(now.getDate() - 7);
+    else if (filter === 'This Month') cutoff.setDate(now.getDate() - 30);
+    return allSessions.filter(s => {
+      const d = rawSessions.find(r => r.session_id === s.id)?.started_at;
+      return d && new Date(d) >= cutoff;
+    });
+  }, [allSessions, rawSessions, filter]);
+
   const totalReps = sessions.reduce((a, s) => a + s.reps, 0);
   const totalTime = sessions.reduce((a, s) => a + s.duration, 0);
   const avgScore = sessions.length > 0
