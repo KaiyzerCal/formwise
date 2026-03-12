@@ -19,6 +19,7 @@ import { TemporalFilterEngine } from './pipeline/TemporalFilterEngine';
 import { SystemHealthMonitor } from './pipeline/runtime/SystemHealthMonitor';
 import JointIntelligenceRail from './live/JointIntelligenceRail';
 import FormStabilityRing from './live/FormStabilityRing';
+import CameraToggleButton from './ui/CameraToggleButton';
 
 const GOLD = '#C9A84C';
 const RED  = '#EF4444';
