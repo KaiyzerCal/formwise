@@ -103,12 +103,16 @@ export function getFormScoreTrend() {
   const sessions = getValidSessions();
   if (sessions.length < 2) return { data: [], insufficient: true, isEmpty: sessions.length === 0 };
 
-  const data = sessions.map((s, i) => ({
-    label:    fmtDate(s.started_at) || `S${i + 1}`,
-    score:    s.average_form_score ?? 0,
-    peak:     s.highest_form_score ?? null,
-    movement: s.movement_name ?? s.movement_id ?? '—',
-  }));
+  const data = sessions
+    .map((s, i) => ({
+      label:    fmtDate(s.started_at) || `S${i + 1}`,
+      score:    Math.max(0, Math.min(100, s.average_form_score ?? 0)), // clamp 0-100
+      peak:     s.highest_form_score ? Math.max(0, Math.min(100, s.highest_form_score)) : null,
+      movement: s.movement_name ?? s.movement_id ?? '—',
+    }))
+    .filter(d => !isNaN(d.score) && d.score != null);
+
+  if (data.length < 2) return { data: [], insufficient: true, isEmpty: false };
 
   // Trend direction
   const first = data[0].score, last = data[data.length - 1].score;
