@@ -181,25 +181,42 @@ export default function CameraView({ exercise, onStop }) {
   const formScore = liveFormScore;
 
   // ── Stop session ──────────────────────────────────────────────────────────
-  const handleStop = () => {
+  const handleStop = useCallback(() => {
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const session = stopSession(); // full session object from SessionLogger.finalize()
     const summary = session?.summary;
+    const reps = session?.reps ?? [];
+    
+    // Compute mastery-derived scores for this session
+    const repScores = reps.map(r => r.score).filter(s => s != null);
+    const avgMasteryScore = repScores.length
+      ? Math.round(repScores.reduce((a, b) => a + b, 0) / repScores.length)
+      : Math.round(formScore);
+    const peakMasteryScore = repScores.length
+      ? Math.max(...repScores)
+      : Math.round(formScore);
+    const lowestMasteryScore = repScores.length
+      ? Math.min(...repScores)
+      : Math.round(formScore);
+
     onStop({
       exercise_id:        exercise.id,
       category:           exercise.category || 'strength',
       duration_seconds:   Math.round(elapsed),
-      form_score_overall: summary?.avgScore      ?? formScore,
-      form_score_peak:    summary?.peakScore     ?? formScore,
-      form_score_lowest:  summary?.lowestScore   ?? formScore,
-      movement_score:     summary?.avgScore      ?? 0,
+      form_score_overall: avgMasteryScore,
+      form_score_peak:    peakMasteryScore,
+      form_score_lowest:  lowestMasteryScore,
+      movement_score:     avgMasteryScore,
       reps_detected:      repCount,
       alerts:             session?.faultLog      ?? [],
       form_timeline:      summary?.formTimeline  ?? [],
       phases:             summary?.phases        ?? {},
-      reps:               session?.reps          ?? [], // for mastery stats
+      reps:               reps,
+      // Additional fields for analytics
+      exercise_def:       exercise,
+      joint_data:         {},
     });
-  };
+  }, [stopSession, repCount, formScore, onStop, exercise]);
 
   return (
     <div className="fixed inset-0 z-40 bg-black">
