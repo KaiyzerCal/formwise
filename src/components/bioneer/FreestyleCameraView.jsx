@@ -88,14 +88,33 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
 
     // Composite: draw video frame first
     if (video.readyState >= 2) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      if (isMirrored) {
+        // Mirror for front camera
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      } else {
+        // Normal draw for back camera
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
     } else {
       clearCanvas(ctx, canvas.width, canvas.height);
     }
 
     if (!result.poseLandmarks) return;
 
-    const smoothed = smoothLandmarks(result.poseLandmarks, prevLandmarksRef.current);
+    // Mirror pose landmarks for front camera display
+    let landmarksToRender = result.poseLandmarks;
+    if (isMirrored) {
+      landmarksToRender = result.poseLandmarks.map(lm => ({
+        ...lm,
+        x: 1 - lm.x, // Mirror horizontally
+      }));
+    }
+
+    const smoothed = smoothLandmarks(landmarksToRender, prevLandmarksRef.current);
     prevLandmarksRef.current = smoothed;
 
     // Track confidence and visible joints
