@@ -400,12 +400,38 @@ export default function SessionHistory() {
         })}
       </div>
 
-      {/* Replay modal */}
+      {/* Freestyle replay modal */}
       {selectedReplay && (
         <FreestyleReplay
           session={selectedReplay}
           onClose={() => setSelectedReplay(null)}
         />
+      )}
+
+      {/* Live session video replay modal */}
+      {selectedLiveReplay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.92)' }}>
+          <div className="relative w-full max-w-2xl mx-4 rounded-2xl overflow-hidden" style={{ background: '#0c0c0c', border: `1px solid ${COLORS.border}` }}>
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: COLORS.border }}>
+              <span className="text-xs font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
+                {selectedLiveReplay.session?.exercise || 'Session Replay'}
+              </span>
+              <button onClick={() => setSelectedLiveReplay(null)}
+                className="text-xs px-3 py-1.5 rounded border"
+                style={{ borderColor: COLORS.border, color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+                CLOSE
+              </button>
+            </div>
+            <video
+              src={selectedLiveReplay.videoSrc}
+              controls
+              autoPlay
+              playsInline
+              className="w-full"
+              style={{ maxHeight: '70vh', background: '#000' }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
