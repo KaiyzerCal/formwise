@@ -17,7 +17,7 @@ function adaptSession(s) {
   return {
     id:         s.session_id,
     exercise:   s.movement_name ?? s.movement_id ?? 'Unknown',
-    category:   'strength',
+    category:   s.category ?? 'strength',
     date:       s.started_at ? new Date(s.started_at).toLocaleDateString() : '—',
     time:       s.started_at ? new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
     duration:   s.duration_seconds ?? 0,
