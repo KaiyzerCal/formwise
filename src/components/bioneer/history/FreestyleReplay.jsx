@@ -3,10 +3,11 @@
  * Includes timeline scrubber and playback controls
  */
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Play, Pause, X } from 'lucide-react';
+import { Play, Pause, X, Download } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { drawSkeleton } from '../canvasRenderer';
 import { computeJointAngles } from '../poseEngine';
+import { exportTechniqueVideo } from '../technique/studio/useTechniqueExporter';
 
 export default function FreestyleReplay({ session, onClose }) {
   const videoRef = useRef(null);
