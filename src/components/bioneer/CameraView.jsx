@@ -310,6 +310,7 @@ export default function CameraView({ exercise, onStop }) {
       // Hard reset all pipeline engines to prevent stale state leakage
       if (temporalFilterRef.current) temporalFilterRef.current.reset();
       if (healthRef.current) healthRef.current.destroy();
+      resetRecorder();
       // Cleanup inference loop is handled by usePoseInferenceLoop
       // Audio cleanup is already in the audio effect above
     };
