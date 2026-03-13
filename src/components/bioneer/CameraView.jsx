@@ -44,23 +44,6 @@ export default function CameraView({ exercise, onStop }) {
   
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
 
-  // Switch camera without reloading — use hook method directly
-  const handleToggleCamera = useCallback(async () => {
-    if (!isSecure) {
-      alert('Camera requires HTTPS or localhost');
-      return;
-    }
-    
-    const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
-    const success = await switchCamera(newFacing);
-    
-    if (success) {
-      setCameraFacing(newFacing);
-      localStorage.setItem('bioneer_camera_facing', newFacing);
-    }
-    // If failed, error is shown in camError state via hook
-  }, [cameraFacing, isSecure, switchCamera]);
-
   // Temporal filter engine — persists for the lifetime of this exercise session
   const temporalFilterRef = useRef(null);
   useEffect(() => {
@@ -77,6 +60,23 @@ export default function CameraView({ exercise, onStop }) {
 
   // ── Camera ───────────────────────────────────────────────────────────────
   const { camState, camError, isSwitching, switchCamera } = useCameraStream(videoRef, cameraFacing);
+
+  // Switch camera without reloading — use hook method directly
+  const handleToggleCamera = useCallback(async () => {
+    if (!isSecure) {
+      alert('Camera requires HTTPS or localhost');
+      return;
+    }
+    
+    const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    const success = await switchCamera(newFacing);
+    
+    if (success) {
+      setCameraFacing(newFacing);
+      localStorage.setItem('bioneer_camera_facing', newFacing);
+    }
+    // If failed, error is shown in camError state via hook
+  }, [cameraFacing, isSecure, switchCamera]);
   useEffect(() => { healthRef.current?.reportCamera(camState); }, [camState]);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
