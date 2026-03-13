@@ -55,6 +55,24 @@ export default function SessionHistory() {
       .catch(err => console.error('Failed to load freestyle sessions:', err));
   }, []);
 
+  // Hydrate videoSrc for live sessions that have a videoStorageKey but no live object URL
+  useEffect(() => {
+    const liveSessions = getAllSessions().filter(s => s.videoStorageKey && !s.videoSrc);
+    if (!liveSessions.length) return;
+    let cancelled = false;
+    (async () => {
+      const updates = {};
+      await Promise.all(liveSessions.map(async (s) => {
+        try {
+          const video = await getLiveSessionVideo(s.videoStorageKey);
+          if (video?.videoSrc) updates[s.session_id] = video.videoSrc;
+        } catch { /* ignore */ }
+      }));
+      if (!cancelled) setHydratedVideos(updates);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const rawSessions = useMemo(() => getAllSessions(), []);
   const sessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
   
