@@ -1,32 +1,25 @@
 /**
- * Technique Converter — transforms freestyle history sessions into technique drafts
+ * Technique Converter — transforms history sessions into technique drafts.
+ * Supports both freestyle sessions (videoBlob) and live sessions (videoSrc from IndexedDB).
  */
 import { saveTechniqueDraft } from './techniqueStorage';
+import { getSessionVideoBlob } from '../data/liveVideoStorage';
 
 /**
- * Create a technique draft from a freestyle history session
- * Validates session data and initializes blank annotation workspace
+ * Create a technique draft from a freestyle history session.
  */
 export async function createTechniqueDraftFromFreestyleSession(session) {
-  // Validate session exists
-  if (!session) {
-    throw new Error('Unable to send to Technique: session is missing.');
-  }
+  if (!session) throw new Error('Unable to send to Technique: session is missing.');
 
-  // Validate video blob
   if (!session.videoBlob || !(session.videoBlob instanceof Blob) || session.videoBlob.size === 0) {
     throw new Error('Unable to send to Technique: saved freestyle video is missing or invalid.');
   }
-
-  // Validate pose frames
   if (!Array.isArray(session.poseFrames)) {
     throw new Error('Unable to send to Technique: pose data is missing.');
   }
 
-  // Generate unique technique ID
   const techniqueId = `technique-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Create draft object
   const draft = {
     techniqueId,
     sourceSessionId: session.sessionId,
@@ -45,8 +38,57 @@ export async function createTechniqueDraftFromFreestyleSession(session) {
     importedFromHistory: true,
   };
 
-  // Save to storage
   await saveTechniqueDraft(draft);
+  return draft;
+}
 
+/**
+ * Create a technique draft from a saved live (strength/sports) session.
+ * Loads the video blob from IndexedDB using the stored video_storage_key.
+ */
+export async function createTechniqueDraftFromLiveSession(session) {
+  if (!session) throw new Error('Unable to send to Technique: session is missing.');
+
+  const storageKey = session.video_storage_key || session.session_id;
+  let videoBlob = null;
+
+  try {
+    const record = await getSessionVideoBlob(storageKey);
+    videoBlob = record?.blob || null;
+  } catch (err) {
+    console.warn('[techniqueConverter] Could not load video blob:', err);
+  }
+
+  if (!videoBlob) {
+    throw new Error('Unable to send to Technique: no video found for this session. The video may not have been recorded.');
+  }
+
+  const techniqueId = `technique-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  const draft = {
+    techniqueId,
+    sourceSessionId: session.session_id,
+    sourceType: 'history_live',
+    createdAt: new Date().toISOString(),
+    category: session.category || session.movement_name || 'live',
+    duration: session.duration_seconds || 0,
+    videoBlob,
+    thumbnail: null,
+    poseFrames: session.poseFrames || [],
+    angleFrames: [],
+    compositedVideo: false,
+    annotations: session.annotations || [],
+    timelineMarkers: [],
+    coachNotes: '',
+    importedFromHistory: true,
+    metrics: {
+      average_form_score:  session.average_form_score,
+      rep_count:           session.rep_count,
+      top_faults:          session.top_faults,
+      movement_name:       session.movement_name,
+    },
+  };
+
+  await saveTechniqueDraft(draft);
   return draft;
 }
