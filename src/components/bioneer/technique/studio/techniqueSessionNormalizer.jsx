@@ -36,7 +36,7 @@ export function normalizeToTechniqueSession(source) {
     createdAt = fs.createdAt || createdAt;
   }
 
-  // Handle technique draft (from history import)
+  // Handle technique draft (from history import — freestyle or live)
   if (source.techniqueId || (source.sourceType && source.sourceType.includes('history'))) {
     sourceType = source.sourceType || 'technique_draft';
     videoBlob = source.videoBlob || videoBlob;
@@ -45,6 +45,12 @@ export function normalizeToTechniqueSession(source) {
     category = source.category || category;
     sessionId = source.techniqueId || source.sourceSessionId || sessionId;
     createdAt = source.createdAt || createdAt;
+    // Live sessions may only have a videoSrc (object URL) instead of blob
+    // Store it so the video player can use it directly
+    if (!videoBlob && source.videoSrc) {
+      // Attach videoSrc for direct playback fallback
+      videoBlob = { _isSrcOnly: true, _src: source.videoSrc };
+    }
   }
 
   // Handle live FormSession from database
