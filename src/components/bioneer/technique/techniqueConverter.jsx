@@ -1,7 +1,8 @@
 /**
- * Technique Converter — transforms freestyle history sessions into technique drafts
+ * Technique Converter — transforms freestyle and live history sessions into technique drafts
  */
 import { saveTechniqueDraft } from './techniqueStorage';
+import { getLiveSessionVideo } from '../history/sessionStorage';
 
 /**
  * Create a technique draft from a freestyle history session
