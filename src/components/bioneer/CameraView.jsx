@@ -239,12 +239,15 @@ export default function CameraView({ exercise, onStop }) {
   const formScore = liveFormScore;
 
   // ── Stop session ──────────────────────────────────────────────────────────
-  const handleStop = useCallback(() => {
+  const handleStop = useCallback(async () => {
+    if (isFinalizing) return;
+    setIsFinalizing(true);
+
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const session = stopSession(); // full session object from SessionLogger.finalize()
     const summary = session?.summary;
     const reps = session?.reps ?? [];
-    
+
     // Compute mastery-derived scores for this session
     const repScores = reps.map(r => r.score).filter(s => s != null);
     const avgMasteryScore = repScores.length
@@ -256,6 +259,25 @@ export default function CameraView({ exercise, onStop }) {
     const lowestMasteryScore = repScores.length
       ? Math.min(...repScores)
       : Math.round(formScore);
+
+    // Finalize recording — await blob before continuing
+    let videoBlob = null;
+    let poseFrames = [];
+    let angleFrames = [];
+    if (isRecording) {
+      try {
+        const finalized = await stopRecording();
+        if (finalized?.videoBlob instanceof Blob && finalized.videoBlob.size > 0) {
+          videoBlob = finalized.videoBlob;
+        } else {
+          console.warn('[CameraView] Recording finalized but video blob is empty');
+        }
+        poseFrames = finalized?.poseFrames ?? [];
+        angleFrames = finalized?.angleFrames ?? [];
+      } catch (err) {
+        console.warn('[CameraView] Failed to finalize recording:', err);
+      }
+    }
 
     onStop({
       exercise_id:        exercise.id,
@@ -270,13 +292,17 @@ export default function CameraView({ exercise, onStop }) {
       form_timeline:      summary?.formTimeline  ?? [],
       phases:             summary?.phases        ?? {},
       reps:               reps,
+      // Video recording output
+      videoBlob,
+      poseFrames,
+      angleFrames,
       // Additional fields for analytics
       exercise_def:       exercise,
       joint_data:         {},
       // Camera metadata for history tracking
-      cameraFacing:       cameraFacing,
+      cameraFacing,
     });
-  }, [stopSession, repCount, formScore, onStop, exercise]);
+  }, [stopSession, stopRecording, isRecording, repCount, formScore, onStop, exercise, isFinalizing]);
 
   // ── Cleanup on unmount or phase change ───────────────────────────────────────
   useEffect(() => {
