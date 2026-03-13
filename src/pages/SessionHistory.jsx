@@ -19,7 +19,7 @@ function adaptSession(s) {
   return {
     id:         s.session_id,
     exercise:   s.movement_name ?? s.movement_id ?? 'Unknown',
-    category:   'strength',
+    category:   s.category || 'strength',
     date:       s.started_at ? new Date(s.started_at).toLocaleDateString() : '—',
     time:       s.started_at ? new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
     duration:   s.duration_seconds ?? 0,
@@ -28,12 +28,14 @@ function adaptSession(s) {
     topFault:   s.top_faults?.[0]?.replace(/_/g, ' ') ?? '—',
     repScores:  s.rep_summaries?.map(r => r.form_score ?? 0) ?? [],
     movementProfileId: s.movement_profile_id ?? null,
+    hasVideo:   !!(s.video_storage_key || s.video_src),
     insights:   [
       s.session_status === 'partial'        ? 'Partial session — limited tracking' : null,
       s.session_status === 'low_confidence' ? 'Low tracking confidence this session' : null,
       s.top_faults?.[0] ? `Top fault: ${s.top_faults[0].replace(/_/g, ' ')}` : null,
     ].filter(Boolean),
     _real: true,
+    _rawSession: s, // preserve for technique transfer
   };
 }
 
