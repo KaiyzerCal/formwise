@@ -5,7 +5,8 @@
 
 const DB_NAME = 'BioneerFreestyleDB';
 const STORE_NAME = 'freestyleSessions';
-const DB_VERSION = 1;
+const LIVE_STORE_NAME = 'liveSessions';
+const DB_VERSION = 2;  // bumped to add liveSessions store
 
 let dbInstance = null;
 
@@ -28,6 +29,9 @@ async function initDB() {
       const db = event.target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'sessionId' });
+      }
+      if (!db.objectStoreNames.contains(LIVE_STORE_NAME)) {
+        db.createObjectStore(LIVE_STORE_NAME, { keyPath: 'sessionId' });
       }
     };
   });
