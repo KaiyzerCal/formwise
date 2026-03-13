@@ -289,6 +289,25 @@ function calculateMaxConfidence(frames) {
 }
 
 /**
+ * Extract and normalize annotations from any source shape
+ */
+function _extractAnnotations(source) {
+  // Flat array of annotation objects
+  if (Array.isArray(source?.annotations)) return source.annotations;
+  // Already structured with frames array
+  if (Array.isArray(source?.annotations?.frames)) {
+    const flat = source.annotations.frames.flat();
+    return flat.length > 0 ? flat : [];
+  }
+  // Saved project annotations (flat)
+  if (source?.annotations && typeof source.annotations === 'object') {
+    const flat = source.annotations.frames ? source.annotations.frames.flat() : [];
+    return flat;
+  }
+  return [];
+}
+
+/**
  * Merge annotations/metadata into a TechniqueSession (non-destructive)
  */
 export function updateTechniqueSession(session, updates) {
