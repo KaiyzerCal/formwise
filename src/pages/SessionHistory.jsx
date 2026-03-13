@@ -382,11 +382,19 @@ export default function SessionHistory() {
         })}
       </div>
 
-      {/* Replay modal */}
+      {/* Freestyle replay modal */}
       {selectedReplay && (
         <FreestyleReplay
           session={selectedReplay}
           onClose={() => setSelectedReplay(null)}
+        />
+      )}
+
+      {/* Live session replay modal */}
+      {selectedLiveReplay && (
+        <LiveSessionReplay
+          session={{ ...selectedLiveReplay, videoSrc: liveVideoUrls[selectedLiveReplay.session_id] || selectedLiveReplay.video_src || null }}
+          onClose={() => setSelectedLiveReplay(null)}
         />
       )}
     </div>
