@@ -57,6 +57,23 @@ export default function SessionHistory() {
       .catch(err => console.error('Failed to load freestyle sessions:', err));
   }, []);
 
+  // Hydrate videoSrc for live sessions from IndexedDB
+  useEffect(() => {
+    const raw = getAllSessions();
+    raw.forEach(async (s) => {
+      if (!s.video_storage_key && !s.session_id) return;
+      const key = s.video_storage_key || s.session_id;
+      try {
+        const url = await getSessionVideoUrl(key);
+        if (url) {
+          setLiveVideoUrls(prev => ({ ...prev, [s.session_id]: url }));
+        }
+      } catch {
+        // no video stored — silently skip
+      }
+    });
+  }, []);
+
   const rawSessions = useMemo(() => getAllSessions(), []);
   const sessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
   
