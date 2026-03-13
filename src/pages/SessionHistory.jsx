@@ -43,9 +43,12 @@ export default function SessionHistory() {
   const [expandedId, setExpandedId] = useState(null);
   const [freestyleSessions, setFreestyleSessions] = useState([]);
   const [selectedReplay, setSelectedReplay] = useState(null);
+  const [selectedLiveReplay, setSelectedLiveReplay] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [sending, setSending] = useState(null);
   const [sendError, setSendError] = useState(null);
+  // hydrated live sessions: session_id → videoSrc
+  const [liveVideoUrls, setLiveVideoUrls] = useState({});
 
   // Load freestyle sessions
   useEffect(() => {
