@@ -44,6 +44,9 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
   });
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
 
+  // ── Camera ───────────────────────────────────────────────────────────────
+  const { camState, camError, isSwitching: isCameraSwitching, switchCamera } = useCameraStream(videoRef, cameraFacing);
+
   // Switch camera without reloading — use hook method directly
   const handleToggleCamera = useCallback(async () => {
     if (!isSecure) {
@@ -59,9 +62,6 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
       localStorage.setItem('bioneer_camera_facing', newFacing);
     }
   }, [cameraFacing, isSecure, switchCamera]);
-
-  // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError, isSwitching: isCameraSwitching, switchCamera } = useCameraStream(videoRef, cameraFacing);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
