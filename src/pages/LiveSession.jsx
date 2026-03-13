@@ -55,15 +55,47 @@ export default function LiveSession() {
     });
     setSavedSession(session);
     // Pass raw data to summary for existing UI (joint_data, exercise_def, etc.)
+    // Keep videoBlob in rawData so handleSave can persist it
     setSessionData({ ...rawData, _canonicalSession: session, movementProfile });
     setPhase("summary");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!savedSession) { handleDiscard(); return; }
     setSaving(true);
-    // Save to store (sync, instant)
-    saveSession(savedSession);
+
+    // Persist video blob to IndexedDB (live session store) BEFORE saving metadata
+    let videoStorageKey = null;
+    let videoSrc = null;
+    const rawData = sessionData;
+    if (rawData?.videoBlob instanceof Blob && rawData.videoBlob.size > 0) {
+      try {
+        const persisted = await saveLiveSessionVideo({
+          sessionId: savedSession.session_id,
+          videoBlob: rawData.videoBlob,
+          poseFrames: rawData.poseFrames ?? [],
+          angleFrames: rawData.angleFrames ?? [],
+        });
+        if (persisted) {
+          videoStorageKey = savedSession.session_id;
+          videoSrc = persisted.videoSrc;
+        }
+      } catch (err) {
+        console.warn('[LiveSession] Video persist failed — saving metadata only:', err);
+      }
+    } else {
+      console.warn('[LiveSession] No video blob available for session', savedSession.session_id);
+    }
+
+    // Attach video reference to canonical session record
+    const sessionWithVideo = {
+      ...savedSession,
+      videoStorageKey,
+      videoSrc,  // object URL valid for this page session; hydrated from IDB on reload
+      hasVideo: !!videoStorageKey,
+    };
+
+    saveSession(sessionWithVideo);
     setSaving(false);
     handleDiscard();
   };
