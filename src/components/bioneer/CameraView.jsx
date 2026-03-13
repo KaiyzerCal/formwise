@@ -45,6 +45,9 @@ export default function CameraView({ exercise, onStop }) {
   
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
 
+  // ── Video recorder ────────────────────────────────────────────────────────
+  const { startRecording, finalizeRecording } = useVideoRecorder();
+
   // Temporal filter engine — persists for the lifetime of this exercise session
   const temporalFilterRef = useRef(null);
   useEffect(() => {
