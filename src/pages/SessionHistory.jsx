@@ -124,20 +124,54 @@ export default function SessionHistory() {
     setSending(session.sessionId);
     setSendError(null);
     try {
-      console.log('[SessionHistory] Creating technique draft from freestyle session:', session.sessionId);
       const draft = await createTechniqueDraftFromFreestyleSession(session);
-      
-      if (!draft || !draft.techniqueId) {
-        throw new Error('Draft creation returned invalid result');
-      }
-
-      console.log('[SessionHistory] Draft created successfully:', draft.techniqueId);
+      if (!draft?.techniqueId) throw new Error('Draft creation returned invalid result');
       navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
     } catch (error) {
-      console.error('[SessionHistory] Failed to send to technique:', error);
+      console.error('[SessionHistory] Failed to send freestyle to technique:', error);
       setSendError(error.message || 'Failed to send session to Technique');
     } finally {
       setSending(null);
+    }
+  };
+
+  const handleSendLiveToTechnique = async (adaptedSession) => {
+    setSending(adaptedSession.id);
+    setSendError(null);
+    try {
+      const videoSrc = hydratedVideos[adaptedSession.id] || adaptedSession.videoSrc;
+      const draft = await createTechniqueDraftFromLiveSession({
+        session: adaptedSession._rawSession,
+        videoSrc,
+        videoStorageKey: adaptedSession.videoStorageKey,
+      });
+      if (!draft?.techniqueId) throw new Error('Draft creation returned invalid result');
+      navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
+    } catch (error) {
+      console.error('[SessionHistory] Failed to send live session to technique:', error);
+      setSendError(error.message || 'Failed to send session to Technique');
+    } finally {
+      setSending(null);
+    }
+  };
+
+  const handlePlayLiveVideo = async (adaptedSession) => {
+    // Use already-hydrated URL or fetch fresh from IndexedDB
+    const existingUrl = hydratedVideos[adaptedSession.id] || adaptedSession.videoSrc;
+    if (existingUrl) {
+      setSelectedLiveReplay({ videoSrc: existingUrl, session: adaptedSession });
+      return;
+    }
+    if (adaptedSession.videoStorageKey) {
+      try {
+        const video = await getLiveSessionVideo(adaptedSession.videoStorageKey);
+        if (video?.videoSrc) {
+          setHydratedVideos(prev => ({ ...prev, [adaptedSession.id]: video.videoSrc }));
+          setSelectedLiveReplay({ videoSrc: video.videoSrc, session: adaptedSession });
+        }
+      } catch (err) {
+        console.error('[SessionHistory] Failed to load live video:', err);
+      }
     }
   };
 
