@@ -42,6 +42,8 @@ export default function SessionHistory() {
   const [expandedId, setExpandedId] = useState(null);
   const [freestyleSessions, setFreestyleSessions] = useState([]);
   const [selectedReplay, setSelectedReplay] = useState(null);
+  const [selectedLiveReplay, setSelectedLiveReplay] = useState(null); // { videoSrc, session }
+  const [hydratedVideos, setHydratedVideos] = useState({}); // sessionId -> videoSrc
   const [deleting, setDeleting] = useState(null);
   const [sending, setSending] = useState(null);
   const [sendError, setSendError] = useState(null);
