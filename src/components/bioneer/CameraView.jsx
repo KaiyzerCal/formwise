@@ -125,18 +125,31 @@ export default function CameraView({ exercise, onStop }) {
     if (result._fps)     healthRef.current?.reportFPS(result._fps);
     if (result._frameMs) healthRef.current?.reportFrameMs(result._frameMs);
 
-    // Canvas render
+    // Canvas render — composite video + skeleton so recording captures both
     const canvas = canvasRef.current;
     const video  = videoRef.current;
     if (!canvas || !video) return;
     const ctx = canvas.getContext('2d');
     canvas.width  = video.videoWidth  || canvas.offsetWidth;
     canvas.height = video.videoHeight || canvas.offsetHeight;
-    clearCanvas(ctx, canvas.width, canvas.height);
+
+    // Draw real video frame first (makes recording include actual camera feed)
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    } else {
+      clearCanvas(ctx, canvas.width, canvas.height);
+    }
+
     if (!result.poseLandmarks) return;
 
     const smoothed = smoothLandmarks(result.poseLandmarks, prevLandmarksRef.current);
     prevLandmarksRef.current = smoothed;
+
+    // Capture pose frame for replay
+    if (isRecording) {
+      const tElapsed = performance.now();
+      capturePoseFrame(smoothed, {}, result.poseLandmarks[0]?.visibility || 0);
+    }
 
     // ── Build joint results from exercise definition (green/yellow/red + angle badges)
     const livePhase  = frameRef.current?.phase ?? null;
