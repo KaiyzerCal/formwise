@@ -214,3 +214,84 @@ export function getVideoUrl(videoBlob) {
   if (!videoBlob) return null;
   return URL.createObjectURL(videoBlob);
 }
+
+// ── Live session video persistence ───────────────────────────────────────────
+
+/**
+ * Save a live session (Strength/Sports) video blob to IndexedDB.
+ * Also generates a thumbnail if possible.
+ * @returns {Promise<{videoSrc: string, thumbnailBlob: Blob|null}>}
+ */
+export async function saveLiveSessionVideo({ sessionId, videoBlob, poseFrames, angleFrames, mimeType }) {
+  if (!sessionId) throw new Error('saveLiveSessionVideo: sessionId is required');
+  if (!videoBlob || !(videoBlob instanceof Blob) || videoBlob.size === 0) {
+    console.warn('[saveLiveSessionVideo] No valid video blob for session', sessionId);
+    return null;
+  }
+
+  const db = await initDB();
+  const thumbnail = await generateThumbnail(videoBlob).catch(() => null);
+
+  const record = {
+    sessionId,
+    videoBlob,
+    poseFrames: poseFrames ?? [],
+    angleFrames: angleFrames ?? [],
+    mimeType: mimeType || videoBlob.type || 'video/webm',
+    thumbnail,
+    createdAt: new Date().toISOString(),
+  };
+
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction([LIVE_STORE_NAME], 'readwrite');
+    const store = tx.objectStore(LIVE_STORE_NAME);
+    const req = store.put(record);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+
+  const videoSrc = URL.createObjectURL(videoBlob);
+  return { videoSrc, thumbnailBlob: thumbnail, videoBlob };
+}
+
+/**
+ * Load a live session video from IndexedDB and return a fresh object URL.
+ */
+export async function getLiveSessionVideo(sessionId) {
+  if (!sessionId) return null;
+  const db = await initDB();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([LIVE_STORE_NAME], 'readonly');
+    const store = tx.objectStore(LIVE_STORE_NAME);
+    const req = store.get(sessionId);
+    req.onsuccess = () => {
+      const record = req.result;
+      if (!record) { resolve(null); return; }
+      resolve({
+        videoBlob: record.videoBlob,
+        videoSrc: URL.createObjectURL(record.videoBlob),
+        poseFrames: record.poseFrames ?? [],
+        angleFrames: record.angleFrames ?? [],
+        thumbnail: record.thumbnail ?? null,
+        mimeType: record.mimeType,
+      });
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/**
+ * Delete live session video from IndexedDB.
+ */
+export async function deleteLiveSessionVideo(sessionId) {
+  if (!sessionId) return;
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([LIVE_STORE_NAME], 'readwrite');
+    const store = tx.objectStore(LIVE_STORE_NAME);
+    const req = store.delete(sessionId);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
