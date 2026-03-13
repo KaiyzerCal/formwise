@@ -585,9 +585,10 @@ export default function CameraView({ exercise, onStop }) {
             </span>
           </div>
           <button onClick={handleStop}
-            className="w-full py-3.5 rounded-xl border text-white font-bold text-sm tracking-wider transition-colors"
+            disabled={isFinalizing}
+            className="w-full py-3.5 rounded-xl border text-white font-bold text-sm tracking-wider transition-colors disabled:opacity-60"
             style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', fontFamily: "'DM Mono', monospace" }}>
-            STOP SESSION
+            {isFinalizing ? 'FINALIZING...' : 'STOP SESSION'}
           </button>
         </div>
       </div>
