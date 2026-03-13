@@ -177,12 +177,25 @@ export default function FreestyleReplay({ session, onClose }) {
         <h2 className="text-sm font-bold tracking-[0.1em] uppercase" style={{ color: COLORS.gold }}>
           Freestyle Replay
         </h2>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-full hover:bg-white/10 transition"
-        >
-          <X className="w-5 h-5" style={{ color: COLORS.textSecondary }} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportMp4}
+            disabled={exporting || !videoUrl}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-[9px] font-bold"
+            style={{
+              borderColor: COLORS.goldBorder,
+              color: COLORS.gold,
+              background: COLORS.goldDim,
+              opacity: (exporting || !videoUrl) ? 0.5 : 1,
+            }}
+          >
+            <Download size={11} />
+            {exporting ? 'EXPORTING…' : 'EXPORT MP4'}
+          </button>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition">
+            <X className="w-5 h-5" style={{ color: COLORS.textSecondary }} />
+          </button>
+        </div>
       </div>
 
       {/* Video + Overlay Container */}
