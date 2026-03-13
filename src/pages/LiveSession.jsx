@@ -46,6 +46,7 @@ export default function LiveSession() {
   };
 
   const handleStop = (rawData) => {
+    rawDataRef.current = rawData; // preserve for save (includes recordedChunks)
     // Normalize into canonical schema with movement profile data
     const movementProfile = selectedMovementId ? getMovementProfile(selectedMovementId) : null;
     const session = normalizeSession(rawData, {
@@ -61,13 +62,36 @@ export default function LiveSession() {
     setPhase("summary");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!savedSession) { handleDiscard(); return; }
     setSaving(true);
-    // Save to store (sync, instant)
-    saveSession(savedSession);
-    setSaving(false);
-    handleDiscard();
+    try {
+      const rawData = rawDataRef.current || {};
+      const { recordedChunks, recordingMimeType } = rawData;
+
+      // Persist video first (wait for full blob finalization)
+      const persistedVideo = await persistRecordedSessionVideo({
+        recordedChunks: recordedChunks || [],
+        mimeType: recordingMimeType || 'video/webm',
+        sessionId: savedSession.session_id,
+      });
+
+      // Attach video fields to the canonical session before saving
+      const sessionWithVideo = {
+        ...savedSession,
+        video_storage_key: persistedVideo?.storageKey ?? savedSession.session_id,
+        video_src: persistedVideo?.videoSrc ?? null,
+      };
+
+      saveSession(sessionWithVideo);
+    } catch (err) {
+      console.error('[LiveSession] handleSave error:', err);
+      // Still save metadata even if video persistence fails
+      saveSession(savedSession);
+    } finally {
+      setSaving(false);
+      handleDiscard();
+    }
   };
 
   const handleDiscard = () => {
