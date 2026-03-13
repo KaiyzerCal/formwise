@@ -20,6 +20,7 @@ export default function FreestyleReplay({ session, onClose }) {
   const [duration, setDuration] = useState(0);
   const [currentAngles, setCurrentAngles] = useState({});
   const [videoUrl, setVideoUrl] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   if (!session) return null;
 
