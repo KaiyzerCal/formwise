@@ -88,68 +88,13 @@ export default function LiveSession() {
     );
   }
 
-  // Select phase — movement library + movement profile selector
+  // Select phase — movement library only, profile resolved silently on selection
   return (
     <div className="flex flex-col h-screen" style={{ background: COLORS.bg }}>
       <MovementLibrary
         selectedId={selectedExercise?.id}
         onSelect={handleStart}
       />
-
-      {/* Movement Profile Selector Panel */}
-      {selectedExercise && (
-        <div
-          className="fixed bottom-0 left-0 right-0 z-50 border-t p-6 space-y-4"
-          style={{
-            background: `linear-gradient(to top, ${COLORS.surface}, ${COLORS.surface}EE)`,
-            backdropFilter: 'blur(12px)',
-            borderColor: COLORS.border,
-          }}
-        >
-          <div>
-            <label className="block text-xs font-bold tracking-[0.15em] uppercase mb-3"
-              style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
-              Select Movement Profile
-            </label>
-            <MovementSelector
-              value={selectedMovementId}
-              onChange={setSelectedMovementId}
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                setSelectedExercise(null);
-                setSelectedMovementId(null);
-              }}
-              className="flex-1 py-3 rounded-lg border font-bold text-sm transition-colors"
-              style={{
-                background: 'transparent',
-                borderColor: COLORS.border,
-                color: COLORS.textSecondary,
-                fontFamily: FONT.mono,
-              }}
-            >
-              Back
-            </button>
-
-            <button
-              onClick={handleStartWithMovement}
-              disabled={!selectedMovementId}
-              className="flex-1 py-3 rounded-lg border font-bold text-sm transition-colors disabled:opacity-50"
-              style={{
-                background: selectedMovementId ? `${COLORS.gold}20` : 'transparent',
-                borderColor: selectedMovementId ? COLORS.gold : COLORS.border,
-                color: selectedMovementId ? COLORS.gold : COLORS.textSecondary,
-                fontFamily: FONT.mono,
-              }}
-            >
-              Start Session
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
