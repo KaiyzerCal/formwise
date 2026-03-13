@@ -147,6 +147,23 @@ export default function FreestyleReplay({ session, onClose }) {
     };
   }, [isPlaying, poseFrames]);
 
+  const handleExportMp4 = async () => {
+    if (!videoRef.current) return;
+    setExporting(true);
+    try {
+      await exportTechniqueVideo({
+        videoElement: videoRef.current,
+        overlayCanvas: overlayCanvasRef.current || null,
+        filename: `bioneer-freestyle-${Date.now()}`,
+      });
+    } catch (err) {
+      console.error('[FreestyleReplay] Export failed:', err);
+      alert('Export failed: ' + err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
