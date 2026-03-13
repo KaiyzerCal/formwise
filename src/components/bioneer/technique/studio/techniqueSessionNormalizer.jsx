@@ -121,12 +121,8 @@ export function normalizeToTechniqueSession(source) {
       metrics: (source.metrics && typeof source.metrics === 'object') ? source.metrics : {},
     },
 
-    // ANNOTATIONS OBJECT (always valid structure)
-    annotations: {
-      frames: [],
-      ranges: [],
-      markers: [],
-    },
+    // ANNOTATIONS OBJECT — preserve existing if present, otherwise empty
+    annotations: _extractAnnotations(source),
 
     // AUXILIARY FIELDS (always valid)
     audioComments: Array.isArray(source.audioComments) ? source.audioComments : [],
