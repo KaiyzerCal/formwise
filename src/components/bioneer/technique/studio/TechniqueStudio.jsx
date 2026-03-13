@@ -1,9 +1,7 @@
 /**
- * TechniqueStudio — PRODUCTION HARDENED
- * Complete coaching environment for reviewing, annotating, and exporting session videos
- * Integrates video playback, frame sync, pose overlay, annotation tools, and export
- * 
- * CRITICAL RENDER ORDER: Strict callback ordering prevents ReferenceError crashes
+ * TechniqueStudio — PRODUCTION HARDENED + FULLY WIRED ANNOTATION EDITING
+ * Complete coaching environment: video playback, frame sync, pose overlay,
+ * interactive annotation tools, undo/redo, autosave, keyboard shortcuts
  */
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
@@ -16,30 +14,28 @@ import TechniqueNotesPanel from './TechniqueNotesPanel';
 import TechniqueExportPanel from './TechniqueExportPanel';
 import { normalizeToTechniqueSession } from './techniqueSessionNormalizer';
 import { useFrameSync } from './useFrameSync';
-import { useAnnotationEditor } from './useAnnotationEditor';
+import { useAnnotationEditor, TOOLS } from './useAnnotationEditor';
 import { getTechniqueDraft } from '../techniqueStorage';
 import { saveTechniqueProject } from '../TechniqueProjectStore';
 import { X } from 'lucide-react';
 
 export default function TechniqueStudio() {
-  // ============================================================================
-  // SECTION 1: HOOKS & STATE (in order: router, state, refs)
-  // ============================================================================
+  // ── Router & session state ───────────────────────────────────────────────
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Session state
   const [techniqueSession, setTechniqueSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const annotationsHydratedRef = useRef(false);
 
-  // Playback state
+  // ── Playback state ───────────────────────────────────────────────────────
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
 
-  // UI toggles
+  // ── UI toggles ───────────────────────────────────────────────────────────
   const [showSkeleton, setShowSkeleton] = useState(true);
   const [showJointLabels, setShowJointLabels] = useState(false);
   const [showAngleLabels, setShowAngleLabels] = useState(false);
@@ -47,96 +43,22 @@ export default function TechniqueStudio() {
   const [showNotes, setShowNotes] = useState(true);
   const [showExport, setShowExport] = useState(false);
 
-  // Annotation state
+  // ── Annotation editor ────────────────────────────────────────────────────
   const annotationEditor = useAnnotationEditor();
 
-  // Refs
+  // ── Refs ─────────────────────────────────────────────────────────────────
   const autosaveTimeoutRef = useRef(null);
   const videoRef = useRef(null);
 
-  // ============================================================================
-  // SECTION 2: DERIVED SAFE FALLBACKS (computed early, before effects)
-  // ============================================================================
-  const safeVideoUrl = techniqueSession?.video?.url || null;
-  const safePoseFrames = Array.isArray(techniqueSession?.pose?.frames) ? techniqueSession.pose.frames : [];
-  const safeFps = techniqueSession?.video?.fps || 30;
-  const safeCategory = techniqueSession?.derived?.category || 'freestyle';
-  const safeCreatedAt = techniqueSession?.createdAt || new Date().toISOString();
+  // ── Safe derived values ──────────────────────────────────────────────────
+  const safeVideoUrl    = techniqueSession?.video?.url || null;
+  const safePoseFrames  = Array.isArray(techniqueSession?.pose?.frames) ? techniqueSession.pose.frames : [];
+  const safeFps         = techniqueSession?.video?.fps || 30;
+  const safeCategory    = techniqueSession?.derived?.category || 'freestyle';
+  const safeCreatedAt   = techniqueSession?.createdAt || new Date().toISOString();
 
-  // Frame sync with safe values (DO NOT depend on frameSync refs in effects before declaration)
   const frameSync = useFrameSync(safePoseFrames, videoRef, safeFps);
 
-  // ============================================================================
-  // SECTION 3: ALL CALLBACKS (defined BEFORE any useEffect)
-  // CRITICAL: No effect may reference a callback defined after this section
-  // ============================================================================
-
-  /**
-   * Playback controls
-   */
-  const handlePlay = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    }
-  }, []);
-
-  const handlePause = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  }, []);
-
-  const handleSeek = useCallback((time) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
-  }, []);
-
-  const handleSpeedChange = useCallback((newSpeed) => {
-    setSpeed(newSpeed);
-    if (videoRef.current) {
-      videoRef.current.playbackRate = newSpeed;
-    }
-  }, []);
-
-  const handleTimeUpdate = useCallback((time) => {
-    setCurrentTime(time);
-  }, []);
-
-  const handleLoadedMetadata = useCallback(() => {
-    const video = videoRef.current;
-    if (video) {
-      setDuration(video.duration);
-    }
-  }, []);
-
-  /**
-   * Frame navigation (with null guards)
-   */
-  const handleStepForward = useCallback(() => {
-    if (frameSync && typeof frameSync.stepForward === 'function') {
-      frameSync.stepForward();
-    }
-  }, [frameSync]);
-
-  const handleStepBackward = useCallback(() => {
-    if (frameSync && typeof frameSync.stepBackward === 'function') {
-      frameSync.stepBackward();
-    }
-  }, [frameSync]);
-
-  const handleJumpFrames = useCallback((count) => {
-    if (frameSync && typeof frameSync.jumpFrames === 'function') {
-      frameSync.jumpFrames(count);
-    }
-  }, [frameSync]);
-
-  /**
-   * Annotation handlers (with safe frame index)
-   */
   const currentFrameIndex = useMemo(() => {
     if (frameSync && typeof frameSync.getFrameIndexAtTime === 'function') {
       return frameSync.getFrameIndexAtTime(currentTime);
@@ -144,6 +66,36 @@ export default function TechniqueStudio() {
     return 0;
   }, [currentTime, frameSync]);
 
+  // ── Playback callbacks ───────────────────────────────────────────────────
+  const handlePlay = useCallback(() => {
+    if (videoRef.current) { videoRef.current.play(); setIsPlaying(true); }
+  }, []);
+
+  const handlePause = useCallback(() => {
+    if (videoRef.current) { videoRef.current.pause(); setIsPlaying(false); }
+  }, []);
+
+  const handleSeek = useCallback((time) => {
+    if (videoRef.current) { videoRef.current.currentTime = time; setCurrentTime(time); }
+  }, []);
+
+  const handleSpeedChange = useCallback((newSpeed) => {
+    setSpeed(newSpeed);
+    if (videoRef.current) videoRef.current.playbackRate = newSpeed;
+  }, []);
+
+  const handleTimeUpdate = useCallback((time) => setCurrentTime(time), []);
+
+  const handleLoadedMetadata = useCallback(() => {
+    const video = videoRef.current;
+    if (video) setDuration(video.duration);
+  }, []);
+
+  const handleStepForward  = useCallback(() => frameSync?.stepForward?.(),  [frameSync]);
+  const handleStepBackward = useCallback(() => frameSync?.stepBackward?.(), [frameSync]);
+  const handleJumpFrames   = useCallback((n) => frameSync?.jumpFrames?.(n), [frameSync]);
+
+  // ── Annotation batch operations ──────────────────────────────────────────
   const handleClearFrame = useCallback(() => {
     annotationEditor.clearFrameAnnotations(currentFrameIndex);
   }, [annotationEditor, currentFrameIndex]);
@@ -154,175 +106,211 @@ export default function TechniqueStudio() {
     }
   }, [annotationEditor]);
 
-  /**
-   * Autosave (with null guard on session)
-   */
+  // ── Autosave ─────────────────────────────────────────────────────────────
   const triggerAutosave = useCallback(() => {
     if (!techniqueSession) return;
-
-    if (autosaveTimeoutRef.current) {
-      clearTimeout(autosaveTimeoutRef.current);
-    }
-
+    if (autosaveTimeoutRef.current) clearTimeout(autosaveTimeoutRef.current);
     autosaveTimeoutRef.current = setTimeout(async () => {
       try {
-        const videoUrl = techniqueSession?.video?.url;
-        const category = techniqueSession?.derived?.category;
-        const movementName = techniqueSession?.derived?.movementName;
-
         await saveTechniqueProject({
           id: techniqueSession.id,
           videoId: techniqueSession.id,
-          videoURL: videoUrl,
+          videoURL: techniqueSession?.video?.url,
           annotations: annotationEditor.annotations,
           selectedReference: null,
           playbackSpeed: speed,
           coachNotes: techniqueSession.coachNotes || '',
           focusTags: techniqueSession.focusTags || [],
+          sourceSessionId: techniqueSession.sourceSessionId || null,
           metadata: {
-            category: category || 'unknown',
-            movementName: movementName || 'unknown',
+            category: techniqueSession?.derived?.category || 'unknown',
+            movementName: techniqueSession?.derived?.movementName || 'unknown',
           },
         });
-      } catch (error) {
-        console.error('Autosave failed:', error);
+      } catch (err) {
+        console.error('[TechniqueStudio] Autosave failed:', err);
       }
-    }, 2000);
+    }, 1500);
   }, [techniqueSession, annotationEditor.annotations, speed]);
 
-  // ============================================================================
-  // SECTION 4: EFFECTS (now safe to reference all callbacks)
-  // ============================================================================
+  // ── Canvas pointer event handlers ────────────────────────────────────────
 
-  /**
-   * Autosave on annotation changes
-   */
-  useEffect(() => {
-    triggerAutosave();
-  }, [annotationEditor.annotations, triggerAutosave]);
+  const pauseIfDrawing = useCallback((tool) => {
+    if (tool !== TOOLS.POINTER && isPlaying) handlePause();
+  }, [isPlaying, handlePause]);
 
-  /**
-   * Load session from draft ID (only effect that touches loading state)
-   */
+  const handleCanvasPointerDown = useCallback((point, e) => {
+    const tool = annotationEditor.activeTool;
+    pauseIfDrawing(tool);
+
+    if (tool === TOOLS.POINTER) {
+      // Hit test → select or begin drag
+      const hitId = annotationEditor.hitTestAnnotation(currentFrameIndex, point);
+      if (hitId) {
+        annotationEditor.selectAnnotation(hitId);
+        annotationEditor.beginDrag(hitId, point);
+      } else {
+        annotationEditor.selectAnnotation(null);
+      }
+      return;
+    }
+
+    if (tool === TOOLS.ERASE) {
+      const hitId = annotationEditor.hitTestAnnotation(currentFrameIndex, point);
+      if (hitId) annotationEditor.deleteAnnotation(hitId);
+      return;
+    }
+
+    if (tool === TOOLS.TEXT || tool === TOOLS.ANGLE) {
+      // These are handled in handleCanvasClick for TEXT; ANGLE uses beginInteraction
+      annotationEditor.beginInteraction(tool, currentFrameIndex, point);
+      return;
+    }
+
+    annotationEditor.beginInteraction(tool, currentFrameIndex, point);
+  }, [annotationEditor, currentFrameIndex, pauseIfDrawing]);
+
+  const handleCanvasPointerMove = useCallback((point, e) => {
+    const tool = annotationEditor.activeTool;
+    if (tool === TOOLS.POINTER) {
+      // Drag selected annotation
+      if (e.buttons > 0 && annotationEditor.selectedAnnotationId) {
+        annotationEditor.updateDrag(point);
+      }
+      return;
+    }
+    annotationEditor.updateInteraction(tool, currentFrameIndex, point);
+  }, [annotationEditor, currentFrameIndex]);
+
+  const handleCanvasPointerUp = useCallback((point, e) => {
+    const tool = annotationEditor.activeTool;
+    if (tool === TOOLS.POINTER) {
+      annotationEditor.finishDrag();
+      return;
+    }
+    if (tool === TOOLS.TEXT || tool === TOOLS.ANGLE || tool === TOOLS.ERASE) return;
+    annotationEditor.finishInteraction(tool, currentFrameIndex, point);
+  }, [annotationEditor, currentFrameIndex]);
+
+  const handleCanvasClick = useCallback((point, e) => {
+    const tool = annotationEditor.activeTool;
+    if (tool === TOOLS.TEXT) {
+      annotationEditor.placeText(currentFrameIndex, point);
+    }
+  }, [annotationEditor, currentFrameIndex]);
+
+  // ── Effects ───────────────────────────────────────────────────────────────
+
+  // Load draft
   useEffect(() => {
-    const loadSession = async () => {
+    const load = async () => {
       setLoading(true);
       setLoadError(null);
+      annotationsHydratedRef.current = false;
 
       try {
         const draftId = searchParams.get('draft');
-        console.log('[TechniqueStudio] Loading draft ID:', draftId);
-
-        if (!draftId) {
-          setLoadError('No draft ID provided in URL');
-          console.error('[TechniqueStudio] Missing draft parameter');
-          setLoading(false);
-          return;
-        }
+        if (!draftId) { setLoadError('No draft ID provided in URL'); setLoading(false); return; }
 
         const draft = await getTechniqueDraft(draftId);
-        console.log('[TechniqueStudio] Retrieved draft:', draft ? 'success' : 'null');
+        if (!draft) { setLoadError('Session not found. Draft ID: ' + draftId); setLoading(false); return; }
 
-        if (!draft) {
-          setLoadError('Session not found or was deleted. Draft ID: ' + draftId);
-          console.error('[TechniqueStudio] Draft not found for ID:', draftId);
-          setLoading(false);
-          return;
-        }
-
-        // Normalize the draft into a TechniqueSession (always returns valid shape)
         const normalized = normalizeToTechniqueSession(draft);
-        console.log('[TechniqueStudio] Session normalized successfully');
         setTechniqueSession(normalized);
-      } catch (error) {
-        console.error('[TechniqueStudio] Error loading session:', error);
-        setLoadError(
-          `Failed to load session: ${error?.message || 'Unknown error'}\n\nCheck browser console for details.`
-        );
+      } catch (err) {
+        console.error('[TechniqueStudio] Error loading session:', err);
+        setLoadError(`Failed to load session: ${err?.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
     };
 
-    loadSession();
-
-    return () => {
-      if (autosaveTimeoutRef.current) {
-        clearTimeout(autosaveTimeoutRef.current);
-      }
-    };
+    load();
+    return () => { if (autosaveTimeoutRef.current) clearTimeout(autosaveTimeoutRef.current); };
   }, [searchParams]);
 
-  /**
-   * Keyboard support (safe because all handlers are already defined)
-   */
+  // Hydrate annotations once per draft load
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!videoRef.current) return;
+    if (!techniqueSession || annotationsHydratedRef.current) return;
+    const savedAnnotations = techniqueSession.annotations;
+    if (savedAnnotations && (Array.isArray(savedAnnotations) ? savedAnnotations.length > 0 : false)) {
+      annotationEditor.loadAnnotations(savedAnnotations);
+    }
+    annotationsHydratedRef.current = true;
+  }, [techniqueSession]);
 
-      switch (e.key) {
-        case ' ':
-          e.preventDefault();
-          isPlaying ? handlePause() : handlePlay();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          handleStepBackward();
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          handleStepForward();
-          break;
-        case 'z':
-        case 'Z':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            e.shiftKey ? annotationEditor.redo() : annotationEditor.undo();
-          }
-          break;
-        default:
-          break;
+  // Autosave on annotation changes
+  useEffect(() => {
+    triggerAutosave();
+  }, [annotationEditor.annotations]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const toolKeys = {
+      v: TOOLS.POINTER, l: TOOLS.LINE, a: TOOLS.ARROW, r: TOOLS.RECTANGLE,
+      c: TOOLS.CIRCLE, p: TOOLS.FREEHAND, t: TOOLS.TEXT, s: TOOLS.SPOTLIGHT,
+      g: TOOLS.ANGLE, e: TOOLS.ERASE,
+    };
+
+    const handleKeyDown = (ev) => {
+      // Don't capture when typing in input/textarea
+      if (['INPUT', 'TEXTAREA'].includes(ev.target.tagName)) return;
+
+      if (ev.key === ' ') {
+        ev.preventDefault();
+        isPlaying ? handlePause() : handlePlay();
+        return;
       }
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); handleStepBackward(); return; }
+      if (ev.key === 'ArrowRight') { ev.preventDefault(); handleStepForward(); return; }
+
+      if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') {
+        ev.preventDefault();
+        ev.shiftKey ? annotationEditor.redo() : annotationEditor.undo();
+        return;
+      }
+
+      if (ev.key === 'Delete' || ev.key === 'Backspace') {
+        ev.preventDefault();
+        annotationEditor.deleteSelectedAnnotation();
+        return;
+      }
+
+      if (ev.key === 'Escape') {
+        annotationEditor.cancelInteraction();
+        annotationEditor.selectAnnotation(null);
+        return;
+      }
+
+      const tool = toolKeys[ev.key.toLowerCase()];
+      if (tool) annotationEditor.setActiveTool(tool);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, handlePlay, handlePause, handleStepBackward, handleStepForward, annotationEditor]);
 
-  // ============================================================================
-  // SECTION 5: RENDER STATES (loading → error → empty → main)
-  // ============================================================================
+  // ── Render states ─────────────────────────────────────────────────────────
 
-  // Loading state
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center" style={{ background: COLORS.bg }}>
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin mx-auto" />
-          <p className="text-sm" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-            Loading technique session...
-          </p>
+          <p className="text-sm" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>Loading technique session...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
   if (loadError) {
     return (
       <div className="fixed inset-0 flex items-center justify-center p-6" style={{ background: COLORS.bg }}>
         <div className="max-w-md p-6 rounded-lg border" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
-          <h2 className="text-sm font-bold mb-2" style={{ color: '#EF4444', fontFamily: FONT.mono }}>
-            Error Loading Session
-          </h2>
-          <p className="text-[9px] mb-4 whitespace-pre-wrap" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-            {loadError}
-          </p>
-          <button
-            onClick={() => navigate(-1)}
-            className="w-full py-2 rounded text-[9px] font-bold"
-            style={{ background: COLORS.goldDim, color: COLORS.gold, border: `1px solid ${COLORS.goldBorder}` }}
-          >
+          <h2 className="text-sm font-bold mb-2" style={{ color: '#EF4444', fontFamily: FONT.mono }}>Error Loading Session</h2>
+          <p className="text-[9px] mb-4 whitespace-pre-wrap" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>{loadError}</p>
+          <button onClick={() => navigate(-1)} className="w-full py-2 rounded text-[9px] font-bold"
+            style={{ background: COLORS.goldDim, color: COLORS.gold, border: `1px solid ${COLORS.goldBorder}` }}>
             Go Back
           </button>
         </div>
@@ -330,37 +318,28 @@ export default function TechniqueStudio() {
     );
   }
 
-  // No session state
   if (!techniqueSession) {
     return (
       <div className="fixed inset-0 flex items-center justify-center" style={{ background: COLORS.bg }}>
-        <p className="text-sm" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
-          No session to display
-        </p>
+        <p className="text-sm" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>No session to display</p>
       </div>
     );
   }
 
-  // No data state (degraded but visible)
   if (!safeVideoUrl && safePoseFrames.length === 0) {
     return (
       <div className="fixed inset-0 flex items-center justify-center p-6" style={{ background: COLORS.bg }}>
         <div className="max-w-md p-6 rounded-lg border" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
-          <h2 className="text-sm font-bold mb-2" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
-            Degraded Session
-          </h2>
+          <h2 className="text-sm font-bold mb-2" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>Degraded Session</h2>
           <p className="text-[9px] mb-4" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-            This session has no video or pose data available. Session may have been partially recorded or lost.
+            This session has no video or pose data. It may have been partially recorded or lost.
           </p>
-          <div className="space-y-2 mb-4 text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+          <div className="space-y-1 mb-4 text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
             <div>Category: {safeCategory}</div>
             <div>Created: {new Date(safeCreatedAt).toLocaleDateString()}</div>
           </div>
-          <button
-            onClick={() => navigate(-1)}
-            className="w-full py-2 rounded text-[9px] font-bold"
-            style={{ background: COLORS.goldDim, color: COLORS.gold, border: `1px solid ${COLORS.goldBorder}` }}
-          >
+          <button onClick={() => navigate(-1)} className="w-full py-2 rounded text-[9px] font-bold"
+            style={{ background: COLORS.goldDim, color: COLORS.gold, border: `1px solid ${COLORS.goldBorder}` }}>
             Go Back
           </button>
         </div>
@@ -368,43 +347,37 @@ export default function TechniqueStudio() {
     );
   }
 
-  // ============================================================================
-  // SECTION 6: MAIN RENDER (fully stable, all refs and handlers ready)
-  // ============================================================================
+  // ── Main render ───────────────────────────────────────────────────────────
 
   return (
-    <div
-      className="fixed inset-0 flex flex-col"
-      style={{ fontFamily: FONT.mono, background: COLORS.bg, color: COLORS.textPrimary }}
-    >
+    <div className="fixed inset-0 flex flex-col" style={{ fontFamily: FONT.mono, background: COLORS.bg, color: COLORS.textPrimary }}>
       {/* Header */}
-      <div className="px-5 py-3 border-b flex items-center justify-between flex-shrink-0" style={{ borderColor: COLORS.border, background: COLORS.surface }}>
+      <div className="px-5 py-3 border-b flex items-center justify-between flex-shrink-0"
+        style={{ borderColor: COLORS.border, background: COLORS.surface }}>
         <div>
           <h1 className="text-xs tracking-[0.18em] uppercase font-bold" style={{ color: COLORS.gold }}>
             Technique Studio
           </h1>
           <p className="text-[8px] tracking-[0.1em] mt-0.5" style={{ color: COLORS.textTertiary }}>
-            {safeCategory} • {new Date(safeCreatedAt).toLocaleDateString()}
+            {safeCategory} · {new Date(safeCreatedAt).toLocaleDateString()}
+            {annotationEditor.annotations.length > 0 && (
+              <span style={{ color: COLORS.gold }}> · {annotationEditor.annotations.length} annotation{annotationEditor.annotations.length !== 1 ? 's' : ''}</span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowExport(true)}
+          <button onClick={() => setShowExport(true)}
             className="px-3 py-1.5 rounded border text-[9px] font-bold"
-            style={{ borderColor: COLORS.goldBorder, color: COLORS.gold }}
-          >
+            style={{ borderColor: COLORS.goldBorder, color: COLORS.gold }}>
             Export
           </button>
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 rounded hover:bg-white/10"
-          >
+          <button onClick={() => navigate(-1)} className="p-2 rounded hover:bg-white/10">
             <X size={18} style={{ color: COLORS.textSecondary }} />
           </button>
         </div>
       </div>
 
-      {/* Main content area */}
+      {/* Main content */}
       <div className="flex-1 overflow-hidden flex" style={{ minHeight: 0 }}>
         {/* Toolbar */}
         <TechniqueToolbar
@@ -426,7 +399,7 @@ export default function TechniqueStudio() {
           onToggleAngleLabels={() => setShowAngleLabels(v => !v)}
         />
 
-        {/* Video player + controls */}
+        {/* Video + controls */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <TechniqueVideoPlayer
             videoRef={videoRef}
@@ -441,6 +414,15 @@ export default function TechniqueStudio() {
             showAnnotations={showAnnotations}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
+            // Interaction
+            activeTool={annotationEditor.activeTool}
+            selectedAnnotationId={annotationEditor.selectedAnnotationId}
+            currentAnnotationDraft={annotationEditor.currentAnnotationDraft}
+            anglePoints={annotationEditor.anglePoints}
+            onCanvasPointerDown={handleCanvasPointerDown}
+            onCanvasPointerMove={handleCanvasPointerMove}
+            onCanvasPointerUp={handleCanvasPointerUp}
+            onCanvasClick={handleCanvasClick}
           />
 
           <TechniqueFrameControls
