@@ -219,7 +219,7 @@ export default function CameraView({ exercise, onStop }) {
   const formScore = liveFormScore;
 
   // ── Stop session ──────────────────────────────────────────────────────────
-  const handleStop = useCallback(() => {
+  const handleStop = useCallback(async () => {
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const session = stopSession(); // full session object from SessionLogger.finalize()
     const summary = session?.summary;
@@ -236,6 +236,9 @@ export default function CameraView({ exercise, onStop }) {
     const lowestMasteryScore = repScores.length
       ? Math.min(...repScores)
       : Math.round(formScore);
+
+    // Finalize recording — wait for onstop to fire so all chunks are flushed
+    const { chunks: recordedChunks, mimeType: recordingMimeType } = await finalizeRecording();
 
     onStop({
       exercise_id:        exercise.id,
@@ -255,8 +258,11 @@ export default function CameraView({ exercise, onStop }) {
       joint_data:         {},
       // Camera metadata for history tracking
       cameraFacing:       cameraFacing,
+      // Recording data — passed to LiveSession for persistence
+      recordedChunks,
+      recordingMimeType,
     });
-  }, [stopSession, repCount, formScore, onStop, exercise]);
+  }, [stopSession, repCount, formScore, onStop, exercise, finalizeRecording]);
 
   // ── Cleanup on unmount or phase change ───────────────────────────────────────
   useEffect(() => {
