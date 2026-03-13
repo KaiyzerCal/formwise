@@ -6,6 +6,7 @@ import MovementLibrary from "../components/bioneer/MovementLibrary";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import { normalizeSession, sessionSaveMessage } from "../components/bioneer/data/sessionNormalizer";
 import { saveSession } from "../components/bioneer/data/sessionStore";
+import { persistRecordedSessionVideo } from "../components/bioneer/data/persistRecordedSessionVideo";
 import { getMovementProfile } from "../components/bioneer/movementProfiles/movementProfiles";
 import MovementSelector from "../components/bioneer/movementProfiles/MovementSelector";
 import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
