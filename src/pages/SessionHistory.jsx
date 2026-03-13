@@ -2,12 +2,14 @@ import React, { useState, useMemo, useEffect } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
 import { getAllSessions } from "../components/bioneer/data/sessionStore";
 import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl } from "../components/bioneer/history/sessionStorage";
+import { getSessionVideoUrl } from "../components/bioneer/data/liveVideoStorage";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import FreestyleReplay from "../components/bioneer/history/FreestyleReplay";
-import { createTechniqueDraftFromFreestyleSession } from "../components/bioneer/technique/techniqueConverter";
+import LiveSessionReplay from "../components/bioneer/history/LiveSessionReplay";
+import { createTechniqueDraftFromFreestyleSession, createTechniqueDraftFromLiveSession } from "../components/bioneer/technique/techniqueConverter";
 import SessionMovementBadge from "../components/bioneer/movementProfiles/SessionMovementBadge";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
