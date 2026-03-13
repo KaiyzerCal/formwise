@@ -8,6 +8,7 @@ import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import { useCameraStream }       from './live/useCameraStream';
 import { usePoseRuntime }        from './live/usePoseRuntime';
 import { usePoseInferenceLoop }  from './live/usePoseInferenceLoop';
+import { useVideoRecorder }      from './live/useVideoRecorder';
 import SessionReadinessGate      from './live/SessionReadinessGate';
 import LiveSessionHUD            from './live/LiveSessionHUD';
 import PoseErrorCard             from './live/PoseErrorCard';

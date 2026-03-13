@@ -146,6 +146,10 @@ export function normalizeSession(rawData, meta = {}) {
 
     session_status:      status,
     notes:               null,
+
+    // Video fields — populated after recording finalization
+    video_storage_key:   rawData.videoStorageKey  ?? null,
+    video_src:           rawData.videoSrc          ?? rawData.recordedVideoUrl ?? rawData.persistedVideoSrc ?? rawData.videoBlobUrl ?? null,
   };
 }
 
