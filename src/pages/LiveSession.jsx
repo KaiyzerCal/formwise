@@ -7,8 +7,7 @@ import SessionSummary from "../components/bioneer/SessionSummary";
 import { normalizeSession, sessionSaveMessage } from "../components/bioneer/data/sessionNormalizer";
 import { saveSession } from "../components/bioneer/data/sessionStore";
 import { getMovementProfile } from "../components/bioneer/movementProfiles/movementProfiles";
-import MovementSelector from "../components/bioneer/movementProfiles/MovementSelector";
-import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
+import { COLORS } from "../components/bioneer/ui/DesignTokens";
 
 export default function LiveSession() {
   const [phase, setPhase] = useState("select");
