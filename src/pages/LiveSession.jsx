@@ -23,7 +23,13 @@ export default function LiveSession() {
     const exId = params.get("exercise");
     if (exId) {
       const ex = getExerciseById(exId) || getSportsMovementById(exId);
-      if (ex) { setSelectedExercise(ex); setPhase("camera"); }
+      if (ex) {
+        const profile = getMovementProfile(ex.id);
+        setSelectedExercise(ex);
+        setSelectedMovementId(profile ? ex.id : null);
+        sessionStartRef.current = Date.now();
+        setPhase("camera");
+      }
     }
   }, []);
 
