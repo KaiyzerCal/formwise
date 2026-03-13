@@ -63,7 +63,7 @@ export default function CameraView({ exercise, onStop }) {
   }, []);
 
   // ── Camera ───────────────────────────────────────────────────────────────
-  const { camState, camError, isSwitching, switchCamera } = useCameraStream(videoRef, cameraFacing);
+  const { camState, camError, isSwitching, switchCamera, streamRef } = useCameraStream(videoRef, cameraFacing);
 
   // Switch camera without reloading — use hook method directly
   const handleToggleCamera = useCallback(async () => {
