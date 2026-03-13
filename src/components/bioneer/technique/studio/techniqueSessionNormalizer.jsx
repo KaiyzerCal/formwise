@@ -71,18 +71,28 @@ export function normalizeToTechniqueSession(source) {
     durationMs: null,
   };
 
-  if (videoBlob instanceof Blob) {
+  // Handle real blob or src-only sentinel from live session
+  if (videoBlob?._isSrcOnly) {
+    videoMetadata = {
+      url: videoBlob._src,
+      width: null,
+      height: null,
+      fps: 30,
+      durationMs: typeof duration === 'number' ? duration * 1000 : null,
+    };
+    videoBlob = null; // not a real blob — playback via URL only
+  } else if (videoBlob instanceof Blob) {
     try {
       videoMetadata = {
         url: URL.createObjectURL(videoBlob),
         width: null,
         height: null,
-        fps: 30, // Default assumption
+        fps: 30,
         durationMs: typeof duration === 'number' ? duration * 1000 : null,
       };
     } catch (error) {
       console.warn('Failed to create object URL from blob:', error);
-      videoBlob = null; // Fallback to null on error
+      videoBlob = null;
     }
   }
 
