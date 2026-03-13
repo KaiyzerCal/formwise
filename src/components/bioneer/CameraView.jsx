@@ -333,7 +333,6 @@ export default function CameraView({ exercise, onStop }) {
             </p>
             <div className="space-y-2">
               <button onClick={() => {
-                setCamError(null);
                 window.location.reload();
               }}
                 className="w-full py-2 rounded-lg text-xs font-bold"
