@@ -83,6 +83,13 @@ export default function CameraView({ exercise, onStop }) {
   }, [cameraFacing, isSecure, switchCamera]);
   useEffect(() => { healthRef.current?.reportCamera(camState); }, [camState]);
 
+  // Start recording as soon as camera stream is active
+  useEffect(() => {
+    if (camState === 'active' && streamRef?.current) {
+      startRecording(streamRef.current);
+    }
+  }, [camState]);
+
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
   useEffect(() => { healthRef.current?.reportPose(poseState); }, [poseState]);
