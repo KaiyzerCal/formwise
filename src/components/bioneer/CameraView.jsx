@@ -91,6 +91,22 @@ export default function CameraView({ exercise, onStop }) {
     return () => destroyAudio();
   }, [poseState]);
 
+  // ── Session recorder ─────────────────────────────────────────────────────
+  const {
+    isRecording,
+    startRecording,
+    stopRecording,
+    capturePoseFrame,
+    reset: resetRecorder,
+  } = useSessionRecorder(videoRef, canvasRef);
+
+  // Start recording automatically once session becomes active
+  useEffect(() => {
+    if (sessionActive && !isRecording) {
+      startRecording();
+    }
+  }, [sessionActive]);
+
   // ── Analysis engine ───────────────────────────────────────────────────────
   const {
     frameState, frameRef, repCount, lockState, activeCue, statusMsg, statusColor,
