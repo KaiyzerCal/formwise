@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
-
 import { getAllSessions } from "../components/bioneer/data/sessionStore";
 import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl } from "../components/bioneer/history/sessionStorage";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send } from "lucide-react";
