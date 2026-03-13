@@ -335,9 +335,28 @@ export default function SessionHistory() {
                     ))}
                   </div>
 
-                  <a href={createPageUrl('TechniqueCompare')} className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border" style={{ borderColor: COLORS.goldBorder, color: COLORS.gold }}>
-                    <BarChart3 size={10} />View Technique
-                  </a>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {session.hasVideo && (
+                      <button
+                        onClick={() => handlePlayLiveVideo(session)}
+                        className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border"
+                        style={{ borderColor: COLORS.goldBorder, color: COLORS.gold, background: 'rgba(201,168,76,0.08)' }}>
+                        <Play size={10} fill={COLORS.gold} />Replay
+                      </button>
+                    )}
+                    {session.hasVideo && (
+                      <button
+                        onClick={() => handleSendLiveToTechnique(session)}
+                        disabled={sending === session.id}
+                        className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border"
+                        style={{ borderColor: COLORS.goldBorder, color: COLORS.gold, background: 'rgba(201,168,76,0.08)', opacity: sending === session.id ? 0.6 : 1 }}>
+                        <Send size={10} />{sending === session.id ? 'SENDING...' : 'TECHNIQUE'}
+                      </button>
+                    )}
+                    <a href={createPageUrl('TechniqueCompare')} className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border" style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>
+                      <BarChart3 size={10} />Compare
+                    </a>
+                  </div>
                 </div>
               )}
 
