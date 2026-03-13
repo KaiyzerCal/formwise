@@ -121,17 +121,28 @@ export default function SessionHistory() {
     setSending(session.sessionId);
     setSendError(null);
     try {
-      console.log('[SessionHistory] Creating technique draft from freestyle session:', session.sessionId);
       const draft = await createTechniqueDraftFromFreestyleSession(session);
-      
-      if (!draft || !draft.techniqueId) {
-        throw new Error('Draft creation returned invalid result');
-      }
-
-      console.log('[SessionHistory] Draft created successfully:', draft.techniqueId);
+      if (!draft || !draft.techniqueId) throw new Error('Draft creation returned invalid result');
       navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
     } catch (error) {
       console.error('[SessionHistory] Failed to send to technique:', error);
+      setSendError(error.message || 'Failed to send session to Technique');
+    } finally {
+      setSending(null);
+    }
+  };
+
+  const handleSendLiveToTechnique = async (session) => {
+    setSending(session.id);
+    setSendError(null);
+    try {
+      // Attach hydrated videoSrc so techniqueConverter can use it if needed
+      const enriched = { ...session._rawSession, videoSrc: liveVideoUrls[session.id] || null };
+      const draft = await createTechniqueDraftFromLiveSession(enriched);
+      if (!draft || !draft.techniqueId) throw new Error('Draft creation returned invalid result');
+      navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
+    } catch (error) {
+      console.error('[SessionHistory] Failed to send live session to technique:', error);
       setSendError(error.message || 'Failed to send session to Technique');
     } finally {
       setSending(null);
