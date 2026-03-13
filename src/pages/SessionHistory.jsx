@@ -7,8 +7,9 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import FreestyleReplay from "../components/bioneer/history/FreestyleReplay";
-import { createTechniqueDraftFromFreestyleSession } from "../components/bioneer/technique/techniqueConverter";
+import { createTechniqueDraftFromFreestyleSession, createTechniqueDraftFromLiveSession } from "../components/bioneer/technique/techniqueConverter";
 import SessionMovementBadge from "../components/bioneer/movementProfiles/SessionMovementBadge";
+import { getLiveSessionVideo } from "../components/bioneer/history/sessionStorage";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
 
