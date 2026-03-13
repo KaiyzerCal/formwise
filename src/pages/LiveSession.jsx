@@ -19,6 +19,7 @@ export default function LiveSession() {
   const [savedSession, setSavedSession] = useState(null);
   const [saving, setSaving] = useState(false);
   const sessionStartRef = useRef(null);
+  const rawDataRef = useRef(null); // holds rawData including recordedChunks
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
