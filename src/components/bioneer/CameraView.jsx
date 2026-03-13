@@ -13,7 +13,6 @@ import LiveSessionHUD            from './live/LiveSessionHUD';
 import PoseErrorCard             from './live/PoseErrorCard';
 import CameraToggle              from './CameraToggle';
 import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
-import { useSessionRecorder }    from './session/useSessionRecorder';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles, computeFormScore } from './poseEngine';
 import { initAudio, destroyAudio, beep } from './audioEngine';
@@ -37,7 +36,6 @@ export default function CameraView({ exercise, onStop }) {
   const [liveJointResults, setLiveJointResults] = useState([]);
   const [liveFormScore, setLiveFormScore] = useState(100);
   const [isSecure, setIsSecure] = useState(window.isSecureContext || false);
-  const [isFinalizing, setIsFinalizing] = useState(false);
 
   // Camera facing mode — persisted to localStorage
   const [cameraFacing, setCameraFacing] = useState(() => {
@@ -91,22 +89,6 @@ export default function CameraView({ exercise, onStop }) {
     return () => destroyAudio();
   }, [poseState]);
 
-  // ── Session recorder ─────────────────────────────────────────────────────
-  const {
-    isRecording,
-    startRecording,
-    stopRecording,
-    capturePoseFrame,
-    reset: resetRecorder,
-  } = useSessionRecorder(videoRef, canvasRef);
-
-  // Start recording automatically once session becomes active
-  useEffect(() => {
-    if (sessionActive && !isRecording) {
-      startRecording();
-    }
-  }, [sessionActive]);
-
   // ── Analysis engine ───────────────────────────────────────────────────────
   const {
     frameState, frameRef, repCount, lockState, activeCue, statusMsg, statusColor,
@@ -125,31 +107,18 @@ export default function CameraView({ exercise, onStop }) {
     if (result._fps)     healthRef.current?.reportFPS(result._fps);
     if (result._frameMs) healthRef.current?.reportFrameMs(result._frameMs);
 
-    // Canvas render — composite video + skeleton so recording captures both
+    // Canvas render
     const canvas = canvasRef.current;
     const video  = videoRef.current;
     if (!canvas || !video) return;
     const ctx = canvas.getContext('2d');
     canvas.width  = video.videoWidth  || canvas.offsetWidth;
     canvas.height = video.videoHeight || canvas.offsetHeight;
-
-    // Draw real video frame first (makes recording include actual camera feed)
-    if (video.readyState >= 2) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    } else {
-      clearCanvas(ctx, canvas.width, canvas.height);
-    }
-
+    clearCanvas(ctx, canvas.width, canvas.height);
     if (!result.poseLandmarks) return;
 
     const smoothed = smoothLandmarks(result.poseLandmarks, prevLandmarksRef.current);
     prevLandmarksRef.current = smoothed;
-
-    // Capture pose frame for replay
-    if (isRecording) {
-      const tElapsed = performance.now();
-      capturePoseFrame(smoothed, {}, result.poseLandmarks[0]?.visibility || 0);
-    }
 
     // ── Build joint results from exercise definition (green/yellow/red + angle badges)
     const livePhase  = frameRef.current?.phase ?? null;
@@ -195,7 +164,7 @@ export default function CameraView({ exercise, onStop }) {
       );
       ctx.setLineDash([]);
     }
-  }, [exercise.cameraMode, exercise.joints, processFrame, muted, isRecording, capturePoseFrame]);
+  }, [exercise.cameraMode, exercise.joints, processFrame, muted]);
 
   usePoseInferenceLoop({
     videoRef, landmarkerRef,
@@ -239,15 +208,12 @@ export default function CameraView({ exercise, onStop }) {
   const formScore = liveFormScore;
 
   // ── Stop session ──────────────────────────────────────────────────────────
-  const handleStop = useCallback(async () => {
-    if (isFinalizing) return;
-    setIsFinalizing(true);
-
+  const handleStop = useCallback(() => {
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const session = stopSession(); // full session object from SessionLogger.finalize()
     const summary = session?.summary;
     const reps = session?.reps ?? [];
-
+    
     // Compute mastery-derived scores for this session
     const repScores = reps.map(r => r.score).filter(s => s != null);
     const avgMasteryScore = repScores.length
@@ -259,25 +225,6 @@ export default function CameraView({ exercise, onStop }) {
     const lowestMasteryScore = repScores.length
       ? Math.min(...repScores)
       : Math.round(formScore);
-
-    // Finalize recording — await blob before continuing
-    let videoBlob = null;
-    let poseFrames = [];
-    let angleFrames = [];
-    if (isRecording) {
-      try {
-        const finalized = await stopRecording();
-        if (finalized?.videoBlob instanceof Blob && finalized.videoBlob.size > 0) {
-          videoBlob = finalized.videoBlob;
-        } else {
-          console.warn('[CameraView] Recording finalized but video blob is empty');
-        }
-        poseFrames = finalized?.poseFrames ?? [];
-        angleFrames = finalized?.angleFrames ?? [];
-      } catch (err) {
-        console.warn('[CameraView] Failed to finalize recording:', err);
-      }
-    }
 
     onStop({
       exercise_id:        exercise.id,
@@ -292,17 +239,13 @@ export default function CameraView({ exercise, onStop }) {
       form_timeline:      summary?.formTimeline  ?? [],
       phases:             summary?.phases        ?? {},
       reps:               reps,
-      // Video recording output
-      videoBlob,
-      poseFrames,
-      angleFrames,
       // Additional fields for analytics
       exercise_def:       exercise,
       joint_data:         {},
       // Camera metadata for history tracking
-      cameraFacing,
+      cameraFacing:       cameraFacing,
     });
-  }, [stopSession, stopRecording, isRecording, repCount, formScore, onStop, exercise, isFinalizing]);
+  }, [stopSession, repCount, formScore, onStop, exercise]);
 
   // ── Cleanup on unmount or phase change ───────────────────────────────────────
   useEffect(() => {
@@ -310,7 +253,6 @@ export default function CameraView({ exercise, onStop }) {
       // Hard reset all pipeline engines to prevent stale state leakage
       if (temporalFilterRef.current) temporalFilterRef.current.reset();
       if (healthRef.current) healthRef.current.destroy();
-      resetRecorder();
       // Cleanup inference loop is handled by usePoseInferenceLoop
       // Audio cleanup is already in the audio effect above
     };
@@ -586,10 +528,9 @@ export default function CameraView({ exercise, onStop }) {
             </span>
           </div>
           <button onClick={handleStop}
-            disabled={isFinalizing}
-            className="w-full py-3.5 rounded-xl border text-white font-bold text-sm tracking-wider transition-colors disabled:opacity-60"
+            className="w-full py-3.5 rounded-xl border text-white font-bold text-sm tracking-wider transition-colors"
             style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', fontFamily: "'DM Mono', monospace" }}>
-            {isFinalizing ? 'FINALIZING...' : 'STOP SESSION'}
+            STOP SESSION
           </button>
         </div>
       </div>

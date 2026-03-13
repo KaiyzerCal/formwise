@@ -7,30 +7,25 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import FreestyleReplay from "../components/bioneer/history/FreestyleReplay";
-import { createTechniqueDraftFromFreestyleSession, createTechniqueDraftFromLiveSession } from "../components/bioneer/technique/techniqueConverter";
+import { createTechniqueDraftFromFreestyleSession } from "../components/bioneer/technique/techniqueConverter";
 import SessionMovementBadge from "../components/bioneer/movementProfiles/SessionMovementBadge";
-import { getLiveSessionVideo } from "../components/bioneer/history/sessionStorage";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
 
 // Adapt canonical session → legacy shape expected by this UI
 function adaptSession(s) {
   return {
-    id:               s.session_id,
-    exercise:         s.movement_name ?? s.movement_id ?? 'Unknown',
-    category:         s.category ?? 'strength',
-    date:             s.started_at ? new Date(s.started_at).toLocaleDateString() : '—',
-    time:             s.started_at ? new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
-    duration:         s.duration_seconds ?? 0,
-    reps:             s.rep_count ?? 0,
-    score:            s.average_form_score ?? 0,
-    topFault:         s.top_faults?.[0]?.replace(/_/g, ' ') ?? '—',
-    repScores:        s.rep_summaries?.map(r => r.form_score ?? 0) ?? [],
+    id:         s.session_id,
+    exercise:   s.movement_name ?? s.movement_id ?? 'Unknown',
+    category:   'strength',
+    date:       s.started_at ? new Date(s.started_at).toLocaleDateString() : '—',
+    time:       s.started_at ? new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
+    duration:   s.duration_seconds ?? 0,
+    reps:       s.rep_count ?? 0,
+    score:      s.average_form_score ?? 0,
+    topFault:   s.top_faults?.[0]?.replace(/_/g, ' ') ?? '—',
+    repScores:  s.rep_summaries?.map(r => r.form_score ?? 0) ?? [],
     movementProfileId: s.movement_profile_id ?? null,
-    videoStorageKey:  s.videoStorageKey ?? null,
-    videoSrc:         s.videoSrc ?? null,
-    hasVideo:         !!(s.videoStorageKey || s.videoSrc),
-    _rawSession:      s,
     insights:   [
       s.session_status === 'partial'        ? 'Partial session — limited tracking' : null,
       s.session_status === 'low_confidence' ? 'Low tracking confidence this session' : null,
@@ -46,8 +41,6 @@ export default function SessionHistory() {
   const [expandedId, setExpandedId] = useState(null);
   const [freestyleSessions, setFreestyleSessions] = useState([]);
   const [selectedReplay, setSelectedReplay] = useState(null);
-  const [selectedLiveReplay, setSelectedLiveReplay] = useState(null); // { videoSrc, session }
-  const [hydratedVideos, setHydratedVideos] = useState({}); // sessionId -> videoSrc
   const [deleting, setDeleting] = useState(null);
   const [sending, setSending] = useState(null);
   const [sendError, setSendError] = useState(null);
@@ -57,24 +50,6 @@ export default function SessionHistory() {
     getAllFreestyleSessions()
       .then(sessions => setFreestyleSessions(sessions || []))
       .catch(err => console.error('Failed to load freestyle sessions:', err));
-  }, []);
-
-  // Hydrate videoSrc for live sessions that have a videoStorageKey but no live object URL
-  useEffect(() => {
-    const liveSessions = getAllSessions().filter(s => s.videoStorageKey && !s.videoSrc);
-    if (!liveSessions.length) return;
-    let cancelled = false;
-    (async () => {
-      const updates = {};
-      await Promise.all(liveSessions.map(async (s) => {
-        try {
-          const video = await getLiveSessionVideo(s.videoStorageKey);
-          if (video?.videoSrc) updates[s.session_id] = video.videoSrc;
-        } catch { /* ignore */ }
-      }));
-      if (!cancelled) setHydratedVideos(updates);
-    })();
-    return () => { cancelled = true; };
   }, []);
 
   const rawSessions = useMemo(() => getAllSessions(), []);
@@ -124,54 +99,20 @@ export default function SessionHistory() {
     setSending(session.sessionId);
     setSendError(null);
     try {
+      console.log('[SessionHistory] Creating technique draft from freestyle session:', session.sessionId);
       const draft = await createTechniqueDraftFromFreestyleSession(session);
-      if (!draft?.techniqueId) throw new Error('Draft creation returned invalid result');
-      navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
-    } catch (error) {
-      console.error('[SessionHistory] Failed to send freestyle to technique:', error);
-      setSendError(error.message || 'Failed to send session to Technique');
-    } finally {
-      setSending(null);
-    }
-  };
-
-  const handleSendLiveToTechnique = async (adaptedSession) => {
-    setSending(adaptedSession.id);
-    setSendError(null);
-    try {
-      const videoSrc = hydratedVideos[adaptedSession.id] || adaptedSession.videoSrc;
-      const draft = await createTechniqueDraftFromLiveSession({
-        session: adaptedSession._rawSession,
-        videoSrc,
-        videoStorageKey: adaptedSession.videoStorageKey,
-      });
-      if (!draft?.techniqueId) throw new Error('Draft creation returned invalid result');
-      navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
-    } catch (error) {
-      console.error('[SessionHistory] Failed to send live session to technique:', error);
-      setSendError(error.message || 'Failed to send session to Technique');
-    } finally {
-      setSending(null);
-    }
-  };
-
-  const handlePlayLiveVideo = async (adaptedSession) => {
-    // Use already-hydrated URL or fetch fresh from IndexedDB
-    const existingUrl = hydratedVideos[adaptedSession.id] || adaptedSession.videoSrc;
-    if (existingUrl) {
-      setSelectedLiveReplay({ videoSrc: existingUrl, session: adaptedSession });
-      return;
-    }
-    if (adaptedSession.videoStorageKey) {
-      try {
-        const video = await getLiveSessionVideo(adaptedSession.videoStorageKey);
-        if (video?.videoSrc) {
-          setHydratedVideos(prev => ({ ...prev, [adaptedSession.id]: video.videoSrc }));
-          setSelectedLiveReplay({ videoSrc: video.videoSrc, session: adaptedSession });
-        }
-      } catch (err) {
-        console.error('[SessionHistory] Failed to load live video:', err);
+      
+      if (!draft || !draft.techniqueId) {
+        throw new Error('Draft creation returned invalid result');
       }
+
+      console.log('[SessionHistory] Draft created successfully:', draft.techniqueId);
+      navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
+    } catch (error) {
+      console.error('[SessionHistory] Failed to send to technique:', error);
+      setSendError(error.message || 'Failed to send session to Technique');
+    } finally {
+      setSending(null);
     }
   };
 
@@ -335,28 +276,9 @@ export default function SessionHistory() {
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {session.hasVideo && (
-                      <button
-                        onClick={() => handlePlayLiveVideo(session)}
-                        className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border"
-                        style={{ borderColor: COLORS.goldBorder, color: COLORS.gold, background: 'rgba(201,168,76,0.08)' }}>
-                        <Play size={10} fill={COLORS.gold} />Replay
-                      </button>
-                    )}
-                    {session.hasVideo && (
-                      <button
-                        onClick={() => handleSendLiveToTechnique(session)}
-                        disabled={sending === session.id}
-                        className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border"
-                        style={{ borderColor: COLORS.goldBorder, color: COLORS.gold, background: 'rgba(201,168,76,0.08)', opacity: sending === session.id ? 0.6 : 1 }}>
-                        <Send size={10} />{sending === session.id ? 'SENDING...' : 'TECHNIQUE'}
-                      </button>
-                    )}
-                    <a href={createPageUrl('TechniqueCompare')} className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border" style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>
-                      <BarChart3 size={10} />Compare
-                    </a>
-                  </div>
+                  <a href={createPageUrl('TechniqueCompare')} className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border" style={{ borderColor: COLORS.goldBorder, color: COLORS.gold }}>
+                    <BarChart3 size={10} />View Technique
+                  </a>
                 </div>
               )}
 
@@ -400,38 +322,12 @@ export default function SessionHistory() {
         })}
       </div>
 
-      {/* Freestyle replay modal */}
+      {/* Replay modal */}
       {selectedReplay && (
         <FreestyleReplay
           session={selectedReplay}
           onClose={() => setSelectedReplay(null)}
         />
-      )}
-
-      {/* Live session video replay modal */}
-      {selectedLiveReplay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.92)' }}>
-          <div className="relative w-full max-w-2xl mx-4 rounded-2xl overflow-hidden" style={{ background: '#0c0c0c', border: `1px solid ${COLORS.border}` }}>
-            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: COLORS.border }}>
-              <span className="text-xs font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
-                {selectedLiveReplay.session?.exercise || 'Session Replay'}
-              </span>
-              <button onClick={() => setSelectedLiveReplay(null)}
-                className="text-xs px-3 py-1.5 rounded border"
-                style={{ borderColor: COLORS.border, color: COLORS.textTertiary, fontFamily: FONT.mono }}>
-                CLOSE
-              </button>
-            </div>
-            <video
-              src={selectedLiveReplay.videoSrc}
-              controls
-              autoPlay
-              playsInline
-              className="w-full"
-              style={{ maxHeight: '70vh', background: '#000' }}
-            />
-          </div>
-        </div>
       )}
     </div>
   );

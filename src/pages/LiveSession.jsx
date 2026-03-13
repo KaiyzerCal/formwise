@@ -6,9 +6,9 @@ import MovementLibrary from "../components/bioneer/MovementLibrary";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import { normalizeSession, sessionSaveMessage } from "../components/bioneer/data/sessionNormalizer";
 import { saveSession } from "../components/bioneer/data/sessionStore";
-import { saveLiveSessionVideo } from "../components/bioneer/history/sessionStorage";
 import { getMovementProfile } from "../components/bioneer/movementProfiles/movementProfiles";
-import { COLORS } from "../components/bioneer/ui/DesignTokens";
+import MovementSelector from "../components/bioneer/movementProfiles/MovementSelector";
+import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 
 export default function LiveSession() {
   const [phase, setPhase] = useState("select");
@@ -24,22 +24,22 @@ export default function LiveSession() {
     const exId = params.get("exercise");
     if (exId) {
       const ex = getExerciseById(exId) || getSportsMovementById(exId);
-      if (ex) {
-        const profile = getMovementProfile(ex.id);
-        setSelectedExercise(ex);
-        setSelectedMovementId(profile ? ex.id : null);
-        sessionStartRef.current = Date.now();
-        setPhase("camera");
-      }
+      if (ex) { setSelectedExercise(ex); setPhase("camera"); }
     }
   }, []);
 
   const handleStart = (movement) => {
     setSelectedExercise(movement);
     sessionStartRef.current = Date.now();
-    // Auto-resolve movement profile from exercise — no user-facing selection step
-    const profile = getMovementProfile(movement.id);
-    setSelectedMovementId(profile ? movement.id : null);
+    // Stay in select phase to allow movement profile selection before camera
+  };
+
+  const handleStartWithMovement = () => {
+    if (!selectedExercise || !selectedMovementId) {
+      alert('Please select both an exercise and a movement profile');
+      return;
+    }
+    sessionStartRef.current = Date.now();
     setPhase("camera");
   };
 
@@ -55,47 +55,15 @@ export default function LiveSession() {
     });
     setSavedSession(session);
     // Pass raw data to summary for existing UI (joint_data, exercise_def, etc.)
-    // Keep videoBlob in rawData so handleSave can persist it
     setSessionData({ ...rawData, _canonicalSession: session, movementProfile });
     setPhase("summary");
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!savedSession) { handleDiscard(); return; }
     setSaving(true);
-
-    // Persist video blob to IndexedDB (live session store) BEFORE saving metadata
-    let videoStorageKey = null;
-    let videoSrc = null;
-    const rawData = sessionData;
-    if (rawData?.videoBlob instanceof Blob && rawData.videoBlob.size > 0) {
-      try {
-        const persisted = await saveLiveSessionVideo({
-          sessionId: savedSession.session_id,
-          videoBlob: rawData.videoBlob,
-          poseFrames: rawData.poseFrames ?? [],
-          angleFrames: rawData.angleFrames ?? [],
-        });
-        if (persisted) {
-          videoStorageKey = savedSession.session_id;
-          videoSrc = persisted.videoSrc;
-        }
-      } catch (err) {
-        console.warn('[LiveSession] Video persist failed — saving metadata only:', err);
-      }
-    } else {
-      console.warn('[LiveSession] No video blob available for session', savedSession.session_id);
-    }
-
-    // Attach video reference to canonical session record
-    const sessionWithVideo = {
-      ...savedSession,
-      videoStorageKey,
-      videoSrc,  // object URL valid for this page session; hydrated from IDB on reload
-      hasVideo: !!videoStorageKey,
-    };
-
-    saveSession(sessionWithVideo);
+    // Save to store (sync, instant)
+    saveSession(savedSession);
     setSaving(false);
     handleDiscard();
   };
@@ -126,13 +94,68 @@ export default function LiveSession() {
     );
   }
 
-  // Select phase — movement library only, profile resolved silently on selection
+  // Select phase — movement library + movement profile selector
   return (
     <div className="flex flex-col h-screen" style={{ background: COLORS.bg }}>
       <MovementLibrary
         selectedId={selectedExercise?.id}
         onSelect={handleStart}
       />
+
+      {/* Movement Profile Selector Panel */}
+      {selectedExercise && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 border-t p-6 space-y-4"
+          style={{
+            background: `linear-gradient(to top, ${COLORS.surface}, ${COLORS.surface}EE)`,
+            backdropFilter: 'blur(12px)',
+            borderColor: COLORS.border,
+          }}
+        >
+          <div>
+            <label className="block text-xs font-bold tracking-[0.15em] uppercase mb-3"
+              style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+              Select Movement Profile
+            </label>
+            <MovementSelector
+              value={selectedMovementId}
+              onChange={setSelectedMovementId}
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setSelectedExercise(null);
+                setSelectedMovementId(null);
+              }}
+              className="flex-1 py-3 rounded-lg border font-bold text-sm transition-colors"
+              style={{
+                background: 'transparent',
+                borderColor: COLORS.border,
+                color: COLORS.textSecondary,
+                fontFamily: FONT.mono,
+              }}
+            >
+              Back
+            </button>
+
+            <button
+              onClick={handleStartWithMovement}
+              disabled={!selectedMovementId}
+              className="flex-1 py-3 rounded-lg border font-bold text-sm transition-colors disabled:opacity-50"
+              style={{
+                background: selectedMovementId ? `${COLORS.gold}20` : 'transparent',
+                borderColor: selectedMovementId ? COLORS.gold : COLORS.border,
+                color: selectedMovementId ? COLORS.gold : COLORS.textSecondary,
+                fontFamily: FONT.mono,
+              }}
+            >
+              Start Session
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

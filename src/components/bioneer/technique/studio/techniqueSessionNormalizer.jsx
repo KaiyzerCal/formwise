@@ -36,7 +36,7 @@ export function normalizeToTechniqueSession(source) {
     createdAt = fs.createdAt || createdAt;
   }
 
-  // Handle technique draft (from history import — freestyle or live)
+  // Handle technique draft (from history import)
   if (source.techniqueId || (source.sourceType && source.sourceType.includes('history'))) {
     sourceType = source.sourceType || 'technique_draft';
     videoBlob = source.videoBlob || videoBlob;
@@ -45,12 +45,6 @@ export function normalizeToTechniqueSession(source) {
     category = source.category || category;
     sessionId = source.techniqueId || source.sourceSessionId || sessionId;
     createdAt = source.createdAt || createdAt;
-    // Live sessions may only have a videoSrc (object URL) instead of blob
-    // Store it so the video player can use it directly
-    if (!videoBlob && source.videoSrc) {
-      // Attach videoSrc for direct playback fallback
-      videoBlob = { _isSrcOnly: true, _src: source.videoSrc };
-    }
   }
 
   // Handle live FormSession from database
@@ -71,28 +65,18 @@ export function normalizeToTechniqueSession(source) {
     durationMs: null,
   };
 
-  // Handle real blob or src-only sentinel from live session
-  if (videoBlob?._isSrcOnly) {
-    videoMetadata = {
-      url: videoBlob._src,
-      width: null,
-      height: null,
-      fps: 30,
-      durationMs: typeof duration === 'number' ? duration * 1000 : null,
-    };
-    videoBlob = null; // not a real blob — playback via URL only
-  } else if (videoBlob instanceof Blob) {
+  if (videoBlob instanceof Blob) {
     try {
       videoMetadata = {
         url: URL.createObjectURL(videoBlob),
         width: null,
         height: null,
-        fps: 30,
+        fps: 30, // Default assumption
         durationMs: typeof duration === 'number' ? duration * 1000 : null,
       };
     } catch (error) {
       console.warn('Failed to create object URL from blob:', error);
-      videoBlob = null;
+      videoBlob = null; // Fallback to null on error
     }
   }
 
