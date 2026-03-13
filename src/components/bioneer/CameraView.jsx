@@ -37,6 +37,7 @@ export default function CameraView({ exercise, onStop }) {
   const [liveJointResults, setLiveJointResults] = useState([]);
   const [liveFormScore, setLiveFormScore] = useState(100);
   const [isSecure, setIsSecure] = useState(window.isSecureContext || false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
 
   // Camera facing mode — persisted to localStorage
   const [cameraFacing, setCameraFacing] = useState(() => {
