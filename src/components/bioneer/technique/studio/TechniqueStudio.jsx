@@ -459,6 +459,8 @@ export default function TechniqueStudio() {
       {showExport && (
         <TechniqueExportPanel
           session={techniqueSession}
+          videoRef={videoRef}
+          overlayCanvasRef={null}
           onClose={() => setShowExport(false)}
         />
       )}
