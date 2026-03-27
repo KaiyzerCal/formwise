@@ -5,9 +5,9 @@
 
 import React from 'react';
 import { COLORS, FONT, scoreColor } from '@/components/bioneer/ui/DesignTokens';
-import { Play, Pause, Check, ChevronRight } from 'lucide-react';
+import { Play, Pause, Check, ChevronRight, Trash2 } from 'lucide-react';
 
-export default function PlanCard({ plan, onSelect, onToggleStatus }) {
+export default function PlanCard({ plan, onSelect, onToggleStatus, onDelete }) {
   const progress = Math.round(
     (plan.completed_sessions / plan.total_planned_sessions) * 100
   );
@@ -18,7 +18,14 @@ export default function PlanCard({ plan, onSelect, onToggleStatus }) {
   const handleToggle = (e) => {
     e.stopPropagation();
     const newStatus = isActive ? 'paused' : 'active';
-    onToggleStatus(plan.id, newStatus);
+    onToggleStatus({ id: plan.id, status: newStatus });
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    if (window.confirm(`Delete "${plan.name}"?`)) {
+      onDelete?.(plan.id);
+    }
   };
 
   return (
@@ -86,17 +93,26 @@ export default function PlanCard({ plan, onSelect, onToggleStatus }) {
         <span className="text-[8px]" style={{ color: COLORS.textTertiary }}>
           {plan.frequency_per_week}x/week for {plan.duration_weeks}w
         </span>
-        <button
-          onClick={handleToggle}
-          className="p-1.5 rounded hover:bg-white/10 transition"
-          title={isActive ? 'Pause plan' : 'Resume plan'}
-        >
-          {isActive ? (
-            <Pause size={14} style={{ color: COLORS.gold }} />
-          ) : (
-            <Play size={14} style={{ color: COLORS.textSecondary }} />
-          )}
-        </button>
+        <div className="flex gap-1">
+          <button
+            onClick={handleToggle}
+            className="p-1.5 rounded hover:bg-white/10 transition"
+            title={isActive ? 'Pause plan' : 'Resume plan'}
+          >
+            {isActive ? (
+              <Pause size={14} style={{ color: COLORS.gold }} />
+            ) : (
+              <Play size={14} style={{ color: COLORS.textSecondary }} />
+            )}
+          </button>
+          <button
+            onClick={handleDelete}
+            className="p-1.5 rounded hover:bg-white/10 transition"
+            title="Delete plan"
+          >
+            <Trash2 size={14} style={{ color: COLORS.fault }} />
+          </button>
+        </div>
       </div>
     </button>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Zap } from 'lucide-react';
+import { Plus, Zap, Share2, Trash2 } from 'lucide-react';
 import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
 import PlanGenerator from '@/components/workout/PlanGenerator';
 import PlanCard from '@/components/workout/PlanCard';
@@ -29,6 +29,37 @@ export default function WorkoutPlans() {
       queryClient.invalidateQueries({ queryKey: ['workoutPlans'] });
     },
   });
+
+  // Delete plan mutation
+  const { mutate: deletePlan } = useMutation({
+    mutationFn: async (planId) => {
+      await base44.entities.WorkoutPlan.delete(planId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workoutPlans'] });
+    },
+  });
+
+  // Delete all plans mutation
+  const { mutate: deleteAllPlans } = useMutation({
+    mutationFn: async () => {
+      await Promise.all(plans.map(p => base44.entities.WorkoutPlan.delete(p.id)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workoutPlans'] });
+    },
+  });
+
+  // Share plans handler
+  const handleShare = () => {
+    const shareText = `Check out my ${plans.length} workout plans on Bioneer! 💪`;
+    if (navigator.share) {
+      navigator.share({ title: 'Bioneer Workout Plans', text: shareText });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(shareText);
+    }
+  };
 
   const activePlans = plans.filter(p => p.status === 'active');
   const completedPlans = plans.filter(p => p.status === 'completed');
@@ -59,14 +90,42 @@ export default function WorkoutPlans() {
               Personalized training programs
             </p>
           </div>
-          <button
-            onClick={() => setShowGenerator(!showGenerator)}
-            className="px-3 py-2 rounded text-[9px] tracking-[0.1em] uppercase font-bold border flex items-center gap-2 transition hover:opacity-90"
-            style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, color: COLORS.gold }}
-          >
-            <Plus size={12} />
-            New
-          </button>
+          <div className="flex gap-2">
+            {plans.length > 0 && (
+              <>
+                <button
+                  onClick={handleShare}
+                  className="px-3 py-2 rounded text-[9px] tracking-[0.1em] uppercase font-bold border flex items-center gap-2 transition hover:opacity-90"
+                  style={{ background: COLORS.surfaceHover, borderColor: COLORS.border, color: COLORS.gold }}
+                  title="Share your plans"
+                >
+                  <Share2 size={12} />
+                  Share
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Delete all ${plans.length} plans?`)) {
+                      deleteAllPlans();
+                    }
+                  }}
+                  className="px-3 py-2 rounded text-[9px] tracking-[0.1em] uppercase font-bold border flex items-center gap-2 transition hover:opacity-90"
+                  style={{ background: 'rgba(255,68,68,0.12)', borderColor: 'rgba(255,68,68,0.25)', color: COLORS.fault }}
+                  title="Delete all plans"
+                >
+                  <Trash2 size={12} />
+                  Delete All
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setShowGenerator(!showGenerator)}
+              className="px-3 py-2 rounded text-[9px] tracking-[0.1em] uppercase font-bold border flex items-center gap-2 transition hover:opacity-90"
+              style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, color: COLORS.gold }}
+            >
+              <Plus size={12} />
+              New
+            </button>
+          </div>
         </div>
 
         {/* Generator Modal */}
@@ -144,6 +203,7 @@ export default function WorkoutPlans() {
                     plan={plan}
                     onSelect={setSelectedPlan}
                     onToggleStatus={updatePlanStatus}
+                    onDelete={deletePlan}
                   />
                 ))}
               </div>
@@ -163,6 +223,7 @@ export default function WorkoutPlans() {
                     plan={plan}
                     onSelect={setSelectedPlan}
                     onToggleStatus={updatePlanStatus}
+                    onDelete={deletePlan}
                   />
                 ))}
               </div>
@@ -182,6 +243,7 @@ export default function WorkoutPlans() {
                     plan={plan}
                     onSelect={setSelectedPlan}
                     onToggleStatus={updatePlanStatus}
+                    onDelete={deletePlan}
                   />
                 ))}
               </div>
