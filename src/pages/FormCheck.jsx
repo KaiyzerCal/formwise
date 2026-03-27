@@ -6,6 +6,7 @@ import MovementLibrary from "../components/bioneer/MovementLibrary";
 import CameraView from "../components/bioneer/CameraView";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import Disclaimer from "../components/bioneer/Disclaimer";
+import HomeDashboard from "../components/bioneer/dashboard/HomeDashboard";
 import { createPageUrl } from "@/utils";
 import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
 import FirstLaunchWizard, { hasCompletedOnboarding } from "../components/bioneer/onboarding/FirstLaunchWizard";
@@ -39,6 +40,11 @@ export default function FormCheck() {
     localStorage.setItem(DISCLAIMER_KEY, "true");
     setShowDisclaimer(false);
     if (!hasCompletedOnboarding()) setShowWizard(true);
+  };
+
+  const handleStartSession = () => {
+    // Start with movement library
+    setPhase("select");
   };
 
   const handleStartAnalysis = (movement) => {
@@ -108,13 +114,13 @@ export default function FormCheck() {
       console.warn('[FormCheck] Save error:', err);
     } finally {
       setSaving(false);
-      setPhase("select");
+      setPhase("home");
       setSessionData(null);
     }
   };
 
   const handleDiscard = () => {
-    setPhase("select");
+    setPhase("home");
     setSessionData(null);
     // Clear any stale refs
     setSelectedExercise(null);
@@ -143,11 +149,20 @@ export default function FormCheck() {
     );
   }
 
-  // Movement library selection screen
-  return (
-    <MovementLibrary
-      selectedId={selectedExercise?.id}
-      onSelect={handleStartAnalysis}
-    />
-  );
+  // Home dashboard or movement library
+  if (phase === "home") {
+    return <HomeDashboard onStartSession={handleStartSession} />;
+  }
+
+  if (phase === "select") {
+    return (
+      <MovementLibrary
+        selectedId={selectedExercise?.id}
+        onSelect={handleStartAnalysis}
+      />
+    );
+  }
+
+  // Default to home
+  return <HomeDashboard onStartSession={handleStartSession} />;
 }

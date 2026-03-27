@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Flame, Trophy, Zap, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Flame, Trophy, Zap, Star, ArrowRight } from 'lucide-react';
 import { COLORS, FONT, scoreColor } from '@/components/bioneer/ui/DesignTokens';
+import { PrimaryButton, ScoreRing, Badge } from './bioneer/ui/PremiumComponents';
 import confetti from 'canvas-confetti';
 
 export default function SessionRewardScreen({ sessionData, onClose }) {
-  const [showConfetti, setShowConfetti] = useState(false);
   const [rewardText, setRewardText] = useState('');
 
   useEffect(() => {
-    // Trigger confetti on mount
-    setShowConfetti(true);
+    // Trigger premium confetti
     confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
+      particleCount: 150,
+      spread: 90,
+      origin: { y: 0.5 },
+      duration: 2000,
     });
 
-    // Generate motivational text based on performance
     const score = sessionData.form_score_overall || 0;
     if (score >= 85) {
       setRewardText('Excellent form! You\'re crushing it! 🔥');
@@ -28,89 +28,117 @@ export default function SessionRewardScreen({ sessionData, onClose }) {
   }, [sessionData]);
 
   const score = sessionData.form_score_overall || 0;
+  const reps = sessionData.reps_detected || 0;
 
   return (
     <div
-      className="fixed inset-0 flex flex-col items-center justify-center p-4 z-50"
+      className="fixed inset-0 flex flex-col items-center justify-center p-4 z-50 overflow-y-auto"
       style={{ background: `${COLORS.bg}ee` }}
     >
-      <div
-        className="max-w-sm rounded-2xl p-8 space-y-6 text-center"
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        className="w-full max-w-md rounded-3xl p-8 space-y-8"
         style={{ background: COLORS.surface, border: `2px solid ${COLORS.gold}` }}
       >
-        {/* Score Display */}
-        <div>
-          <div
-            className="text-6xl font-bold mb-2"
-            style={{ color: scoreColor(score), fontFamily: FONT.heading }}
+        {/* Header with Trophy */}
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <motion.div
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
           >
-            {Math.round(score)}
-          </div>
-          <div style={{ color: COLORS.textSecondary }}>Form Score</div>
-        </div>
+            <Trophy size={40} style={{ color: COLORS.gold }} />
+          </motion.div>
+          <h2 className="text-xl font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
+            Session Complete
+          </h2>
+        </motion.div>
+
+        {/* Score Ring */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="flex justify-center"
+        >
+          <ScoreRing score={score} size={140} />
+        </motion.div>
 
         {/* Motivational Text */}
-        <div
-          className="text-lg"
-          style={{ color: COLORS.textPrimary, fontFamily: FONT.mono }}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          className="text-center"
         >
-          {rewardText}
-        </div>
+          <p className="text-sm font-bold leading-relaxed" style={{ color: COLORS.textPrimary, fontFamily: FONT.mono }}>
+            {rewardText}
+          </p>
+        </motion.div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div style={{ background: COLORS.goldDim, padding: '12px', borderRadius: '8px' }}>
-            <Flame size={20} style={{ color: COLORS.gold, margin: '0 auto mb-2' }} />
-            <div
-              className="text-sm font-bold"
+        {/* Key Metrics Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.4 }}
+          className="grid grid-cols-3 gap-3"
+        >
+          {/* XP Badge */}
+          <div className="rounded-2xl p-4 text-center" style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, border: '1px solid' }}>
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 0.6, repeat: Infinity, delay: 0.8 }}
+            >
+              <Flame size={24} style={{ color: COLORS.gold, margin: '0 auto 8px' }} />
+            </motion.div>
+            <div className="text-xs font-bold" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>+50 XP</div>
+          </div>
+
+          {/* Reps */}
+          <div className="rounded-2xl p-4 text-center" style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, border: '1px solid' }}>
+            <Zap size={24} style={{ color: COLORS.gold, margin: '0 auto 8px' }} />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="text-lg font-bold"
               style={{ color: COLORS.gold, fontFamily: FONT.heading }}
             >
-              +50 XP
-            </div>
+              {reps}
+            </motion.div>
+            <div className="text-[8px] font-bold uppercase" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>Reps</div>
           </div>
 
-          <div style={{ background: COLORS.goldDim, padding: '12px', borderRadius: '8px' }}>
-            <Zap size={20} style={{ color: COLORS.gold, margin: '0 auto mb-2' }} />
-            <div
-              className="text-sm font-bold"
-              style={{ color: COLORS.gold, fontFamily: FONT.heading }}
+          {/* Streak */}
+          <div className="rounded-2xl p-4 text-center" style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, border: '1px solid' }}>
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 0.6, repeat: Infinity, delay: 1.2 }}
             >
-              Streak +1
-            </div>
+              <Star size={24} style={{ color: COLORS.gold, margin: '0 auto 8px' }} />
+            </motion.div>
+            <div className="text-xs font-bold" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>+1 Day</div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Key Metric */}
-        <div style={{ background: COLORS.border, padding: '12px', borderRadius: '8px' }}>
-          <div
-            className="text-xs font-bold tracking-wide uppercase"
-            style={{ color: COLORS.textSecondary, marginBottom: '4px' }}
-          >
-            Rep Count
-          </div>
-          <div
-            className="text-2xl font-bold"
-            style={{ color: COLORS.textPrimary, fontFamily: FONT.heading }}
-          >
-            {sessionData.reps_detected || 0}
-          </div>
-        </div>
-
-        {/* CTA */}
-        <button
-          onClick={onClose}
-          className="w-full py-3 rounded-lg font-bold transition-colors"
-          style={{
-            background: COLORS.gold,
-            color: COLORS.bg,
-            fontFamily: FONT.heading,
-          }}
-          onMouseEnter={(e) => (e.target.style.opacity = '0.9')}
-          onMouseLeave={(e) => (e.target.style.opacity = '1')}
+        {/* CTA Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.4 }}
+          className="pt-2"
         >
-          Save & Continue
-        </button>
-      </div>
+          <PrimaryButton onClick={onClose} icon={ArrowRight}>
+            Continue
+          </PrimaryButton>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

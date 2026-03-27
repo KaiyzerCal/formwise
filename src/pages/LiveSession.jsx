@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { getExerciseById } from "../components/bioneer/exerciseLibrary";
 import { getSportsMovementById } from "../components/bioneer/sportsLibrary";
@@ -219,13 +220,15 @@ export default function LiveSession() {
             />
           </div>
 
-          <div className="flex gap-3">
-            <button
+          <div className="flex gap-4">
+            <motion.button
               onClick={() => {
                 setSelectedExercise(null);
                 setSelectedMovementId(null);
               }}
-              className="flex-1 py-3 rounded-lg border font-bold text-sm transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex-1 py-3 rounded-xl border font-bold text-sm transition-all duration-150"
               style={{
                 background: 'transparent',
                 borderColor: COLORS.border,
@@ -234,12 +237,14 @@ export default function LiveSession() {
               }}
             >
               Back
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               onClick={handleStartWithMovement}
               disabled={!selectedMovementId}
-              className="flex-1 py-3 rounded-lg border font-bold text-sm transition-colors disabled:opacity-50"
+              whileHover={selectedMovementId ? { scale: 1.02 } : {}}
+              whileTap={selectedMovementId ? { scale: 0.98 } : {}}
+              className="flex-1 py-3 rounded-xl border font-bold text-sm transition-all duration-150 disabled:opacity-50"
               style={{
                 background: selectedMovementId ? `${COLORS.gold}20` : 'transparent',
                 borderColor: selectedMovementId ? COLORS.gold : COLORS.border,
@@ -248,7 +253,7 @@ export default function LiveSession() {
               }}
             >
               Start Session
-            </button>
+            </motion.button>
           </div>
         </div>
       )}
