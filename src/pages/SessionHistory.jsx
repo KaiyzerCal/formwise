@@ -12,6 +12,8 @@ import FreestyleReplay from "../components/bioneer/history/FreestyleReplay";
 import LiveSessionReplay from "../components/bioneer/history/LiveSessionReplay";
 import { createTechniqueDraftFromFreestyleSession, createTechniqueDraftFromLiveSession } from "../components/bioneer/technique/techniqueConverter";
 import SessionMovementBadge from "../components/bioneer/movementProfiles/SessionMovementBadge";
+import { getConsistencyRating } from "../components/bioneer/learning/ConsistencyAnalyzer";
+import { getFatigueLabel } from "../components/bioneer/learning/FatigueDetector";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
 
@@ -37,6 +39,7 @@ function adaptSession(s) {
     ].filter(Boolean),
     _real: true,
     _rawSession: s, // preserve for technique transfer
+    learning: s.learning ?? null,
   };
 }
 
@@ -346,7 +349,44 @@ export default function SessionHistory() {
                     ))}
                   </div>
 
-                  {/* Video replay & technique buttons for live sessions */}
+                  {/* Learning section */}
+                  {session.learning && (() => {
+                    const { consistency, fatigue, adaptiveScoring, feedback } = session.learning;
+                    const consistencyRating = consistency ? getConsistencyRating(consistency.consistencyScore) : null;
+                    const fatigueLabel = fatigue ? getFatigueLabel(fatigue.severity) : null;
+                    const scoreDelta = adaptiveScoring ? (adaptiveScoring.adaptedScore ?? 0) - (adaptiveScoring.baseScore ?? session.score) : 0;
+                    const topInsight = feedback?.insights?.[0] ?? null;
+                    return (
+                      <div className="rounded border p-3 space-y-2" style={{ background: 'rgba(201,168,76,0.04)', borderColor: COLORS.goldBorder }}>
+                        <span className="text-[8px] tracking-[0.15em] uppercase font-bold" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>LEARNING</span>
+                        <div className="flex flex-wrap gap-2">
+                          {consistencyRating && (
+                            <span className="px-2 py-0.5 rounded text-[8px] font-bold tracking-[0.1em]"
+                              style={{ background: `${consistencyRating.color}15`, color: consistencyRating.color, fontFamily: FONT.mono }}>
+                              {consistencyRating.label}
+                            </span>
+                          )}
+                          {fatigue && (fatigue.severity === 'high' || fatigue.severity === 'medium') && (
+                            <span className="px-2 py-0.5 rounded text-[8px] font-bold tracking-[0.1em]"
+                              style={{ background: `${fatigueLabel.color}15`, color: fatigueLabel.color, fontFamily: FONT.mono }}>
+                              {fatigueLabel.icon} {fatigueLabel.text}
+                            </span>
+                          )}
+                          {Math.abs(scoreDelta) > 5 && (
+                            <span className="px-2 py-0.5 rounded text-[8px] font-bold tracking-[0.1em]"
+                              style={{ background: scoreDelta > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: scoreDelta > 0 ? '#22C55E' : '#EF4444', fontFamily: FONT.mono }}>
+                              {scoreDelta > 0 ? '+' : ''}{Math.round(scoreDelta)} adjusted
+                            </span>
+                          )}
+                        </div>
+                        {topInsight && (
+                          <p className="text-[9px] italic" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>{topInsight}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                   {/* Video replay & technique buttons for live sessions */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {(session.hasVideo || liveVideoUrls[session.id]) && (
                       <button

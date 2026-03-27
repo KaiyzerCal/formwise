@@ -18,6 +18,7 @@ import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles, computeFormScore, setPoseCategory } from './poseEngine';
 import { initAudio, destroyAudio, beep, speak } from './audioEngine';
+import { detectFatigue } from './learning/FatigueDetector';
 import { TemporalFilterEngine } from './pipeline/TemporalFilterEngine';
 import { SystemHealthMonitor } from './pipeline/runtime/SystemHealthMonitor';
 import JointIntelligenceRail from './live/JointIntelligenceRail';
@@ -47,6 +48,10 @@ export default function CameraView({ exercise, onStop }) {
   const recentScoresRef = useRef([]);
   // Track fault history for check-in context
   const faultHistoryRef = useRef([]);
+  // Live fatigue warning
+  const [fatigueBannerDismissed, setFatigueBannerDismissed] = useState(false);
+  const [showFatigueBanner, setShowFatigueBanner] = useState(false);
+  const repScoresLiveRef = useRef([]);
 
   // Camera facing mode — persisted to localStorage
   const [cameraFacing, setCameraFacing] = useState(() => {
@@ -327,6 +332,26 @@ export default function CameraView({ exercise, onStop }) {
 
     // Track recent scores for trend analysis
     recentScoresRef.current = [...recentScoresRef.current.slice(-4), liveFormScore];
+
+    // Live fatigue detection (rep 6+)
+    repScoresLiveRef.current = [...repScoresLiveRef.current, liveFormScore];
+    if (repCount >= 6 && !fatigueBannerDismissed) {
+      const last3 = repScoresLiveRef.current.slice(-3);
+      if (last3.length === 3) {
+        const decline = last3[0] - last3[2]; // drop over last 3 reps
+        if (decline > 10) {
+          const fakeMetrics = {
+            allMetrics: repScoresLiveRef.current.map(s => ({
+              formScore: s, repDuration: 2, kneeAngleMin: 90, kneeAngleMax: 160, stabilityVariance: 0,
+            })),
+          };
+          const result = detectFatigue(fakeMetrics);
+          if (result.severity === 'high' || result.severity === 'medium') {
+            setShowFatigueBanner(true);
+          }
+        }
+      }
+    }
 
     // ── Check-in every 5 reps ────────────────────────────────────────────
     if (repCount > 0 && repCount % 5 === 0) {
@@ -665,6 +690,31 @@ export default function CameraView({ exercise, onStop }) {
               style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
               {geminiCue}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Fatigue Warning Banner ───────────────────────────────────────── */}
+      {showFatigueBanner && !fatigueBannerDismissed && sessionActive && (
+        <div className="absolute left-4 right-4 z-50 flex justify-center pointer-events-auto"
+          style={{ bottom: '7rem' }}>
+          <div className="w-full max-w-sm px-4 py-3 rounded-xl border flex items-center justify-between gap-3"
+            style={{ background: 'rgba(245,158,11,0.12)', borderColor: 'rgba(245,158,11,0.5)', backdropFilter: 'blur(8px)' }}>
+            <div>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[9px] font-bold tracking-[0.12em]" style={{ color: '#f59e0b', fontFamily: "'DM Mono', monospace" }}>
+                  ⚠ FATIGUE DETECTED
+                </span>
+              </div>
+              <p className="text-[10px] uppercase tracking-wide" style={{ color: 'rgba(245,158,11,0.8)', fontFamily: "'DM Mono', monospace" }}>
+                Consider ending set
+              </p>
+            </div>
+            <button onClick={() => { setFatigueBannerDismissed(true); setShowFatigueBanner(false); }}
+              className="text-[9px] px-2 py-1 rounded border flex-shrink-0"
+              style={{ borderColor: 'rgba(245,158,11,0.4)', color: '#f59e0b', fontFamily: "'DM Mono', monospace" }}>
+              DISMISS
+            </button>
           </div>
         </div>
       )}

@@ -11,6 +11,7 @@ import { getSessionNarrative } from "../components/bioneer/ai/GeminiCoach";
 import { getMovementProfile } from "../components/bioneer/movementProfiles/movementProfiles";
 import MovementSelector from "../components/bioneer/movementProfiles/MovementSelector";
 import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
+import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
 
 export default function LiveSession() {
   const [phase, setPhase] = useState("select");
@@ -21,6 +22,7 @@ export default function LiveSession() {
   const [saving, setSaving] = useState(false);
   const sessionStartRef = useRef(null);
   const rawDataRef = useRef(null); // holds rawData including recordedChunks
+  const { processSessionLearning } = useSessionLearning();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -84,7 +86,15 @@ export default function LiveSession() {
         video_src: persistedVideo?.videoSrc ?? null,
       };
 
-      saveSession(sessionWithVideo);
+      // Run learning pipeline (non-blocking)
+      processSessionLearning({
+        ...sessionWithVideo,
+        reps: rawDataRef.current?.reps ?? [],
+      }).then(enriched => {
+        saveSession({ ...sessionWithVideo, learning: enriched?.learning ?? null });
+      }).catch(() => {
+        saveSession(sessionWithVideo);
+      });
 
       // Fire-and-forget: fetch AI narrative and patch session async
       const sessionIdForNarrative = sessionWithVideo.session_id;
