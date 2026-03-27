@@ -4,9 +4,11 @@ import { Flame, Trophy, Zap, Star, ArrowRight } from 'lucide-react';
 import { COLORS, FONT, scoreColor } from '@/components/bioneer/ui/DesignTokens';
 import { PrimaryButton, ScoreRing, Badge } from './bioneer/ui/PremiumComponents';
 import confetti from 'canvas-confetti';
+import { POINT_VALUES } from '@/lib/gamificationEngine';
 
 export default function SessionRewardScreen({ sessionData, onClose }) {
   const [rewardText, setRewardText] = useState('');
+  const [pointsEarned, setPointsEarned] = useState(0);
 
   useEffect(() => {
     // Trigger premium confetti
@@ -25,6 +27,20 @@ export default function SessionRewardScreen({ sessionData, onClose }) {
     } else {
       setRewardText('Solid effort! You\'re improving! 📈');
     }
+
+    // Calculate points earned
+    let totalPoints = POINT_VALUES.SESSION_COMPLETE;
+    
+    // Bonus for high score
+    if (score >= 85) totalPoints += POINT_VALUES.PERSONAL_BEST;
+    
+    // Bonus for zero faults
+    const reps = sessionData.reps_detected || 0;
+    if (reps >= 10 && !sessionData.top_faults?.length) {
+      totalPoints += POINT_VALUES.ZERO_FAULT_SET;
+    }
+
+    setPointsEarned(totalPoints);
   }, [sessionData]);
 
   const score = sessionData.form_score_overall || 0;
@@ -91,13 +107,13 @@ export default function SessionRewardScreen({ sessionData, onClose }) {
         >
           {/* XP Badge */}
           <div className="rounded-2xl p-4 text-center" style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, border: '1px solid' }}>
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 0.6, repeat: Infinity, delay: 0.8 }}
-            >
-              <Flame size={24} style={{ color: COLORS.gold, margin: '0 auto 8px' }} />
-            </motion.div>
-            <div className="text-xs font-bold" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>+50 XP</div>
+           <motion.div
+             animate={{ scale: [1, 1.2, 1] }}
+             transition={{ duration: 0.6, repeat: Infinity, delay: 0.8 }}
+           >
+             <Flame size={24} style={{ color: COLORS.gold, margin: '0 auto 8px' }} />
+           </motion.div>
+           <div className="text-xs font-bold" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>+{pointsEarned} XP</div>
           </div>
 
           {/* Reps */}

@@ -19,6 +19,7 @@ import { checkAndAwardAchievements } from "@/lib/achievements";
 import { recordSession } from "@/lib/retentionEngine";
 import SessionRewardScreen from "@/components/SessionRewardScreen";
 import { recordSessionFaults, markResolvedFaults, generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
+import { awardSessionPoints } from "@/lib/gamificationEngine";
 
 export default function LiveSession() {
    const navigate = useNavigate();
@@ -96,8 +97,9 @@ export default function LiveSession() {
         saveSession(sessionWithVideo);
       });
 
-      // Fire-and-forget: check achievements
+      // Fire-and-forget: check achievements + award points
       checkAndAwardAchievements().catch(() => {});
+      awardSessionPoints(sessionWithVideo).catch(() => {});
 
       // Record fault history and check for improvements
       recordSessionFaults(sessionWithVideo).catch(() => {});
