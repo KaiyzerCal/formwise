@@ -17,7 +17,6 @@ import Achievements from './pages/Achievements';
 import Progress from './pages/Progress';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
-import ErrorBoundary from './lib/ErrorBoundary';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -60,37 +59,37 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       {/* Freestyle session route (no layout) */}
-      <Route path="/FreestyleSession" element={<ErrorBoundary section="Freestyle Session"><FreestyleSession /></ErrorBoundary>} />
+      <Route path="/FreestyleSession" element={<FreestyleSession />} />
       {/* Technique Studio route (no layout) */}
-      <Route path="/TechniqueStudio" element={<ErrorBoundary section="Technique Studio"><TechniqueStudio /></ErrorBoundary>} />
+      <Route path="/TechniqueStudio" element={<TechniqueStudio />} />
       {/* Settings route */}
       <Route path="/Settings" element={
         <LayoutWrapper currentPageName="Settings">
-          <ErrorBoundary section="Settings"><Settings /></ErrorBoundary>
+          <Settings />
         </LayoutWrapper>
       } />
       {/* Public session share */}
-      <Route path="/session/:session_id/public" element={<ErrorBoundary section="Public Session"><PublicSession /></ErrorBoundary>} />
+      <Route path="/session/:session_id/public" element={<PublicSession />} />
       {/* Coach portal */}
       <Route path="/CoachPortal" element={
         <LayoutWrapper currentPageName="CoachPortal">
-          <ErrorBoundary section="Coach Portal"><CoachPortal /></ErrorBoundary>
+          <CoachPortal />
         </LayoutWrapper>
       } />
       {/* Achievements */}
       <Route path="/Achievements" element={
         <LayoutWrapper currentPageName="Achievements">
-          <ErrorBoundary section="Achievements"><Achievements /></ErrorBoundary>
+          <Achievements />
         </LayoutWrapper>
       } />
       {/* Progress */}
       <Route path="/Progress" element={
         <LayoutWrapper currentPageName="Progress">
-          <ErrorBoundary section="Progress"><Progress /></ErrorBoundary>
+          <Progress />
         </LayoutWrapper>
       } />
-      <Route path="/PrivacyPolicy" element={<ErrorBoundary section="Privacy Policy"><PrivacyPolicy /></ErrorBoundary>} />
-      <Route path="/TermsOfService" element={<ErrorBoundary section="Terms of Service"><TermsOfService /></ErrorBoundary>} />
+      <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
+      <Route path="/TermsOfService" element={<TermsOfService />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
