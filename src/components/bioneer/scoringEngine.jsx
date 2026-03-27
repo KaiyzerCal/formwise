@@ -300,6 +300,53 @@ export function selectSingleCue(repHistory, exerciseId, cueState, nowMs) {
   };
 }
 
+// ─── Rep / Consistency / Stability Scoring ───────────────────────────────────
+
+/**
+ * Score a single rep from its dimension scores and red flags.
+ * Returns { repScore, consistency, stability } (0–100 each).
+ */
+export function scoreRep(repData, exerciseId) {
+  const { scores, redFlags } = calcDimensionScores(exerciseId, repData);
+  const repScore = calcOverallScore(scores, exerciseId);
+
+  // Consistency proxy: penalise missing dimensions
+  const definedDims = Object.values(scores).filter(v => v != null);
+  const consistency = definedDims.length
+    ? Math.round(definedDims.reduce((a, b) => a + b, 0) / definedDims.length)
+    : 0;
+
+  // Stability proxy: inverse of total penalty from red flags
+  const totalPenalty = redFlags.reduce((s, f) => s + (f.penaltyPoints ?? 10), 0);
+  const stability = Math.max(0, 100 - totalPenalty);
+
+  return { repScore, consistency, stability };
+}
+
+/**
+ * Consistency score from an array of rep scores.
+ * Low variance = high consistency.
+ */
+export function calculateConsistency(repScores) {
+  if (!repScores || repScores.length < 2) return repScores?.[0] ?? 0;
+  const mean = repScores.reduce((a, b) => a + b, 0) / repScores.length;
+  const variance = repScores.reduce((s, v) => s + (v - mean) ** 2, 0) / repScores.length;
+  const stdDev = Math.sqrt(variance);
+  return Math.round(Math.max(0, 100 - stdDev * 2));
+}
+
+/**
+ * Stability score from joint angle variance across frames.
+ * jointVariance: { [jointKey]: number }  (variance value, lower is better)
+ */
+export function calculateStability(jointVariance) {
+  const vals = Object.values(jointVariance ?? {});
+  if (!vals.length) return 100;
+  const avgVariance = vals.reduce((a, b) => a + b, 0) / vals.length;
+  return Math.round(Math.max(0, 100 - avgVariance * 3));
+}
+
+// ─── (internal) ──────────────────────────────────────────────────────────────
 function buildIssueStats(recentReps) {
   const stats = {};
   recentReps.forEach((rep) => {

@@ -26,6 +26,7 @@ import { FeedbackScheduler }    from './pipeline/FeedbackScheduler';
 import { SessionLogger }        from './pipeline/SessionLogger';
 import { MasteryScoreEngine }        from './pipeline/MasteryScoreEngine';
 import { MovementContextEngine }     from './pipeline/MovementContextEngine';
+import { evaluateForm }              from '../../engines/FormFeedbackEngine';
 
 let _sessionIdCounter = 0;
 
@@ -65,6 +66,7 @@ export class LiveSessionOrchestrator {
     this.onRep       = null;
     this.onCue       = null;
     this.onLockState = null;
+    this.onFeedback  = null;  // (feedbackResult) => void — FormFeedbackEngine output
 
     // Mastery state
     this.lastJointResults = [];
@@ -248,6 +250,10 @@ export class LiveSessionOrchestrator {
     }
     if (this.frameBuffer.length > 1800) this.frameBuffer.shift(); // 60s @ 30fps
 
+    // ── FormFeedbackEngine (sync, per-frame) ─────────────────────────────────
+    const feedbackResult = evaluateForm({ jointAngles: kinAngles, exerciseId: this.exerciseId });
+    this.onFeedback?.(feedbackResult);
+
     // ── Emit to UI ───────────────────────────────────────────────────────────
     this.onFrame?.({
       frame:      { tMs, phase: phaseId, joints: smoothedJoints },
@@ -260,6 +266,7 @@ export class LiveSessionOrchestrator {
       repCount:   this.repDetector.getRepCount(),
       activeCue:  this.scheduler.getActiveCue(),
       movementContext: movCtx,       // multi-frame context signals
+      feedbackState: feedbackResult.status,   // 'green'|'yellow'|'red'
     });
   }
 
