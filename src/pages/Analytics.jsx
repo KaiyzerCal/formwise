@@ -26,7 +26,6 @@ import PersonalRecordsPanel    from "../components/bioneer/analytics/PersonalRec
 import AdvancedFormScoreTrend  from "../components/bioneer/analytics/AdvancedFormScoreTrend";
 import FaultCategoryBreakdown  from "../components/bioneer/analytics/FaultCategoryBreakdown";
 import MuscleGroupProgress     from "../components/bioneer/analytics/MuscleGroupProgress";
-import AnalyticsHeroCard       from "../components/bioneer/analytics/AnalyticsHeroCard";
 import { getAllSessions }       from "../components/bioneer/data/unifiedSessionStore";
 import { calculateMovementBaseline } from "../components/bioneer/learning/UserMovementModel";
 
@@ -154,9 +153,6 @@ export default function Analytics() {
       <PageHeader isEmpty={overview.isEmpty} />
       <div className="p-4 lg:p-6 space-y-4">
 
-        {/* Hero card with main metric */}
-        <AnalyticsHeroCard />
-
         {/* Step 6: Progress notifications */}
         {progressNotifications.map((n, i) => (
           <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg border"
@@ -169,6 +165,7 @@ export default function Analytics() {
           </div>
         ))}
 
+        <WeeklyPerformanceCard />
         <OverviewCards overview={overview} />
         
         {/* Premium Analytics Upgrades */}

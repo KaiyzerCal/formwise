@@ -259,13 +259,10 @@ export default function TechniqueCompare() {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <h1 className="text-xs tracking-[0.18em] uppercase font-bold" style={{ color: COLORS.gold }}>
-              Form Check
+              Technique Compare
             </h1>
-            <p className="text-[9px] tracking-[0.1em] mt-0.5" style={{ color: COLORS.textTertiary }}>
-              Compare your movement to ideal form
-            </p>
             {importLabel && (
-              <p className="text-[9px] tracking-[0.1em] mt-1" style={{ color: COLORS.textTertiary }}>
+              <p className="text-[9px] tracking-[0.1em] mt-0.5" style={{ color: COLORS.textTertiary }}>
                 {importLabel}
               </p>
             )}

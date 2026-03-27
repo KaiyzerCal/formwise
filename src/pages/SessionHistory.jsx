@@ -15,7 +15,6 @@ import { createTechniqueDraftFromFreestyleSession, createTechniqueDraftFromLiveS
 import SessionMovementBadge from "../components/bioneer/movementProfiles/SessionMovementBadge";
 import { getConsistencyRating } from "../components/bioneer/learning/ConsistencyAnalyzer";
 import { getFatigueLabel } from "../components/bioneer/learning/FatigueDetector";
-import SessionCard from "@/components/cards/SessionCard";
 
 const FILTERS = ['This Week', 'This Month', 'All Time'];
 
@@ -274,10 +273,7 @@ export default function SessionHistory() {
     <div className="h-full flex flex-col" style={{ fontFamily: FONT.mono }}>
       {/* Header */}
       <div className="px-5 py-4 border-b flex items-center justify-between flex-wrap gap-3" style={{ borderColor: COLORS.border }}>
-        <div>
-          <h1 className="text-xs tracking-[0.15em] uppercase font-bold" style={{ color: COLORS.gold }}>Session History</h1>
-          <p className="text-[9px] mt-1" style={{ color: COLORS.textTertiary }}>Review and analyze your past sessions</p>
-        </div>
+        <h1 className="text-xs tracking-[0.15em] uppercase font-bold" style={{ color: COLORS.gold }}>Session History</h1>
         <div className="flex items-center gap-2">
           {FILTERS.map(f => (
             <button key={f} onClick={() => setFilter(f)}
@@ -320,51 +316,7 @@ export default function SessionHistory() {
       </div>
 
       {/* Session list */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-5 space-y-4">
-        {/* Pinned: Recent Good Sessions */}
-        {allSessions.length > 0 && (
-          <div>
-            <h2 className="text-xs tracking-[0.1em] uppercase font-bold mb-3" style={{ color: COLORS.textSecondary }}>Recent Sessions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {allSessions
-                .slice()
-                .reverse()
-                .slice(0, 3)
-                .map(session => (
-                  <SessionCard
-                    key={session.id}
-                    session={session._rawSession || session}
-                    onReplay={() => {
-                      if (session._freestyle) {
-                        setSelectedReplay(session._freestyleData);
-                      } else {
-                        setSelectedLiveReplay(session._rawSession);
-                      }
-                    }}
-                    onCritique={() => {
-                      if (session._freestyle) {
-                        handleSendToTechnique(session._freestyleData);
-                      } else {
-                        handleSendLiveToTechnique(session);
-                      }
-                    }}
-                  />
-                ))}
-            </div>
-            <button
-              className="mt-3 text-xs tracking-[0.1em] uppercase font-bold transition-colors hover:text-gold"
-              onClick={() => setFilter('All Time')}
-              style={{ color: COLORS.textSecondary }}
-            >
-              View all sessions →
-            </button>
-          </div>
-        )}
-
-        {/* Full list */}
-        <div>
-          <h2 className="text-xs tracking-[0.1em] uppercase font-bold mb-3" style={{ color: COLORS.textSecondary }}>Full History</h2>
-          <div className="space-y-2">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-5 space-y-2">
         {/* Cloud sync skeleton */}
         {cloudSyncing && (
           <div className="flex items-center gap-2 px-3 py-2 rounded border mb-2"
@@ -614,11 +566,9 @@ export default function SessionHistory() {
                 </div>
               )}
             </div>
-            );
-            })}
-            </div>
-            </div>
-            </div>
+          );
+        })}
+      </div>
 
       {/* Delete all confirmation modal */}
       {showDeleteAllConfirm && (
