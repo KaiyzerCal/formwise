@@ -8,6 +8,7 @@ import SessionSummary from "../components/bioneer/SessionSummary";
 import Disclaimer from "../components/bioneer/Disclaimer";
 import { createPageUrl } from "@/utils";
 import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
+import FirstLaunchWizard, { hasCompletedOnboarding } from "../components/bioneer/onboarding/FirstLaunchWizard";
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
@@ -17,11 +18,13 @@ export default function FormCheck() {
   const [sessionData, setSessionData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const { processSessionLearning } = useSessionLearning();
 
   useEffect(() => {
     const accepted = localStorage.getItem(DISCLAIMER_KEY);
     if (!accepted) setShowDisclaimer(true);
+    else if (!hasCompletedOnboarding()) setShowWizard(true);
 
     // Check URL params for exercise pre-selection
     const params = new URLSearchParams(window.location.search);
@@ -35,6 +38,7 @@ export default function FormCheck() {
   const handleAcceptDisclaimer = () => {
     localStorage.setItem(DISCLAIMER_KEY, "true");
     setShowDisclaimer(false);
+    if (!hasCompletedOnboarding()) setShowWizard(true);
   };
 
   const handleStartAnalysis = (movement) => {
@@ -118,6 +122,10 @@ export default function FormCheck() {
 
   if (showDisclaimer) {
     return <Disclaimer onAccept={handleAcceptDisclaimer} />;
+  }
+
+  if (showWizard) {
+    return <FirstLaunchWizard onComplete={() => setShowWizard(false)} />;
   }
 
   if (phase === "camera" && selectedExercise) {

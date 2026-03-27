@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import ScoreTooltip from "./onboarding/ScoreTooltip";
 import { getSetAnalysis } from "./ai/GeminiCoach";
 
 function ScoreBar({ score }) {
@@ -151,10 +152,13 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
             </p>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-bold" style={{ fontFamily: "'DM Mono', monospace", color: score >= 80 ? "#22C55E" : score >= 65 ? "#EAB308" : "#EF4444" }}>
-              {score}
-            </span>
-            <span className="text-white/30 text-sm"> / 100</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold" style={{ fontFamily: "'DM Mono', monospace", color: score >= 80 ? "#22C55E" : score >= 65 ? "#EAB308" : "#EF4444" }}>
+                {score}
+              </span>
+              <span className="text-white/30 text-sm"> / 100</span>
+              <ScoreTooltip />
+            </div>
           </div>
         </div>
 

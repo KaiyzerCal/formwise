@@ -6,6 +6,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Circle, AlertCircle, Loader2 } from 'lucide-react';
+import CameraPlacementGuide from '../onboarding/CameraPlacementGuide';
 
 const GOLD = '#C9A84C';
 const RED  = '#EF4444';
@@ -29,7 +30,7 @@ function Check({ label, ok, warn, loading }) {
   );
 }
 
-export default function SessionReadinessGate({ checks, guidance, onForceStart }) {
+export default function SessionReadinessGate({ checks, guidance, onForceStart, exercise, poseLandmarks }) {
   const allGood = checks.every(c => c.ok);
   const poseReady = checks.find(c => c.label === 'Pose engine ready')?.ok;
   const [showOverride, setShowOverride] = useState(false);
@@ -72,6 +73,13 @@ export default function SessionReadinessGate({ checks, guidance, onForceStart })
             <Check key={i} {...c} loading={loading(c.label)} />
           ))}
         </div>
+
+        {/* Camera placement guide — shown while waiting for body detection */}
+        {exercise && !checks.find(c => c.label === 'Body detected')?.ok && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <CameraPlacementGuide exercise={exercise} poseLandmarks={poseLandmarks} />
+          </div>
+        )}
 
         {guidance && (
           <div className="mt-2 pt-3 border-t border-white/10 text-center">

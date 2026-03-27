@@ -230,21 +230,26 @@ export default function SessionHistory() {
         )}
 
         {allSessions.length === 0 && !cloudSyncing && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center"
+          <div className="flex flex-col items-center justify-center py-16 gap-6">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center"
               style={{ background: COLORS.goldDim, border: `1px solid ${COLORS.goldBorder}` }}>
-              <BarChart3 size={20} style={{ color: COLORS.gold }} />
+              <BarChart3 size={24} style={{ color: COLORS.gold }} />
             </div>
-            <div className="text-center space-y-1.5 max-w-xs">
-              <p className="text-xs font-medium tracking-[0.1em] uppercase"
+            <div className="text-center space-y-2 max-w-xs">
+              <p className="text-xs font-bold tracking-[0.15em] uppercase"
                 style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-                No sessions logged yet
+                No Sessions Yet
               </p>
               <p className="text-[10px] leading-relaxed"
-                style={{ color: COLORS.textMuted, fontFamily: FONT.mono }}>
-                Complete your first live session to start building your training history.
+                style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+                Your training history will appear here
               </p>
             </div>
+            <a href={createPageUrl('FormCheck')}
+              className="px-6 py-3 rounded border text-xs font-bold tracking-[0.15em] uppercase"
+              style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, color: COLORS.gold, fontFamily: FONT.mono }}>
+              BEGIN TRAINING
+            </a>
           </div>
         )}
         {allSessions.slice().reverse().map(session => {

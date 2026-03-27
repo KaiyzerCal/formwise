@@ -515,6 +515,8 @@ export default function CameraView({ exercise, onStop }) {
           checks={readinessChecks}
           guidance={guidance}
           onForceStart={handleForceStart}
+          exercise={exercise}
+          poseLandmarks={poseResults?.poseLandmarks?.[0] ?? null}
         />
       )}
 

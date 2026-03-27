@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { BarChart3 } from "lucide-react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
 import {
   getAnalyticsOverview,
@@ -9,6 +10,8 @@ import {
   getRecentInsights,
 } from "../components/bioneer/analytics/selectors";
 
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import OverviewCards           from "../components/bioneer/analytics/OverviewCards";
 import FormTrendChart          from "../components/bioneer/analytics/FormTrendChart";
 import FaultIntelligencePanel  from "../components/bioneer/analytics/FaultIntelligencePanel";
@@ -107,6 +110,37 @@ export default function Analytics() {
     });
     return Array.from(seen);
   }, []);
+
+  const navigate = useNavigate();
+
+  if (overview.isEmpty) {
+    return (
+      <div className="h-full flex flex-col">
+        <PageHeader isEmpty={true} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center"
+            style={{ background: COLORS.goldDim, border: `1px solid ${COLORS.goldBorder}` }}>
+            <BarChart3 size={28} style={{ color: COLORS.gold }} />
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-bold tracking-[0.15em] uppercase"
+              style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+              Complete Your First Session
+            </p>
+            <p className="text-[10px] leading-relaxed max-w-xs"
+              style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+              To Unlock Intelligence
+            </p>
+          </div>
+          <button onClick={() => navigate(createPageUrl('FormCheck'))}
+            className="px-6 py-3 rounded border text-xs font-bold tracking-[0.15em] uppercase"
+            style={{ background: COLORS.goldDim, borderColor: COLORS.goldBorder, color: COLORS.gold, fontFamily: FONT.mono }}>
+            START SESSION
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full overflow-y-auto" style={{ fontFamily: FONT.mono }}>
