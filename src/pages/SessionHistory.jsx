@@ -3,6 +3,7 @@ import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens"
 import { getAllSessions, syncFromCloud, deleteSession as deleteExerciseSession, clearAllSessions } from "../components/bioneer/data/unifiedSessionStore";
 import toast from "react-hot-toast";
 import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl, clearAllFreestyleSessions } from "../components/bioneer/history/sessionStorage";
+import { deleteSessionVideoBlob } from "../components/bioneer/data/liveVideoStorage";
 import { getSessionVideoUrl } from "../components/bioneer/data/liveVideoStorage";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
@@ -160,10 +161,13 @@ export default function SessionHistory() {
     }
   };
 
-  const handleDeleteExerciseSession = (sessionId) => {
+  const handleDeleteExerciseSession = async (sessionId) => {
     setDeleting(sessionId);
     try {
+      // Delete from cloud and local storage
       deleteExerciseSession(sessionId);
+      // Delete associated video from IndexedDB
+      await deleteSessionVideoBlob(sessionId);
       setLocalSessions(getAllSessions());
       toast('Session deleted', {
         style: {
@@ -188,6 +192,9 @@ export default function SessionHistory() {
     try {
       clearAllSessions();
       await clearAllFreestyleSessions();
+      // Delete all videos from IndexedDB
+      const allSessions = getAllSessions();
+      await Promise.all(allSessions.map(s => deleteSessionVideoBlob(s.session_id)));
       setLocalSessions([]);
       setFreestyleSessions([]);
       setShowDeleteAllConfirm(false);
