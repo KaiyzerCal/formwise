@@ -5,8 +5,9 @@ import CameraView from "../components/bioneer/CameraView";
 import MovementLibrary from "../components/bioneer/MovementLibrary";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import { normalizeSession, sessionSaveMessage } from "../components/bioneer/data/sessionNormalizer";
-import { saveSession } from "../components/bioneer/data/sessionStore";
+import { saveSession, updateSession } from "../components/bioneer/data/sessionStore";
 import { persistRecordedSessionVideo } from "../components/bioneer/data/persistRecordedSessionVideo";
+import { getSessionNarrative } from "../components/bioneer/ai/GeminiCoach";
 import { getMovementProfile } from "../components/bioneer/movementProfiles/movementProfiles";
 import MovementSelector from "../components/bioneer/movementProfiles/MovementSelector";
 import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
@@ -84,6 +85,12 @@ export default function LiveSession() {
       };
 
       saveSession(sessionWithVideo);
+
+      // Fire-and-forget: fetch AI narrative and patch session async
+      const sessionIdForNarrative = sessionWithVideo.session_id;
+      getSessionNarrative(sessionWithVideo).then(narrative => {
+        if (narrative) updateSession(sessionIdForNarrative, { ai_narrative: narrative });
+      });
     } catch (err) {
       console.error('[LiveSession] handleSave error:', err);
       // Still save metadata even if video persistence fails

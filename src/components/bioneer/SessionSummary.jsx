@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import { getSetAnalysis } from "./ai/GeminiCoach";
 
 function ScoreBar({ score }) {
   const color = score >= 80 ? "#22C55E" : score >= 65 ? "#EAB308" : "#EF4444";
@@ -76,6 +77,21 @@ function buildCoachingText(exerciseDef, jointData) {
 }
 
 export default function SessionSummary({ sessionData, onSave, onDiscard, saving, saveOutcome }) {
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    if (!sessionData) return;
+    const reps = sessionData.reps ?? [];
+    const exerciseName = sessionData.exercise_def?.name || sessionData.exercise_id;
+    if (!reps.length) return;
+    setAiLoading(true);
+    getSetAnalysis(reps, exerciseName).then(result => {
+      if (result) setAiAnalysis(result);
+      setAiLoading(false);
+    });
+  }, []);
+
   // Defensive guards — ensure all required data exists
   if (!sessionData) return null;
 
@@ -143,6 +159,31 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
         </div>
 
         <ScoreBar score={score} />
+
+        {/* AI Coaching Note */}
+        {(aiLoading || aiAnalysis) && (
+          <div className="rounded-xl border p-3 space-y-2" style={{ background: 'rgba(201,168,76,0.06)', borderColor: 'rgba(201,168,76,0.25)' }}>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-widest" style={{ fontFamily: "'DM Mono', monospace", color: 'rgba(201,168,76,0.7)' }}>
+                AI Coaching Note
+              </p>
+              <span className="text-[8px] tracking-[0.15em] uppercase px-1.5 py-0.5 rounded"
+                style={{ background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontFamily: "'DM Mono', monospace" }}>
+                ✦ GEMINI
+              </span>
+            </div>
+            {aiLoading ? (
+              <div className="space-y-1.5 animate-pulse">
+                <div className="h-2.5 rounded-full w-full" style={{ background: 'rgba(201,168,76,0.15)' }} />
+                <div className="h-2.5 rounded-full w-4/5" style={{ background: 'rgba(201,168,76,0.10)' }} />
+              </div>
+            ) : (
+              <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)', fontFamily: "'DM Mono', monospace" }}>
+                {aiAnalysis}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-2">

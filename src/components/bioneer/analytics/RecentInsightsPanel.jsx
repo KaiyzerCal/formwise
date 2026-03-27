@@ -22,13 +22,24 @@ export default function RecentInsightsPanel({ insightData }) {
       {hasInsights ? (
         <div className="space-y-3">
           {insightData.insights.map((ins, i) => (
-            <div key={i} className="flex items-start gap-2.5">
-              <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
-                style={{ background: DOT_COLOR[ins.type] ?? DOT_COLOR.neutral }} />
-              <p className="text-[10px] leading-relaxed" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-                {ins.text}
-              </p>
-            </div>
+            ins.type === 'ai' ? (
+              <div key={i} className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex-shrink-0 text-[11px]" style={{ color: COLORS.gold }}>✦</span>
+                <p className="flex-1 text-[10px] leading-relaxed" style={{ color: COLORS.textPrimary, fontFamily: FONT.mono }}>
+                  {ins.text}
+                </p>
+                <span className="text-[8px] tracking-[0.12em] uppercase flex-shrink-0 mt-0.5"
+                  style={{ color: COLORS.gold, fontFamily: FONT.mono }}>GEMINI</span>
+              </div>
+            ) : (
+              <div key={i} className="flex items-start gap-2.5">
+                <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
+                  style={{ background: DOT_COLOR[ins.type] ?? DOT_COLOR.neutral }} />
+                <p className="text-[10px] leading-relaxed" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+                  {ins.text}
+                </p>
+              </div>
+            )
           ))}
         </div>
       ) : (

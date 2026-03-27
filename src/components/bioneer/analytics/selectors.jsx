@@ -276,6 +276,12 @@ export function getRecentInsights() {
 
   const insights = [];
 
+  // AI narratives from most recent 5 sessions
+  const aiSessions = [...sessions].reverse().slice(0, 5).filter(s => s.ai_narrative);
+  aiSessions.forEach(s => {
+    insights.push({ type: 'ai', text: s.ai_narrative });
+  });
+
   // Score trend over last 3
   if (sessions.length >= 3) {
     const last3  = sessions.slice(-3);
@@ -317,5 +323,5 @@ export function getRecentInsights() {
   if (sessions.length === 1)
     insights.push({ type: 'neutral', text: 'Complete 2–3 more sessions to unlock trend analysis and pattern detection.' });
 
-  return { insights: insights.slice(0, 5), insufficient: sessions.length < 1 };
+  return { insights: insights.slice(0, 6), insufficient: sessions.length < 1 };
 }

@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { name: 'Analytics', label: 'ANALYTICS', icon: BarChart3 },
   { name: 'MovementLibraryPage', label: 'LIBRARY', icon: BookOpen },
   { name: 'SessionHistory', label: 'HISTORY', icon: Clock },
+  { name: 'Settings', label: 'SETTINGS', icon: Settings },
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -56,10 +57,10 @@ export default function Layout({ children, currentPageName }) {
             })}
           </nav>
           <div className="px-5 py-4 border-t" style={{ borderColor: COLORS.border }}>
-            <button className="flex items-center gap-3 text-[10px] tracking-[0.15em] uppercase" style={{ color: COLORS.textTertiary }}>
+            <Link to="/Settings" className="flex items-center gap-3 text-[10px] tracking-[0.15em] uppercase" style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textTertiary }}>
               <Settings size={14} strokeWidth={1.5} />
               <span>SETTINGS</span>
-            </button>
+            </Link>
           </div>
         </aside>
 

@@ -9,6 +9,7 @@ import { useCameraStream }       from './live/useCameraStream';
 import { usePoseRuntime }        from './live/usePoseRuntime';
 import { usePoseInferenceLoop }  from './live/usePoseInferenceLoop';
 import { useVideoRecorder }      from './live/useVideoRecorder';
+import { useGeminiCoach }        from './ai/useGeminiCoach';
 import SessionReadinessGate      from './live/SessionReadinessGate';
 import LiveSessionHUD            from './live/LiveSessionHUD';
 import PoseErrorCard             from './live/PoseErrorCard';
@@ -37,6 +38,10 @@ export default function CameraView({ exercise, onStop }) {
   const [liveJointResults, setLiveJointResults] = useState([]);
   const [liveFormScore, setLiveFormScore] = useState(100);
   const [isSecure, setIsSecure] = useState(window.isSecureContext || false);
+  const [geminiCue, setGeminiCue] = useState(null);
+  const geminiCueShownAtRef = useRef(null);
+  const lastGeminiCueTextRef = useRef(null);
+  const prevRepCountRef = useRef(0);
 
   // Camera facing mode — persisted to localStorage
   const [cameraFacing, setCameraFacing] = useState(() => {
@@ -44,6 +49,9 @@ export default function CameraView({ exercise, onStop }) {
   });
   
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
+
+  // ── Gemini coach ──────────────────────────────────────────────────────────
+  const { getLiveCue } = useGeminiCoach();
 
   // ── Video recorder ────────────────────────────────────────────────────────
   const { startRecording, finalizeRecording } = useVideoRecorder();
@@ -263,6 +271,53 @@ export default function CameraView({ exercise, onStop }) {
       recordingMimeType,
     });
   }, [stopSession, repCount, formScore, onStop, exercise, finalizeRecording]);
+
+  // ── Gemini live cue: fire after each rep ─────────────────────────────────
+  useEffect(() => {
+    if (repCount <= prevRepCountRef.current) return;
+    prevRepCountRef.current = repCount;
+
+    // Only fire if deterministic cue is absent or has been shown >4s
+    const cueIsStale = !activeCue || (geminiCueShownAtRef.current && Date.now() - geminiCueShownAtRef.current > 4000);
+    if (!cueIsStale) return;
+
+    const faults = frameRef.current?.faults ?? [];
+    if (!faults.length) return; // only fetch when there's a fault to report
+
+    const payload = {
+      exercise:       exercise.id,
+      rep:            repCount,
+      phase:          frameRef.current?.phase ?? null,
+      knee_angle:     frameRef.current?.angles?.kneeL ?? null,
+      hip_angle:      frameRef.current?.angles?.hipL ?? null,
+      torso_angle:    frameRef.current?.angles?.torso ?? null,
+      symmetry_score: null,
+      depth_reached:  null,
+      active_faults:  faults,
+      form_score:     liveFormScore,
+      rep_velocity:   'normal',
+      fatigue_index:  1 - (liveFormScore / 100),
+    };
+
+    getLiveCue(payload).then(result => {
+      if (!result || result.confidence < 0.7) return;
+      if (result.cue === lastGeminiCueTextRef.current) return;
+      lastGeminiCueTextRef.current = result.cue;
+      setGeminiCue(result.cue);
+      geminiCueShownAtRef.current = Date.now();
+
+      // Audio cue via speech synthesis if enabled
+      if (localStorage.getItem('formwise_ai_audio') === 'true' && window.speechSynthesis) {
+        const utt = new SpeechSynthesisUtterance(result.cue);
+        utt.rate = 1.1;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utt);
+      }
+
+      // Auto-hide after 5s
+      setTimeout(() => setGeminiCue(null), 5000);
+    });
+  }, [repCount]);
 
   // ── Cleanup on unmount or phase change ───────────────────────────────────────
   useEffect(() => {
@@ -528,6 +583,23 @@ export default function CameraView({ exercise, onStop }) {
             <p className="text-sm font-bold tracking-wide uppercase"
               style={{ color: RED, fontFamily: "'DM Mono', monospace" }}>
               {activeCue.text}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Gemini AI cue banner ───────────────────────────────────────────── */}
+      {geminiCue && sessionActive && (
+        <div className="absolute left-4 right-4 z-50 flex justify-center pointer-events-none"
+          style={{ top: activeCue ? '10.5rem' : '8rem' }}>
+          <div className="px-4 py-2.5 rounded-xl border text-center max-w-xs"
+            style={{ background: 'rgba(201,168,76,0.08)', borderColor: `${GOLD}60`, backdropFilter: 'blur(8px)' }}>
+            <div className="flex items-center justify-center gap-1.5 mb-0.5">
+              <span className="text-[9px] font-bold tracking-[0.15em]" style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>✦ AI</span>
+            </div>
+            <p className="text-sm font-bold tracking-wide uppercase"
+              style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
+              {geminiCue}
             </p>
           </div>
         </div>

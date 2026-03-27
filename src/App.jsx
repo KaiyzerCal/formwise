@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import FreestyleSession from './pages/FreestyleSession';
 import TechniqueStudio from './components/bioneer/technique/studio/TechniqueStudio';
+import Settings from './pages/Settings';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -52,6 +53,12 @@ const AuthenticatedApp = () => {
       <Route path="/FreestyleSession" element={<FreestyleSession />} />
       {/* Technique Studio route (no layout) */}
       <Route path="/TechniqueStudio" element={<TechniqueStudio />} />
+      {/* Settings route */}
+      <Route path="/Settings" element={
+        <LayoutWrapper currentPageName="Settings">
+          <Settings />
+        </LayoutWrapper>
+      } />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

@@ -64,6 +64,10 @@ export function deleteSession(id) {
   writeAll(all);
 }
 
+export function clearAllSessions() {
+  writeAll([]);
+}
+
 export function getSessionsByMovement(movementId) {
   return readAll()
     .filter(s => s.movement_id === movementId)
