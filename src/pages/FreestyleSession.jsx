@@ -10,6 +10,7 @@ import FreestyleCameraView from '../components/bioneer/FreestyleCameraView';
 import FreestyleReplay from '../components/bioneer/history/FreestyleReplay';
 import { saveFreestyleSession } from '../components/bioneer/history/sessionStorage';
 import { SESSION_CATEGORIES } from '../components/bioneer/session/sessionTypes';
+import { saveSession as saveToCloud } from '../components/bioneer/data/unifiedSessionStore';
 
 const FREESTYLE_MODE = {
   id: 'freestyle',
@@ -66,6 +67,7 @@ export default function FreestyleSession() {
         throw new Error('Replay unavailable: session recording did not finalize correctly.');
       }
 
+      // Step 1: Save to IndexedDB (cache)
       await saveFreestyleSession({
         sessionId: recordedSession.sessionId,
         mode: recordedSession.mode,
@@ -76,6 +78,44 @@ export default function FreestyleSession() {
         angleFrames: recordedSession.angleFrames || [],
         cameraFacing: recordedSession.cameraFacing || 'environment',
       });
+
+      // Step 2: Sync to cloud (required for cross-device persistence)
+      // Build minimal FormSession payload for cloud
+      const cloudPayload = {
+        session_id: recordedSession.sessionId,
+        exercise_id: 'freestyle',
+        category: recordedSession.category || 'strength',
+        duration_seconds: recordedSession.duration || 0,
+        form_score_overall: 0,
+        movement_score: 0,
+        form_score_peak: 0,
+        form_score_lowest: 0,
+        reps_detected: 0,
+        rep_count: 0,
+        average_form_score: 0,
+        highest_form_score: 0,
+        lowest_form_score: 0,
+        mastery_avg: 0,
+        alerts: [],
+        phases: {},
+        form_timeline: [],
+        top_faults: [],
+        risk_flags: [],
+        body_side_bias: 'balanced',
+        tracking_confidence: 0,
+        session_status: 'complete',
+        started_at: new Date().toISOString(),
+        movement_id: 'freestyle',
+        movement_name: 'Freestyle',
+      };
+
+      // Push to cloud (don't block on failure)
+      try {
+        await saveToCloud(cloudPayload);
+      } catch (cloudErr) {
+        console.warn('[FREESTYLE_CLOUD_SYNC_FAILED]', cloudErr.message);
+        // Silently continue — IndexedDB save succeeded
+      }
 
       // Reset to library after successful save
       setRecordedSession(null);

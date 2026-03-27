@@ -76,33 +76,48 @@ function toCloudPayload(session) {
 }
 
 function fromCloudRecord(record) {
-  // Convert base44 record → local canonical session shape
-  return {
-    session_id:          `cloud_${record.id}`,
-    _cloud_id:           record.id,
-    exercise_id:         record.exercise_id,
-    category:            record.category,
-    duration_seconds:    record.duration_seconds,
-    average_form_score:  record.average_form_score ?? record.form_score_overall ?? 0,
-    highest_form_score:  record.highest_form_score ?? record.form_score_peak ?? 0,
-    lowest_form_score:   record.lowest_form_score ?? record.form_score_lowest ?? 0,
-    movement_score:      record.movement_score ?? 0,
-    rep_count:           record.rep_count ?? record.reps_detected ?? 0,
-    reps_detected:       record.reps_detected ?? 0,
-    mastery_avg:         record.mastery_avg ?? 0,
-    alerts:              record.alerts ?? [],
-    phases:              record.phases ?? {},
-    form_timeline:       record.form_timeline ?? [],
-    top_faults:          record.top_faults ?? [],
-    risk_flags:          record.risk_flags ?? [],
-    body_side_bias:      record.body_side_bias ?? 'balanced',
-    tracking_confidence: record.tracking_confidence ?? 0,
-    session_status:      record.session_status ?? 'complete',
-    started_at:          record.started_at ?? record.created_date,
-    movement_id:         record.movement_id ?? record.exercise_id,
-    movement_name:       record.movement_name ?? record.exercise_id,
-    _source:             'cloud',
-  };
+   // Convert base44 record → local canonical session shape
+   return {
+     session_id:          record.id, // NO prefix — use cloud ID directly
+     _cloud_id:           record.id,
+     exercise_id:         record.exercise_id,
+     category:            record.category,
+     duration_seconds:    record.duration_seconds,
+     average_form_score:  record.average_form_score ?? record.form_score_overall ?? 0,
+     highest_form_score:  record.highest_form_score ?? record.form_score_peak ?? 0,
+     lowest_form_score:   record.lowest_form_score ?? record.form_score_lowest ?? 0,
+     movement_score:      record.movement_score ?? 0,
+     rep_count:           record.rep_count ?? record.reps_detected ?? 0,
+     reps_detected:       record.reps_detected ?? 0,
+     mastery_avg:         record.mastery_avg ?? 0,
+     alerts:              record.alerts ?? [],
+     phases:              record.phases ?? {},
+     form_timeline:       record.form_timeline ?? [],
+     top_faults:          record.top_faults ?? [],
+     risk_flags:          record.risk_flags ?? [],
+     body_side_bias:      record.body_side_bias ?? 'balanced',
+     tracking_confidence: record.tracking_confidence ?? 0,
+     session_status:      record.session_status ?? 'complete',
+     started_at:          record.started_at ?? record.created_date,
+     movement_id:         record.movement_id ?? record.exercise_id,
+     movement_name:       record.movement_name ?? record.exercise_id,
+     _source:             'cloud',
+   };
+}
+
+// Normalize session IDs — remove "cloud_" prefix for consistency
+function normalizeSession(session) {
+  if (!session) return session;
+  const normalized = { ...session };
+  // Remove cloud_ prefix if present
+  if (typeof normalized.session_id === 'string' && normalized.session_id.startsWith('cloud_')) {
+    normalized.session_id = normalized.session_id.substring(6);
+  }
+  // Ensure cloud_id is set
+  if (!normalized._cloud_id && normalized.session_id) {
+    normalized._cloud_id = normalized.session_id;
+  }
+  return normalized;
 }
 
 async function pushToCloud(session) {
@@ -119,15 +134,30 @@ async function pushToCloud(session) {
 // ── Core CRUD (same API as sessionStore.js) ───────────────────────────────────
 
 export function saveSession(session) {
-  if (!session?.session_id) return null;
-  const all = readAll();
-  const idx = all.findIndex(s => s.session_id === session.session_id);
-  if (idx >= 0) { all[idx] = session; } else { all.push(session); }
-  writeAll(all);
-  // Background cloud push — don't await
-  pushToCloud(session);
-  return session;
-}
+   if (!session?.session_id) {
+     console.warn('[SESSION_SAVE] Missing session_id');
+     return null;
+   }
+
+   // Normalize session ID
+   const normalized = normalizeSession(session);
+
+   console.log('[SESSION_SAVE_START]', { session_id: normalized.session_id, has_video: !!normalized.video_storage_key });
+
+   const all = readAll();
+   const idx = all.findIndex(s => s.session_id === normalized.session_id);
+   if (idx >= 0) { all[idx] = normalized; } else { all.push(normalized); }
+   writeAll(all);
+
+   // Background cloud push — don't await
+   pushToCloud(normalized).then(() => {
+     console.log('[SESSION_SAVE_SUCCESS]', { session_id: normalized.session_id });
+   }).catch(err => {
+     console.warn('[SESSION_SAVE_FAILED]', { session_id: normalized.session_id, error: err.message });
+   });
+
+   return normalized;
+ }
 
 export function getAllSessions() {
   return readAll().sort((a, b) =>
@@ -224,25 +254,27 @@ export function getAggregateStats() {
  * Returns count of net-new sessions added.
  */
 export async function syncFromCloud(limit = 50) {
-  emit('syncing');
-  try {
-    const cloudRecords = await base44.entities.FormSession.list('-started_at', limit);
-    const local = readAll();
-    const localIds = new Set(local.map(s => s._cloud_id).filter(Boolean));
+   emit('syncing');
+   try {
+     const cloudRecords = await base44.entities.FormSession.list('-started_at', limit);
+     const local = readAll().map(normalizeSession); // Normalize existing local sessions
+     const localIds = new Set(local.map(s => s._cloud_id || s.session_id).filter(Boolean));
 
-    let added = 0;
-    cloudRecords.forEach(record => {
-      if (!localIds.has(record.id)) {
-        local.push(fromCloudRecord(record));
-        added++;
-      }
-    });
+     let added = 0;
+     cloudRecords.forEach(record => {
+       if (!localIds.has(record.id)) {
+         const normalized = normalizeSession(fromCloudRecord(record));
+         local.push(normalized);
+         console.log('[SESSION_HYDRATE_MERGE]', { cloud_id: record.id, source: 'new' });
+         added++;
+       }
+     });
 
-    if (added > 0) writeAll(local);
-    emit('synced');
-    return added;
-  } catch {
-    emit('offline');
-    return 0;
-  }
-}
+     if (added > 0) writeAll(local);
+     emit('synced');
+     return added;
+   } catch {
+     emit('offline');
+     return 0;
+   }
+ }

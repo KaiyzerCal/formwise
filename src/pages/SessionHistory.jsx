@@ -105,26 +105,39 @@ export default function SessionHistory() {
   }, []);
 
   const sessions = useMemo(() => localSessions.map(adaptSession), [localSessions]);
-  
-  // Combine exercise and freestyle sessions
-  const allSessions = [
-    ...sessions,
-    ...freestyleSessions.map(fs => ({
-      id: fs.sessionId,
-      exercise: 'Freestyle Capture',
-      category: fs.category || 'freestyle',
-      date: fs.createdAt ? new Date(fs.createdAt).toLocaleDateString() : '—',
-      time: fs.createdAt ? new Date(fs.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
-      duration: fs.duration || 0,
-      reps: 0,
-      score: 0,
-      topFault: '—',
-      repScores: [],
-      insights: [],
-      _freestyle: true,
-      _freestyleData: fs,
-    })),
-  ];
+
+  // Deduplicate by cloud_id (merge local + cloud + freestyle)
+  const sessionMap = new Map(); // Key: cloud_id or session_id
+
+  // Add exercise sessions
+  sessions.forEach(s => {
+    const key = s._rawSession?._cloud_id || s.id;
+    sessionMap.set(key, s);
+  });
+
+  // Add freestyle sessions
+  freestyleSessions.forEach(fs => {
+    const key = fs.sessionId;
+    if (!sessionMap.has(key)) {
+      sessionMap.set(key, {
+        id: fs.sessionId,
+        exercise: 'Freestyle Capture',
+        category: fs.category || 'freestyle',
+        date: fs.createdAt ? new Date(fs.createdAt).toLocaleDateString() : '—',
+        time: fs.createdAt ? new Date(fs.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
+        duration: fs.duration || 0,
+        reps: 0,
+        score: 0,
+        topFault: '—',
+        repScores: [],
+        insights: [],
+        _freestyle: true,
+        _freestyleData: fs,
+      });
+    }
+  });
+
+  const allSessions = Array.from(sessionMap.values());
 
   const totalReps = sessions.reduce((a, s) => a + s.reps, 0);
   const totalTime = allSessions.reduce((a, s) => a + s.duration, 0);

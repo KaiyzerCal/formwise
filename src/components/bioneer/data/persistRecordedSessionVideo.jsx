@@ -37,32 +37,36 @@ export function getBestMimeType() {
  * @returns {Promise<{videoBlob, videoSrc, mimeType, storageKey} | null>}
  */
 export async function persistRecordedSessionVideo({ recordedChunks, mimeType, sessionId }) {
-  if (!Array.isArray(recordedChunks) || recordedChunks.length === 0) {
-    console.warn('[persistVideo] No recorded chunks to persist');
-    return null;
-  }
-  if (!sessionId) {
-    console.warn('[persistVideo] sessionId is required');
-    return null;
-  }
+   if (!Array.isArray(recordedChunks) || recordedChunks.length === 0) {
+     console.warn('[persistVideo] No recorded chunks to persist');
+     console.log('[SESSION_INCOMPLETE] Missing video chunks');
+     return null;
+   }
+   if (!sessionId) {
+     console.warn('[persistVideo] sessionId is required');
+     console.log('[SESSION_INCOMPLETE] Missing sessionId');
+     return null;
+   }
 
-  const safeMime    = mimeType || getBestMimeType();
-  const videoBlob   = new Blob(recordedChunks, { type: safeMime });
+   const safeMime    = mimeType || getBestMimeType();
+   const videoBlob   = new Blob(recordedChunks, { type: safeMime });
 
-  if (videoBlob.size === 0) {
-    console.warn('[persistVideo] Blob is empty after building');
-    return null;
-  }
+   if (videoBlob.size === 0) {
+     console.warn('[persistVideo] Blob is empty after building');
+     console.log('[SESSION_INCOMPLETE] Empty video blob');
+     return null;
+   }
 
-  const videoSrc    = URL.createObjectURL(videoBlob);
-  const storageKey  = sessionId;
+   const videoSrc    = URL.createObjectURL(videoBlob);
+   const storageKey  = sessionId;
 
-  try {
-    await saveSessionVideoBlob(sessionId, videoBlob, safeMime);
-  } catch (err) {
-    console.error('[persistVideo] Failed to persist to IndexedDB:', err);
-    // Still return blob/url — replay will work this session even without persistence
-  }
+   try {
+     await saveSessionVideoBlob(sessionId, videoBlob, safeMime);
+   } catch (err) {
+     console.error('[persistVideo] Failed to persist to IndexedDB:', err);
+     // Still return blob/url — replay will work this session even without persistence
+   }
 
-  return { videoBlob, videoSrc, mimeType: safeMime, storageKey };
-}
+   console.log('[SESSION_VIDEO_PERSISTED]', { sessionId, size: videoBlob.size, mime: safeMime });
+   return { videoBlob, videoSrc, mimeType: safeMime, storageKey };
+ }
