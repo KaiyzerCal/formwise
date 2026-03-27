@@ -9,8 +9,6 @@ import { Flame, Trophy, Zap, Activity, ArrowRight, Play } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getAllSessions } from '../data/unifiedSessionStore';
 import { COLORS, FONT } from '../ui/DesignTokens';
-import { SPACING, MOTION } from '@/lib/spacingSystem';
-import { LogoMark } from '../ui/LogoMark';
 import { PremiumCard, StatCard, PrimaryButton, EmptyState } from '../ui/PremiumComponents';
 
 export default function HomeDashboard({ onStartSession }) {
@@ -58,62 +56,41 @@ export default function HomeDashboard({ onStartSession }) {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: COLORS.bg, fontFamily: FONT.mono }}>
-      {/* Header Section — Premium, minimal */}
+      {/* Header Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="border-b"
-        style={{
-          borderColor: COLORS.border,
-          padding: SPACING.xl,
-        }}
+        className="px-6 py-8 border-b space-y-6"
+        style={{ borderColor: COLORS.border }}
       >
-        {/* Logo + Tagline */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: SPACING.md,
-            marginBottom: SPACING.lg,
-          }}
-        >
-          <LogoMark size={40} color={COLORS.gold} />
-          <div style={{ flex: 1 }}>
-            <h1
-              style={{
-                fontSize: '20px',
-                fontWeight: '700',
-                letterSpacing: '0.15em',
-                color: COLORS.gold,
-                margin: 0,
-                textTransform: 'uppercase',
-              }}
-            >
-              BIONEER
-            </h1>
-            <p
-              style={{
-                fontSize: '10px',
-                color: COLORS.textTertiary,
-                letterSpacing: '0.08em',
-                margin: `${SPACING.xs} 0 0 0`,
-                textTransform: 'uppercase',
-              }}
-            >
-              Form Coaching System
-            </p>
-          </div>
-        </motion.div>
+        <div>
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-3xl font-bold tracking-[0.2em] uppercase"
+            style={{ color: COLORS.gold, fontFamily: FONT.heading }}
+          >
+            BIONEER
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="text-xs tracking-[0.1em] uppercase mt-2"
+            style={{ color: COLORS.textTertiary }}
+          >
+            Your AI-powered form coach
+          </motion.p>
+        </div>
 
-        {/* Primary CTA — Dominant, large, confident */}
+        {/* Primary CTA - Dominant placement */}
         <motion.div
           variants={itemVariants}
           initial="hidden"
           animate="visible"
+          className="pt-2"
         >
           <PrimaryButton onClick={onStartSession} icon={Play}>
             Start Workout
@@ -122,22 +99,17 @@ export default function HomeDashboard({ onStartSession }) {
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto" style={{ padding: SPACING.xl }}>
+      <div className="flex-1 overflow-y-auto px-6 py-6">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="max-w-4xl"
-          style={{ display: 'flex', flexDirection: 'column', gap: SPACING.xl }}
+          className="space-y-8 max-w-4xl"
         >
-          {/* Key Metrics Row — Visual Hierarchy */}
+          {/* Key Metrics Row */}
           <motion.div
             variants={itemVariants}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-              gap: SPACING.md,
-            }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
             <StatCard
               label="Streak"
@@ -185,20 +157,11 @@ export default function HomeDashboard({ onStartSession }) {
 
           {/* Recent Sessions */}
           {recentSessions.length > 0 && (
-            <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
-              <h3
-                style={{
-                  fontSize: '10px',
-                  fontWeight: '700',
-                  letterSpacing: '0.1em',
-                  color: COLORS.textTertiary,
-                  textTransform: 'uppercase',
-                  margin: 0,
-                }}
-              >
+            <motion.div variants={itemVariants} className="space-y-4">
+              <h3 className="text-xs font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.textTertiary }}>
                 Recent Activity
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
+              <div className="space-y-3">
                 {recentSessions.map((session, idx) => (
                   <motion.div
                     key={session.session_id}
@@ -206,36 +169,25 @@ export default function HomeDashboard({ onStartSession }) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 * (idx + 1) }}
                   >
-                    <PremiumCard onClick={() => {}} highlight={false}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.md }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontSize: '13px',
-                              fontWeight: '600',
-                              color: COLORS.textPrimary,
-                              marginBottom: SPACING.xs,
-                            }}
-                          >
+                    <PremiumCard className="p-4 hover:border-gold/50 cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1 flex-1">
+                          <div className="text-sm font-bold" style={{ color: COLORS.textPrimary }}>
                             {session.movement_name || 'Session'}
                           </div>
-                          <div style={{ fontSize: '10px', color: COLORS.textTertiary }}>
+                          <div className="text-[9px]" style={{ color: COLORS.textTertiary }}>
                             {new Date(session.started_at).toLocaleDateString()}
                           </div>
                         </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div className="text-right">
                           <motion.div
-                            style={{
-                              fontSize: '20px',
-                              fontWeight: '700',
-                              color: session.average_form_score >= 80 ? COLORS.correct : COLORS.warning,
-                              fontFamily: FONT.mono,
-                            }}
+                            className="text-xl font-bold"
+                            style={{ color: session.average_form_score >= 80 ? COLORS.correct : COLORS.warning }}
                           >
                             {Math.round(session.average_form_score)}
                           </motion.div>
-                          <div style={{ fontSize: '8px', color: COLORS.textTertiary, marginTop: SPACING.xs }}>
-                            FORM
+                          <div className="text-[8px]" style={{ color: COLORS.textTertiary }}>
+                            Form Score
                           </div>
                         </div>
                       </div>
@@ -254,48 +206,33 @@ export default function HomeDashboard({ onStartSession }) {
           )}
 
           {/* Quick Links */}
-          <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column', gap: SPACING.md }}>
-            <h3
-              style={{
-                fontSize: '10px',
-                fontWeight: '700',
-                letterSpacing: '0.1em',
-                color: COLORS.textTertiary,
-                textTransform: 'uppercase',
-                margin: 0,
-              }}
-            >
+          <motion.div variants={itemVariants} className="space-y-4">
+            <h3 className="text-xs font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.textTertiary }}>
               Explore
             </h3>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                gap: SPACING.md,
-              }}
-            >
-              <Link to="/Analytics" style={{ textDecoration: 'none' }}>
-                <PremiumCard onClick={() => {}}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
-                    <Zap size={20} color={COLORS.gold} strokeWidth={1.5} />
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: COLORS.textPrimary }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link to="/Analytics">
+                <PremiumCard className="h-full p-5 hover:border-gold/50">
+                  <div className="space-y-2">
+                    <Zap size={24} style={{ color: COLORS.gold }} />
+                    <div className="text-sm font-bold" style={{ color: COLORS.textPrimary }}>
                       Analytics
                     </div>
-                    <div style={{ fontSize: '10px', color: COLORS.textTertiary, lineHeight: '1.4' }}>
-                      Performance trends
+                    <div className="text-[9px]" style={{ color: COLORS.textTertiary }}>
+                      View performance trends
                     </div>
                   </div>
                 </PremiumCard>
               </Link>
 
-              <Link to="/Progress" style={{ textDecoration: 'none' }}>
-                <PremiumCard onClick={() => {}}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
-                    <Trophy size={20} color={COLORS.gold} strokeWidth={1.5} />
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: COLORS.textPrimary }}>
+              <Link to="/Progress">
+                <PremiumCard className="h-full p-5 hover:border-gold/50">
+                  <div className="space-y-2">
+                    <Trophy size={24} style={{ color: COLORS.gold }} />
+                    <div className="text-sm font-bold" style={{ color: COLORS.textPrimary }}>
                       Progress
                     </div>
-                    <div style={{ fontSize: '10px', color: COLORS.textTertiary, lineHeight: '1.4' }}>
+                    <div className="text-[9px]" style={{ color: COLORS.textTertiary }}>
                       Track improvements
                     </div>
                   </div>

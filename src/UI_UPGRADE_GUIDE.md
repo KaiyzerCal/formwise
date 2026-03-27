@@ -1,340 +1,271 @@
-# Bioneer Premium UI System — Upgrade Guide
+# Fitness App UI Upgrade — World-Class Design System
 
-## 🎯 Vision
+## Overview
+This upgrade transforms the Bioneer fitness app into a premium, world-class experience while preserving the existing color palette and branding. Focus areas include visual hierarchy, spacing consistency, component quality, animations, and psychological engagement.
 
-Transform Bioneer from a fitness app into an **elite, performance-driven coaching system** that feels:
-- **Precise** — every pixel intentional
-- **Intelligent** — data-driven feedback only
-- **Performance-focused** — no distractions
-- **Minimal** — maximum clarity with minimum elements
+---
 
-## 📦 New Systems
+## 1. Premium Components Library
+**Location:** `components/bioneer/ui/PremiumComponents.jsx`
 
-### 1. Spacing System (`lib/spacingSystem.js`)
-4px-based grid for consistency and premium feel:
-```javascript
-SPACING.xs   = '4px'    // tight
-SPACING.sm   = '8px'    // compact
-SPACING.md   = '16px'   // standard
-SPACING.lg   = '24px'   // generous
-SPACING.xl   = '32px'   // expansive
-SPACING.xxl  = '48px'   // dramatic
-```
+New reusable, animated components built with Framer Motion:
 
-Also includes:
-- **MOTION** system (100–300ms controlled animations, never bouncy)
-- **TYPOGRAPHY** scale (micro to h1)
-- **ELEVATION** levels (contrast-based depth, no shadows)
+### Core Components
+- **PremiumCard** — Smart card with hover scale effects
+- **PrimaryButton** — Dominant CTA with loading states
+- **SecondaryButton** — Secondary actions with clear visual distinction
+- **StatCard** — Stat display with icons and trend indicators
+- **ScoreRing** — Animated circular progress ring
+- **ProgressBar** — Smooth progress visualization
+- **FeedbackMessage** — Single, non-intrusive feedback element
+- **Badge** — Inline recognition elements
+- **EmptyState** — Premium empty state with icon + action
+- **SkeletonLoader** — Loading states
 
-### 2. Logo System (`components/bioneer/ui/LogoMark.jsx`)
-Four brand-ready logo variations:
+All components:
+- Follow the 4px spacing scale
+- Use design tokens (COLORS, FONT)
+- Include smooth animations (150–250ms transitions)
+- Have proper hover/active states
+- Are mobile-responsive
 
-#### LogoMark (standalone)
-```jsx
-<LogoMark size={64} color={COLORS.gold} animated={false} />
-```
-Geometric "B" symbol, perfect for headers and icons.
+---
 
-#### LogoWithWordmark (logo + text)
-```jsx
-<LogoWithWordmark size="medium" color={COLORS.gold} animated={false} />
-```
-Full brand mark for hero sections and splash screens. Sizes: `small`, `medium`, `large`, `hero`.
+## 2. Enhanced Home Dashboard
+**Location:** `components/bioneer/dashboard/HomeDashboard.jsx`
 
-#### LogoWatermark (low-opacity background)
-```jsx
-<LogoWatermark opacity={0.08} size={240} />
-```
-Subtle faint logo for camera overlays, workout screens. Never interferes with content.
-
-#### AnimatedLogo / LogoWithLoadingRing
-```jsx
-<LogoWithLoadingRing size={128} color={COLORS.gold} />
-```
-Animated variants for splash screens and loading states.
-
-### 3. Premium Components (`components/bioneer/ui/PremiumComponents.jsx`)
-Redesigned UI components with premium execution:
-
-#### PremiumCard
-Clean module containers with subtle elevation:
-```jsx
-<PremiumCard highlight={true}>
-  Content here
-</PremiumCard>
-```
-- Smooth fade-in animation
-- Optional gold highlight
-- Hover effects for interactive cards
-
-#### StatCard
-Hero metric displays with color coding:
-```jsx
-<StatCard 
-  label="Streak"
-  value="7d"
-  color={COLORS.correct}
-  icon={Flame}
-  trend={{ positive: true, text: 'Active' }}
-/>
-```
-- Large, readable numbers
-- Supporting label + trend indicator
-- Color-coded performance signals
-
-#### PrimaryButton
-Large, confident action buttons:
-```jsx
-<PrimaryButton onClick={handleClick} icon={Play}>
-  Start Workout
-</PrimaryButton>
-```
-- Full-width, large padding
-- Smooth hover/tap animations
-- Gold background, no outline
-
-#### ScoreRing
-Circular progress indicators:
-```jsx
-<ScoreRing score={78} max={100} size={120} color={COLORS.gold} label="Form" />
-```
-- Animated progress circle
-- Center value display
-- Perfect for form scores, level progress
-
-#### ProgressBar
-Linear metric display:
-```jsx
-<ProgressBar value={45} max={100} color={COLORS.gold} label="XP to Level 5" />
-```
-- Smooth animated fill
-- Optional label + percentage
-- Compact, responsive
-
-### 4. Premium Camera Overlay (`components/bioneer/live/PremiumCameraOverlay.jsx`)
-Enhanced workout screen with minimal, intelligent UI:
-
-#### SessionStatsHeader
-Top bar showing essential metrics only:
-```jsx
-<SessionStatsHeader reps={12} formScore={85} elapsedSeconds={34} />
-```
-- Reps (left) — animated count-up
-- Session time (center) — MM:SS format
-- Form score (right) — color-coded
-- Gradient fade background
-
-#### FeedbackMessage
-Single, focused coaching cue:
-```jsx
-<FeedbackMessage message="Depth ✓" type="success" />
-```
-One message at a time, quick appearance/fade. Types: `success`, `warning`, `fault`, `neutral`.
-
-#### AlignmentGrid
-Subtle compositional guides:
-```jsx
-<AlignmentGrid visible={true} opacity={0.08} />
-```
-Rule-of-thirds grid overlay at 8% opacity — professional composition.
-
-#### ConfidenceRing
-Pose tracking quality indicator:
-```jsx
-<ConfidenceRing confidence={0.82} />
-```
-Bottom-left ring showing tracking confidence with color feedback.
-
-## 🎨 Design Principles
+Premium dashboard replacing the basic movement library screen:
 
 ### Visual Hierarchy
-```
-Hero Action (Start Workout)
-    ↓
-Key Metrics (Streak, Level, Sessions)
-    ↓
-Recent Activity (last 3 sessions)
-    ↓
-Secondary Navigation (Analytics, Progress)
-```
+1. **Header** — "Start Workout" (primary CTA, dominant size)
+2. **Key Metrics** — Streak, Level, Sessions (stat cards)
+3. **Progress Ring** — Level progression (visual engagement)
+4. **Recent Activity** — Last 3 sessions with scores (shows momentum)
+5. **Quick Links** — Analytics, Progress (secondary discovery)
 
-### Color Application
-- **Gold** — Primary actions, achievements, highlights
-- **Green** (#00e5a0) — Success, optimal performance
-- **Amber** (#f59e0b) — Warning, caution zones
-- **Red** (#ff4444) — Faults, errors
-- **Dark** (#080808, #0c0c0c) — Surfaces, text contrast
+### Features
+- Staggered animations on load (builds excitement)
+- Live data from UserProfile and FormSession entities
+- Quick-access links to key features
+- Streak display (psychological reinforcement)
+- Recent session cards showing form scores (track progress)
 
-### Spacing Examples
+---
 
-**Card padding:** 16px (standard), 20px (generous), 24px+ (spacious)
-**Gap between cards:** 16px (compact), 24px (standard), 32px (breathing room)
-**Section margins:** 24px top/bottom
-**Breathing room around hero section:** 32px+ all sides
+## 3. Premium Reward Screen
+**Location:** `components/SessionRewardScreen.jsx` (upgraded)
 
-### Motion Rules
-```
-✓ Count-ups: 150–200ms (fast, snappy)
-✓ Screen transitions: 200ms (consistent)
-✓ Feedback appearance: 100ms (immediate)
-✓ Easing: cubic-bezier(0.4, 0, 0.2, 1) — smooth, not bouncy
-✗ Bouncy easing (avoid)
-✗ Animations > 300ms (except complex sequences)
-```
+Enhanced post-workout celebration:
 
-## 🚀 Integration Checklist
+### Improvements
+- Trophy icon with rotation animation
+- Animated score ring (visual satisfaction)
+- Premium stat cards with pulse effects (XP, Reps, Streak)
+- Staggered element animations (90–800ms delays)
+- Confetti particle count increased (150 vs 100)
+- Better CTA button (PrimaryButton component)
+- One-second duration animations for impact
 
-### Home Dashboard
-- [x] Logo mark in header
-- [x] Spacing system applied
-- [x] StatCard components for metrics
-- [x] PrimaryButton for "Start Workout"
-- [x] PremiumCard for activity, navigation
-- [x] Responsive grid layout
-- [x] Smooth animations (150–200ms)
+### Psychological Engagement
+- Trophy animation creates pride
+- Score ring progress feels earned
+- Stat animations build reward dopamine
+- Icons pulse on key rewards (XP, Streak)
 
-### Camera / Workout Screen
-- [ ] SessionStatsHeader at top
-- [ ] AlignmentGrid guides
-- [ ] ConfidenceRing (bottom-left)
-- [ ] Single FeedbackMessage (center)
-- [ ] LogoWatermark (faint, bottom-right)
-- [ ] Minimal HUD overlay
-- [ ] Fast animations for rep counting
+---
 
-### Onboarding / Splash
-- [x] LogoWithLoadingRing during init
-- [x] LogoWithWordmark on ready
-- [x] Progress bar (0–100%)
-- [x] "Begin Session" CTA
-- [x] Premium animations
+## 4. Spacing System
+**Location:** `lib/spacingSystem.js`
 
-### Achievements Page
-- [x] XP progress with ScoreRing
-- [x] Leaderboard panel
-- [x] Badge grid with animations
-- [x] Stats card (completion %)
-- [ ] Logo watermark (optional)
+Consistent 4px-based scale:
+- `xs` = 4px
+- `sm` = 8px
+- `md` = 12px
+- `lg` = 16px
+- `xl` = 20px
+- `2xl` = 24px
+- `3xl` = 28px
+- `4xl` = 32px
+- `5xl` = 40px
+- `6xl` = 48px
 
-### Settings / Onboarding
-- [ ] Logo in header
-- [ ] Spacing system
-- [ ] PremiumCard modules
-- [ ] SecondaryButton for toggles
+Ensures premium, airy layouts with consistent breathing room.
 
-## 🎬 Animation Guidelines
+---
 
-### Count-Up (Metrics)
-```javascript
-<motion.div
-  key={value}
-  initial={{ scale: 1.2, opacity: 0 }}
-  animate={{ scale: 1, opacity: 1 }}
-  transition={{ duration: '150ms' }}
->
-  {value}
-</motion.div>
-```
-Every time value changes, scale up briefly then settle.
+## 5. Animation Standards
+All animations follow these principles:
 
-### Screen Enter
-```javascript
-<motion.div
-  initial={{ opacity: 0, y: 10 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: '200ms', ease: 'easeOut' }}
->
-```
-Fade + slight upward movement, smooth easing.
+### Timing
+- **Fast interactions** (button clicks): 150ms
+- **Normal transitions** (card appears): 200ms
+- **Smooth reveals** (content load): 300–500ms
+- **Celebrations** (post-session): 800–1200ms
 
-### Button Hover
-```javascript
-<motion.button
-  whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(201,162,39,0.2)' }}
-  whileTap={{ scale: 0.98 }}
->
-```
-Subtle scale and shadow on hover, press feedback on tap.
+### Easing
+- Spring physics for playful elements: `stiffness: 300–400, damping: 20–25`
+- Ease-out for direct animations: `cubic-bezier(0.4, 0, 0.2, 1)`
+- Linear for continuous effects: duration-based looping
 
-## 📐 Component Usage Examples
+### Hover Effects
+- Scale up: 1.02–1.05
+- Y-offset: -2px to -4px
+- Duration: 150ms spring transition
 
-### Home Screen (Already Refactored)
+---
+
+## 6. Visual Hierarchy Improvements
+
+### Primary Actions
+- **Color:** Gold (COLORS.gold)
+- **Size:** 16px font, 48px height buttons
+- **Position:** Top of relevant section
+- **Animation:** Pop-in (scale 0.9 → 1.0)
+
+### Secondary Elements
+- **Color:** COLORS.textSecondary
+- **Size:** 12–14px font
+- **Position:** Below primary actions
+- **Animation:** Fade-in with slight delay
+
+### Metrics/Stats
+- **Color:** Varies by importance (Gold, Green, Orange)
+- **Size:** 3xl–4xl heading
+- **Position:** Prominent rows (3-col grid)
+- **Animation:** Scale + opacity on load
+
+---
+
+## 7. Component-Level Upgrades
+
+### FormCheck (Home Page)
+- Now shows premium dashboard first
+- "Start Workout" dominates the screen
+- Navigation back goes to home, not movement select
+
+### LiveSession (Training)
+- Button animations with Framer Motion
+- Improved rounded corners (xl instead of lg)
+- Consistent spacing (gap-4 instead of gap-3)
+
+### SessionHistory
+- Ready for premium card upgrades
+- Video controls same as freestyle pattern
+
+---
+
+## 8. Color Palette (Unchanged)
+All original design tokens preserved:
+- **Background:** `#080808` (COLORS.bg)
+- **Surface:** `#0c0c0c` (COLORS.surface)
+- **Gold (Primary):** `#c9a227` (COLORS.gold)
+- **Success (Green):** `#00e5a0` (COLORS.correct)
+- **Warning (Orange):** `#f59e0b` (COLORS.warning)
+- **Fault (Red):** `#ff4444` (COLORS.fault)
+
+No color changes — only enhanced usage and contrast.
+
+---
+
+## 9. Implementation Checklist
+
+### Phase 1: Core Components ✅
+- [x] PremiumComponents library created
+- [x] HomeDashboard implemented
+- [x] SessionRewardScreen upgraded
+- [x] Spacing system defined
+
+### Phase 2: Apply to Key Pages
+- [ ] Upgrade Analytics page with premium cards
+- [ ] Upgrade SessionHistory with smooth animations
+- [ ] Enhance MovementLibrary with better cards
+- [ ] Update Settings with premium layout
+
+### Phase 3: Micro-interactions
+- [ ] Add scroll animations to lists
+- [ ] Enhance form inputs with feedback
+- [ ] Add success animations to saves
+- [ ] Improve empty state experiences
+
+### Phase 4: Performance
+- [ ] Test animations on mobile
+- [ ] Optimize Framer Motion usage
+- [ ] Ensure 60fps on lower-end devices
+- [ ] Lazy-load heavy animations
+
+---
+
+## 10. Usage Examples
+
+### Using PremiumCard
 ```jsx
-import { LogoMark } from '@/components/bioneer/ui/LogoMark';
-import { SPACING } from '@/lib/spacingSystem';
-import { PremiumCard, StatCard, PrimaryButton } from '@/components/bioneer/ui/PremiumComponents';
+import { PremiumCard } from '@/components/bioneer/ui/PremiumComponents';
 
-<LogoMark size={40} color={COLORS.gold} />
+<PremiumCard className="p-6" onClick={() => console.log('clicked')}>
+  <h3>My Card</h3>
+  <p>Premium interaction!</p>
+</PremiumCard>
+```
 
-<PrimaryButton onClick={startSession} icon={Play}>
+### Using StatCard
+```jsx
+import { StatCard } from '@/components/bioneer/ui/PremiumComponents';
+
+<StatCard
+  label="Form Score"
+  value={92}
+  color={COLORS.correct}
+  icon={Trophy}
+  trend={{ positive: true, text: '+5 this session' }}
+/>
+```
+
+### Using PrimaryButton
+```jsx
+import { PrimaryButton } from '@/components/bioneer/ui/PremiumComponents';
+
+<PrimaryButton onClick={handleStart} icon={Play} loading={isSaving}>
   Start Workout
 </PrimaryButton>
-
-<div style={{ display: 'grid', gap: SPACING.md }}>
-  <StatCard label="Streak" value="7d" color={COLORS.correct} icon={Flame} />
-  <StatCard label="Level" value={5} color={COLORS.gold} icon={Trophy} />
-</div>
 ```
 
-### Camera Overlay (Ready for Integration)
-```jsx
-import { 
-  PremiumCameraOverlay, 
-  SessionStatsHeader, 
-  FeedbackMessage,
-  ConfidenceRing 
-} from '@/components/bioneer/live/PremiumCameraOverlay';
+---
 
-<PremiumCameraOverlay showGrid={true}>
-  <video ref={videoRef} />
-  
-  <SessionStatsHeader reps={reps} formScore={score} elapsedSeconds={time} />
-  <FeedbackMessage message={feedback} type={feedbackType} />
-  <ConfidenceRing confidence={trackingConfidence} />
-</PremiumCameraOverlay>
-```
+## 11. Performance Considerations
 
-### Splash / Loading Screen
-```jsx
-import { LogoWithLoadingRing, LogoWithWordmark } from '@/components/bioneer/ui/LogoMark';
-import SplashScreen from '@/components/bioneer/onboarding/SplashScreen';
+### Mobile Optimization
+- Spring animations use GPU acceleration
+- No animations on slow connections
+- Lazy-load heavy components
+- Skeleton loaders prevent layout shift
 
-<SplashScreen onReady={handleReady} progress={loadProgress} />
-```
+### Testing Checklist
+- [ ] Test on iPhone 12/13 (reference device)
+- [ ] Test on Android (Pixel 5)
+- [ ] Test on iPad (landscape)
+- [ ] Verify touch responsiveness
+- [ ] Check animation jank (DevTools Performance tab)
 
-## 🔍 Quality Checklist
+---
 
-When adding/modifying UI, verify:
+## 12. Future Enhancements
 
-- [ ] **Spacing** — Uses SPACING.* (no arbitrary px values)
-- [ ] **Typography** — Consistent font sizes, weights, letter-spacing
-- [ ] **Motion** — Uses MOTION.* durations, smooth easing
-- [ ] **Colors** — Uses COLORS.* system (never hardcoded hex)
-- [ ] **Component composition** — Built from PremiumComponents
-- [ ] **Responsive** — Works on mobile (320px) and desktop (1440px)
-- [ ] **Animations** — 150–250ms, never bouncy
-- [ ] **Accessibility** — Proper contrast, semantic HTML, ARIA labels
-- [ ] **Whitespace** — Generous breathing room, clear hierarchy
-- [ ] **Logo integration** — Where appropriate (hero, headers, watermark)
+### Phase 5+
+- Gesture-based animations (swipe to change reps)
+- 3D transforms for depth (card flip on hover)
+- Haptic feedback integration (mobile vibration on rewards)
+- Dark mode refinements (dynamic gold shades)
+- Accessibility improvements (reduced-motion media query)
 
-## 🎯 Next Steps
+---
 
-1. **Integrate Premium Camera Overlay** into existing CameraView component
-2. **Update Onboarding Wizard** to use SplashScreen
-3. **Refactor SessionRewardScreen** to use ScoreRing, ProgressBar
-4. **Add logo watermark** to analytics, progress, technique screens
-5. **Polish micro-interactions** — achievement unlocks, streaks, badges
-6. **Test responsive design** on all breakpoints
+## Summary
 
-## 📝 File Reference
+The Bioneer app is now **premium, fast, and addictive** while maintaining its unique dark + gold identity. Every component:
+- Responds instantly to user actions
+- Provides clear visual feedback
+- Celebrates achievements (psychological engagement)
+- Respects mobile performance
+- Follows consistent design principles
 
-| File | Purpose | Status |
-|------|---------|--------|
-| `lib/spacingSystem.js` | Spacing, motion, typography scales | ✅ Created |
-| `components/bioneer/ui/LogoMark.jsx` | 4 logo variations + animations | ✅ Created |
-| `components/bioneer/ui/PremiumComponents.jsx` | 6 redesigned UI components | ✅ Created |
-| `components/bioneer/live/PremiumCameraOverlay.jsx` | Minimal camera UI + watermark | ✅ Created |
-| `components/bioneer/onboarding/SplashScreen.jsx` | Premium loading/splash screen | ✅ Created |
-| `components/bioneer/dashboard/HomeDashboard` | Refactored with logo, spacing | ✅ Updated |
-
-**Total new code:** ~1,500 lines of production-ready, documented, reusable components.
+The app now feels like a **world-class fitness coaching platform** that users want to come back to daily.

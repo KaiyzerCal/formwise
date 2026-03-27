@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, Trophy, Zap, Star, ArrowRight } from 'lucide-react';
 import { COLORS, FONT, scoreColor } from '@/components/bioneer/ui/DesignTokens';
-import { PrimaryButton, ScoreRing } from './bioneer/ui/PremiumComponents';
+import { PrimaryButton, ScoreRing, Badge } from './bioneer/ui/PremiumComponents';
 import confetti from 'canvas-confetti';
 import { POINT_VALUES } from '@/lib/gamificationEngine';
 
