@@ -3,13 +3,16 @@
  * Includes timeline scrubber and playback controls
  */
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Play, Pause, X, Download } from 'lucide-react';
+import { Play, Pause, X, Download, Send } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { drawSkeleton } from '../canvasRenderer';
 import { computeJointAngles } from '../poseEngine';
 import { exportTechniqueVideo } from '../technique/studio/useTechniqueExporter';
+import { createTechniqueDraftFromFreestyleSession } from '../technique/techniqueConverter';
+import { useNavigate } from 'react-router-dom';
 
 export default function FreestyleReplay({ session, onClose }) {
+  const navigate = useNavigate();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const overlayCanvasRef = useRef(null);
@@ -21,6 +24,7 @@ export default function FreestyleReplay({ session, onClose }) {
   const [currentAngles, setCurrentAngles] = useState({});
   const [videoUrl, setVideoUrl] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [sending, setSending] = useState(false);
 
   if (!session) return null;
 
@@ -161,6 +165,20 @@ export default function FreestyleReplay({ session, onClose }) {
       alert('Export failed: ' + err.message);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleSendToTechnique = async () => {
+    setSending(true);
+    try {
+      const draft = await createTechniqueDraftFromFreestyleSession(session);
+      if (!draft || !draft.techniqueId) throw new Error('Draft creation failed');
+      navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
+    } catch (err) {
+      console.error('[FreestyleReplay] Failed to send to technique:', err);
+      alert('Failed to send to Technique Studio: ' + err.message);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -310,11 +328,36 @@ export default function FreestyleReplay({ session, onClose }) {
         </div>
 
         {/* Session metadata */}
-        <div className="flex items-center justify-between text-xs" style={{ color: COLORS.textTertiary }}>
-          <span>{session.category || 'unknown'}</span>
-          <span>Recorded: {new Date(session.createdAt).toLocaleDateString()}</span>
+         <div className="flex items-center justify-between text-xs" style={{ color: COLORS.textTertiary }}>
+           <span>{session.category || 'unknown'}</span>
+           <span>Recorded: {new Date(session.createdAt).toLocaleDateString()}</span>
+         </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 pt-2">
+          <button
+            onClick={handleSendToTechnique}
+            disabled={sending}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded border text-[9px] font-bold tracking-[0.1em] uppercase transition-all"
+            style={{
+              borderColor: COLORS.goldBorder,
+              color: COLORS.gold,
+              background: COLORS.goldDim,
+              opacity: sending ? 0.6 : 1,
+            }}
+          >
+            <Send size={12} />
+            {sending ? 'SENDING...' : 'PROCEED TO CRITIQUE'}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 rounded border text-[9px] font-bold tracking-[0.1em] uppercase"
+            style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}
+          >
+            CLOSE
+          </button>
         </div>
-      </div>
-    </div>
-  );
-}
+        </div>
+        </div>
+        );
+        }

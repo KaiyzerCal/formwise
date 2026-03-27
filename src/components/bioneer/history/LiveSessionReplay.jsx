@@ -3,10 +3,12 @@
  * Uses actual recorded video from IndexedDB; skeleton overlay optional if poseFrames present.
  */
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Play, Pause, X, Eye, EyeOff } from 'lucide-react';
+import { Play, Pause, X, Eye, EyeOff, Send } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { getSessionVideoUrl } from '../data/liveVideoStorage';
 import { useVideoPose } from '../compare/useVideoPose';
+import { createTechniqueDraftFromLiveSession } from '../technique/techniqueConverter';
+import { useNavigate } from 'react-router-dom';
 
 // Skeleton rendering from VideoPanel
 const POSE_CONNECTIONS = [
@@ -64,6 +66,7 @@ function drawSkeleton(ctx, lm, w, h, accentColor) {
 }
 
 export default function LiveSessionReplay({ session, onClose }) {
+  const navigate = useNavigate();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -75,6 +78,7 @@ export default function LiveSessionReplay({ session, onClose }) {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);
   const [showSkeleton, setShowSkeleton] = useState(true);
+  const [sending, setSending]     = useState(false);
 
   // Pose detection
   const { landmarks } = useVideoPose({
@@ -192,6 +196,21 @@ export default function LiveSessionReplay({ session, onClose }) {
 
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
+  const handleSendToTechnique = async () => {
+    setSending(true);
+    try {
+      const enriched = { ...session, videoSrc: videoUrl || null };
+      const draft = await createTechniqueDraftFromLiveSession(enriched);
+      if (!draft || !draft.techniqueId) throw new Error('Draft creation failed');
+      navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);
+    } catch (err) {
+      console.error('[LiveSessionReplay] Failed to send to technique:', err);
+      alert('Failed to send to Technique Studio: ' + err.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col" style={{ fontFamily: FONT.mono }}>
       {/* Header */}
@@ -263,7 +282,7 @@ export default function LiveSessionReplay({ session, onClose }) {
             className="w-full h-1 rounded-lg bg-gray-700 cursor-pointer"
             style={{ accentColor: COLORS.gold }}
           />
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 mb-3">
             <div className="flex items-center gap-2">
               {isPlaying ? (
                 <button onClick={handlePause} className="p-2 rounded-lg hover:bg-white/10">
@@ -291,8 +310,33 @@ export default function LiveSessionReplay({ session, onClose }) {
               {fmt(currentTime)} / {fmt(duration)}
             </span>
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+           <button
+             onClick={handleSendToTechnique}
+             disabled={sending}
+             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded border text-[9px] font-bold tracking-[0.1em] uppercase transition-all"
+             style={{
+               borderColor: COLORS.goldBorder,
+               color: COLORS.gold,
+               background: COLORS.goldDim,
+               opacity: sending ? 0.6 : 1,
+             }}
+           >
+             <Send size={12} />
+             {sending ? 'SENDING...' : 'PROCEED TO CRITIQUE'}
+           </button>
+           <button
+             onClick={onClose}
+             className="px-4 py-2.5 rounded border text-[9px] font-bold tracking-[0.1em] uppercase"
+             style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}
+           >
+             CLOSE
+           </button>
+          </div>
+          </div>
+          )}
+          </div>
+          );
+          }
