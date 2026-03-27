@@ -3,18 +3,83 @@
  * Uses actual recorded video from IndexedDB; skeleton overlay optional if poseFrames present.
  */
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Play, Pause, X } from 'lucide-react';
+import { Play, Pause, X, Eye, EyeOff } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { getSessionVideoUrl } from '../data/liveVideoStorage';
+import { useVideoPose } from '../compare/useVideoPose';
+
+// Skeleton rendering from VideoPanel
+const POSE_CONNECTIONS = [
+  [11,12],[11,13],[13,15],[12,14],[14,16],  // shoulders/arms
+  [11,23],[12,24],[23,24],                   // torso
+  [23,25],[25,27],[24,26],[26,28],           // legs
+  [27,29],[27,31],[28,30],[28,32],           // ankles/feet
+];
+
+const KEY_JOINTS = new Set([11,12,13,14,15,16,23,24,25,26,27,28]);
+
+function drawSkeleton(ctx, lm, w, h, accentColor) {
+  if (!lm || !lm.length) return;
+  ctx.save();
+
+  // Connectors
+  POSE_CONNECTIONS.forEach(([a, b]) => {
+    const pa = lm[a], pb = lm[b];
+    if (!pa || !pb || pa.visibility < 0.3 || pb.visibility < 0.3) return;
+    const alpha = Math.min(pa.visibility, pb.visibility);
+    ctx.strokeStyle = `rgba(255,255,255,${(alpha * 0.65).toFixed(2)})`;
+    ctx.lineWidth   = 1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(pa.x * w, pa.y * h);
+    ctx.lineTo(pb.x * w, pb.y * h);
+    ctx.stroke();
+  });
+
+  // Joints
+  lm.forEach((p, i) => {
+    if (!p || p.visibility < 0.35) return;
+    const x = p.x * w, y = p.y * h;
+    const isKey = KEY_JOINTS.has(i);
+    const radius = isKey ? 5 : 3;
+    const color  = isKey ? accentColor : 'rgba(255,255,255,0.6)';
+
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = p.visibility;
+    ctx.fill();
+
+    if (isKey) {
+      ctx.beginPath();
+      ctx.arc(x, y, radius + 2.5, 0, Math.PI * 2);
+      ctx.strokeStyle = `${accentColor}60`;
+      ctx.lineWidth   = 1;
+      ctx.stroke();
+    }
+  });
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
 
 export default function LiveSessionReplay({ session, onClose }) {
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const containerRef = useRef(null);
   const [videoUrl, setVideoUrl]   = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration]   = useState(0);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);
+  const [showSkeleton, setShowSkeleton] = useState(true);
+
+  // Pose detection
+  const { landmarks } = useVideoPose({
+    videoRef, isPlaying, enabled: !!videoUrl, id: 'replay',
+  });
 
   // Prefer in-memory videoSrc (object URL already created), fallback to IndexedDB
   useEffect(() => {
@@ -77,6 +142,54 @@ export default function LiveSessionReplay({ session, onClose }) {
     setCurrentTime(t);
   }, []);
 
+  const syncCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    const el = containerRef.current;
+    if (!canvas || !el) return;
+    const { width, height } = el.getBoundingClientRect();
+    if (canvas.width !== Math.round(width) || canvas.height !== Math.round(height)) {
+      canvas.width = Math.round(width);
+      canvas.height = Math.round(height);
+    }
+  }, []);
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    syncCanvas();
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const { width: w, height: h } = canvas;
+
+    ctx.clearRect(0, 0, w, h);
+
+    if (landmarks && showSkeleton) {
+      drawSkeleton(ctx, landmarks, w, h, COLORS.gold);
+    }
+  }, [landmarks, showSkeleton, syncCanvas]);
+
+  // Canvas RAF loop
+  useEffect(() => {
+    const loop = () => {
+      draw();
+      if (isPlaying) rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [draw, isPlaying]);
+
+  // Redraw on landmark change
+  useEffect(() => { draw(); }, [landmarks, draw]);
+
+  // Resize observer
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => { syncCanvas(); draw(); });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [syncCanvas, draw]);
+
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
   return (
@@ -98,7 +211,7 @@ export default function LiveSessionReplay({ session, onClose }) {
       </div>
 
       {/* Video area */}
-      <div className="flex-1 relative overflow-hidden bg-black flex items-center justify-center">
+      <div ref={containerRef} className="flex-1 relative overflow-hidden bg-black flex items-center justify-center">
         {loading && (
           <div className="flex flex-col items-center gap-3">
             <div className="w-7 h-7 border-4 border-slate-600 border-t-yellow-400 rounded-full animate-spin" />
@@ -118,13 +231,15 @@ export default function LiveSessionReplay({ session, onClose }) {
             <video
               ref={videoRef}
               src={videoUrl}
-              className="w-full h-full object-contain"
+              className="absolute inset-0 w-full h-full object-contain"
               onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
               onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               playsInline
             />
+            {/* Skeleton overlay canvas */}
+            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
             {!isPlaying && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <button
@@ -149,7 +264,7 @@ export default function LiveSessionReplay({ session, onClose }) {
             style={{ accentColor: COLORS.gold }}
           />
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {isPlaying ? (
                 <button onClick={handlePause} className="p-2 rounded-lg hover:bg-white/10">
                   <Pause className="w-5 h-5" style={{ color: COLORS.gold }} />
@@ -159,6 +274,18 @@ export default function LiveSessionReplay({ session, onClose }) {
                   <Play className="w-5 h-5" style={{ color: COLORS.gold }} fill={COLORS.gold} />
                 </button>
               )}
+              <div className="w-px h-5" style={{ background: COLORS.border }} />
+              <button
+                onClick={() => setShowSkeleton(!showSkeleton)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                style={{ color: showSkeleton ? COLORS.gold : COLORS.textTertiary }}
+              >
+                {showSkeleton ? (
+                  <Eye className="w-5 h-5" />
+                ) : (
+                  <EyeOff className="w-5 h-5" />
+                )}
+              </button>
             </div>
             <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
               {fmt(currentTime)} / {fmt(duration)}
