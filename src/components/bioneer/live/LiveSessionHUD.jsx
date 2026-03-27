@@ -25,7 +25,7 @@ function Bar({ label, pct, color }) {
   );
 }
 
-export default function LiveSessionHUD({ confidence, visibleJoints, totalJoints = 33, startMs, delegate }) {
+export default function LiveSessionHUD({ confidence, visibleJoints, totalJoints = 33, startMs, delegate, delegateBadge }) {
   const confPct   = Math.round((confidence ?? 0) * 100);
   const jointsPct = Math.round(((visibleJoints ?? 0) / totalJoints) * 100);
   const confColor = confPct > 70 ? '#22C55E' : confPct > 45 ? '#EAB308' : '#EF4444';
@@ -54,10 +54,10 @@ export default function LiveSessionHUD({ confidence, visibleJoints, totalJoints 
       <Bar label="Joints"     pct={jointsPct} color={jtColor} />
 
       {/* Delegate badge */}
-      {delegate && (
+      {delegateBadge && (
         <div className="text-[8px] text-right tracking-widest uppercase"
           style={{ fontFamily: "'DM Mono', monospace", color: 'rgba(255,255,255,0.2)' }}>
-          {delegate}
+          DEL·{delegateBadge}
         </div>
       )}
     </div>

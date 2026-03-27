@@ -16,7 +16,7 @@ import PoseErrorCard             from './live/PoseErrorCard';
 import CameraToggle              from './CameraToggle';
 import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
-import { smoothLandmarks, computeJointAngles, computeFormScore } from './poseEngine';
+import { smoothLandmarks, computeJointAngles, computeFormScore, setPoseCategory } from './poseEngine';
 import { initAudio, destroyAudio, beep } from './audioEngine';
 import { TemporalFilterEngine } from './pipeline/TemporalFilterEngine';
 import { SystemHealthMonitor } from './pipeline/runtime/SystemHealthMonitor';
@@ -60,6 +60,8 @@ export default function CameraView({ exercise, onStop }) {
   const temporalFilterRef = useRef(null);
   useEffect(() => {
     temporalFilterRef.current = new TemporalFilterEngine(exercise.category || 'strength');
+    // Sync EMA alpha to exercise category
+    setPoseCategory(exercise.category || 'strength');
     return () => temporalFilterRef.current?.reset();
   }, [exercise.id, exercise.category]);
 
@@ -99,7 +101,7 @@ export default function CameraView({ exercise, onStop }) {
   }, [camState]);
 
   // ── Pose runtime ─────────────────────────────────────────────────────────
-  const { poseState, phase, poseError, delegate, landmarkerRef, retry } = usePoseRuntime();
+  const { poseState, phase, poseError, delegate, delegateBadge, landmarkerRef, retry } = usePoseRuntime();
   useEffect(() => { healthRef.current?.reportPose(poseState); }, [poseState]);
 
   // ── Audio ────────────────────────────────────────────────────────────────
@@ -192,13 +194,61 @@ export default function CameraView({ exercise, onStop }) {
     onResult: handleResult,
   });
 
-  // ── Readiness gate ────────────────────────────────────────────────────────
+  // ── Readiness gate — weighted visibility by exercise category ───────────
   const lm = poseResults?.poseLandmarks;
-  // FIX: Stricter thresholds — require stable tracking before allowing analysis start
   const visibleJoints = lm ? lm.filter(p => p.visibility > 0.5).length : 0;
   const avgConf       = lm ? lm.reduce((s, p) => s + p.visibility, 0) / lm.length : 0;
-  const bodyDetected  = visibleJoints >= 12;  // require 12+ joints visible for confidence
-  const confOk        = avgConf >= 0.5;       // require 50% average confidence (was 0.25)
+  const confOk        = avgConf >= 0.5;
+
+  // Weighted gate: check category-specific joints
+  const UPPER_JOINTS   = [11, 12, 13, 14, 15, 16]; // shoulders, elbows, wrists
+  const LOWER_JOINTS   = [23, 24, 25, 26, 27, 28]; // hips, knees, ankles
+  const UPPER_CATS     = ['bench', 'ohp', 'push', 'pull'];
+  const LOWER_CATS     = ['squat', 'deadlift', 'lunge', 'hinge'];
+  const cat            = (exercise.category || exercise.id || '').toLowerCase();
+  const isUpperFocus   = UPPER_CATS.some(k => cat.includes(k));
+  const isLowerFocus   = LOWER_CATS.some(k => cat.includes(k));
+
+  function jointsMissing(indices, threshold) {
+    if (!lm) return indices;
+    return indices.filter(i => !lm[i] || lm[i].visibility < threshold);
+  }
+
+  let bodyDetected = false;
+  let guidance = null;
+
+  if (lm) {
+    if (isUpperFocus) {
+      const missing = jointsMissing(UPPER_JOINTS, 0.6);
+      bodyDetected = missing.length === 0;
+      if (!bodyDetected) {
+        const hasWrist = [15, 16].some(i => missing.includes(i));
+        const hasElbow = [13, 14].some(i => missing.includes(i));
+        guidance = hasWrist ? 'Step back — we can\'t see your hands'
+          : hasElbow ? 'Move away from the wall — arm blocked'
+          : 'Ensure upper body is fully visible';
+      }
+    } else if (isLowerFocus) {
+      const missing = jointsMissing(LOWER_JOINTS, 0.6);
+      bodyDetected = missing.length === 0;
+      if (!bodyDetected) {
+        const hasFeet = [27, 28].some(i => missing.includes(i));
+        const hasKnee = [25, 26].some(i => missing.includes(i));
+        guidance = hasFeet ? 'Step back — we can\'t see your feet'
+          : hasKnee ? 'Step back — knees not visible'
+          : 'Ensure lower body is fully visible';
+      }
+    } else {
+      // Full body: 16+ joints > 0.5
+      bodyDetected = visibleJoints >= 16;
+      if (!bodyDetected) {
+        const missing = jointsMissing(LOWER_JOINTS.slice(-2), 0.5); // ankles
+        guidance = missing.length > 0 ? 'Step back — we can\'t see your feet'
+          : 'Step back so your full body is visible';
+      }
+    }
+    if (!guidance && !confOk) guidance = 'Step back — improve lighting';
+  }
 
   const readinessChecks = [
     { label: 'Camera active',     ok: camState === 'active' },
@@ -206,23 +256,15 @@ export default function CameraView({ exercise, onStop }) {
     { label: 'Full body visible', ok: bodyDetected },
     { label: 'Confidence stable', ok: confOk },
   ];
-  // All checks must pass for automatic readiness
-  const allReady = readinessChecks.every(c => c.ok) && bodyDetected && confOk;
+  const allReady = readinessChecks.every(c => c.ok);
 
   useEffect(() => {
     if (allReady && !sessionActive) setSessionActive(true);
   }, [allReady, sessionActive]);
 
-  // Manual override — let user force-start when pose is ready but body detection stalls
   const handleForceStart = useCallback(() => {
     if (poseState === 'ready') setSessionActive(true);
   }, [poseState]);
-
-  const guidance = !bodyDetected && poseState === 'ready'
-    ? 'Ensure your full body is visible'
-    : !confOk && bodyDetected
-    ? 'Step back — improve lighting'
-    : null;
 
   const formScore = liveFormScore;
 
@@ -552,6 +594,7 @@ export default function CameraView({ exercise, onStop }) {
           visibleJoints={visibleJoints}
           startMs={startTimeRef.current}
           delegate={delegate}
+          delegateBadge={delegateBadge}
         />
       )}
 

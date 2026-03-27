@@ -79,6 +79,15 @@ const AuthenticatedApp = () => {
 };
 
 
+// Prefetch WASM files into browser cache after page load (low priority)
+const WASM_FILES = [
+  'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_wasm_internal.js',
+  'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_wasm_internal.wasm',
+];
+if (typeof window !== 'undefined') {
+  setTimeout(() => WASM_FILES.forEach(url => fetch(url, { priority: 'low' }).catch(() => {})), 2000);
+}
+
 function App() {
 
   return (

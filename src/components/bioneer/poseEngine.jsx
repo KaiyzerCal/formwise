@@ -2,7 +2,16 @@
 // Handles landmark detection, smoothing, and angle calculation
 
 const CONFIDENCE_THRESHOLD = 0.65;
-const EMA_ALPHA = 0.4;
+
+// EMA smoothing: slower for strength (0.25), faster for athletic/sports (0.45)
+const EMA_ALPHA_STRENGTH = 0.25;
+const EMA_ALPHA_ATHLETIC = 0.45;
+
+let _emaAlpha = EMA_ALPHA_STRENGTH;
+
+export function setPoseCategory(category) {
+  _emaAlpha = (category === 'athletic' || category === 'sports') ? EMA_ALPHA_ATHLETIC : EMA_ALPHA_STRENGTH;
+}
 
 // Skeleton connections for rendering
 export const SKELETON_CONNECTIONS = [
@@ -60,13 +69,14 @@ export const STATE_COLORS = {
 
 export function smoothLandmarks(current, previous) {
   if (!previous) return current;
+  const a = _emaAlpha;
   return current.map((lm, i) => {
     const prev = previous[i];
     if (!prev) return lm;
     return {
-      x: EMA_ALPHA * lm.x + (1 - EMA_ALPHA) * prev.x,
-      y: EMA_ALPHA * lm.y + (1 - EMA_ALPHA) * prev.y,
-      z: EMA_ALPHA * (lm.z || 0) + (1 - EMA_ALPHA) * (prev.z || 0),
+      x: a * lm.x + (1 - a) * prev.x,
+      y: a * lm.y + (1 - a) * prev.y,
+      z: a * (lm.z || 0) + (1 - a) * (prev.z || 0),
       visibility: lm.visibility,
     };
   });

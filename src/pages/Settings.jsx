@@ -68,6 +68,7 @@ export default function Settings() {
   const [coachTone, setCoachTone] = useState(() => localStorage.getItem('formwise_coach_tone') || 'Direct');
   const [frontCamera, setFrontCamera] = useState(() => localStorage.getItem('bioneer_camera_facing') === 'user');
   const [trackingSensitivity, setTrackingSensitivity] = useState(() => localStorage.getItem('formwise_tracking_sensitivity') || 'Medium');
+  const [poseModel, setPoseModel] = useState(() => localStorage.getItem('bioneer_pose_model') || 'full');
   const [sessionCount, setSessionCount] = useState(0);
   const [keySaved, setKeySaved] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -82,6 +83,7 @@ export default function Settings() {
   useEffect(() => { localStorage.setItem('formwise_coach_tone', coachTone); }, [coachTone]);
   useEffect(() => { localStorage.setItem('bioneer_camera_facing', frontCamera ? 'user' : 'environment'); }, [frontCamera]);
   useEffect(() => { localStorage.setItem('formwise_tracking_sensitivity', trackingSensitivity); }, [trackingSensitivity]);
+  useEffect(() => { localStorage.setItem('bioneer_pose_model', poseModel); }, [poseModel]);
 
   const handleSaveKey = () => {
     localStorage.setItem('formwise_gemini_key', geminiKey.trim());
@@ -202,6 +204,19 @@ export default function Settings() {
           />
           <p className="text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
             Low = smoother response · High = faster, more reactive
+          </p>
+
+          <SelectRow
+            label="Tracking Quality"
+            value={poseModel}
+            options={['full', 'heavy', 'lite']}
+            onChange={setPoseModel}
+          />
+          <p className="text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+            Standard (full) · High Accuracy (heavy, slower) · Performance (lite, CPU)
+          </p>
+          <p className="text-[9px]" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
+            Takes effect on next session start
           </p>
         </Section>
 
