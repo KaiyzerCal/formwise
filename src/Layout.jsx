@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Menu, X, Medal } from "lucide-react";
+import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Menu, X, Medal, TrendingUp } from "lucide-react";
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
 import StreakWidget from "@/components/bioneer/ui/StreakWidget";
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { name: 'LiveSession',        labelKey: 'LIVE SESSION',  icon: Camera,     ariaLabel: 'Live Session — start form analysis' },
   { name: 'TechniqueCompare',   labelKey: 'TECHNIQUE',     icon: GitCompare,  ariaLabel: 'Technique — compare your form to reference' },
   { name: 'Analytics',          labelKey: 'ANALYTICS',     icon: BarChart3,   ariaLabel: 'Analytics — view performance trends' },
+  { name: 'Progress',           labelKey: 'PROGRESS',      icon: TrendingUp,  ariaLabel: 'Progress — long-term trends and milestones' },
   { name: 'MovementLibraryPage',labelKey: 'LIBRARY',       icon: BookOpen,    ariaLabel: 'Library — browse movement exercises' },
   { name: 'SessionHistory',     labelKey: 'HISTORY',       icon: Clock,       ariaLabel: 'History — past session records' },
   { name: 'Achievements',       labelKey: 'ACHIEVEMENTS',  icon: Medal,       ariaLabel: 'Achievements — earned milestones' },

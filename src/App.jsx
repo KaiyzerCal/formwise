@@ -14,6 +14,7 @@ import Landing from './pages/Landing';
 import PublicSession from './pages/PublicSession';
 import CoachPortal from './pages/CoachPortal';
 import Achievements from './pages/Achievements';
+import Progress from './pages/Progress';
 import ErrorBoundary from './lib/ErrorBoundary';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -78,6 +79,12 @@ const AuthenticatedApp = () => {
       <Route path="/Achievements" element={
         <LayoutWrapper currentPageName="Achievements">
           <ErrorBoundary section="Achievements"><Achievements /></ErrorBoundary>
+        </LayoutWrapper>
+      } />
+      {/* Progress */}
+      <Route path="/Progress" element={
+        <LayoutWrapper currentPageName="Progress">
+          <ErrorBoundary section="Progress"><Progress /></ErrorBoundary>
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
