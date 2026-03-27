@@ -363,6 +363,7 @@ export default function SessionHistory() {
                     const fatigueLabel = fatigue ? getFatigueLabel(fatigue.severity) : null;
                     const scoreDelta = adaptiveScoring ? (adaptiveScoring.adaptedScore ?? 0) - (adaptiveScoring.baseScore ?? session.score) : 0;
                     const topInsight = feedback?.insights?.[0] ?? null;
+                    const insightText = typeof topInsight === 'object' ? (topInsight?.message || topInsight?.actionable || '') : topInsight;
                     return (
                       <div className="rounded border p-3 space-y-2" style={{ background: 'rgba(201,168,76,0.04)', borderColor: COLORS.goldBorder }}>
                         <span className="text-[8px] tracking-[0.15em] uppercase font-bold" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>LEARNING</span>
@@ -386,8 +387,8 @@ export default function SessionHistory() {
                             </span>
                           )}
                         </div>
-                        {topInsight && (
-                          <p className="text-[9px] italic" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>{topInsight}</p>
+                        {insightText && (
+                          <p className="text-[9px] italic" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>{insightText}</p>
                         )}
                       </div>
                     );
