@@ -17,6 +17,7 @@ import Achievements from './pages/Achievements';
 import Progress from './pages/Progress';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import WorkoutPlans from './pages/WorkoutPlans';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -90,6 +91,11 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
       <Route path="/TermsOfService" element={<TermsOfService />} />
+      <Route path="/WorkoutPlans" element={
+        <LayoutWrapper currentPageName="WorkoutPlans">
+          <WorkoutPlans />
+        </LayoutWrapper>
+      } />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

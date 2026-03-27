@@ -1,0 +1,115 @@
+{
+  "name": "WorkoutPlan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the workout plan"
+    },
+    "goal": {
+      "type": "string",
+      "enum": [
+        "strength",
+        "aesthetics",
+        "confidence",
+        "health"
+      ],
+      "description": "Primary fitness goal"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "description": "Plan difficulty level"
+    },
+    "exercises": {
+      "type": "array",
+      "description": "List of exercises in the plan",
+      "items": {
+        "type": "object",
+        "properties": {
+          "exercise_id": {
+            "type": "string"
+          },
+          "exercise_name": {
+            "type": "string"
+          },
+          "target_reps": {
+            "type": "number"
+          },
+          "target_sets": {
+            "type": "number"
+          },
+          "focus_areas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific form areas to focus on"
+          },
+          "difficulty_level": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ]
+          }
+        }
+      }
+    },
+    "frequency_per_week": {
+      "type": "number",
+      "description": "How many times per week to perform this plan"
+    },
+    "duration_weeks": {
+      "type": "number",
+      "description": "Length of plan in weeks"
+    },
+    "completed_sessions": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of sessions completed"
+    },
+    "total_planned_sessions": {
+      "type": "number",
+      "description": "Total sessions planned (frequency \u00d7 duration)"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the plan was started"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "paused"
+      ],
+      "default": "active",
+      "description": "Current status of the plan"
+    },
+    "generated_from_analysis": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this was AI-generated from performance data"
+    },
+    "performance_notes": {
+      "type": "string",
+      "description": "Notes on performance improvements during plan"
+    }
+  },
+  "required": [
+    "name",
+    "goal",
+    "difficulty",
+    "exercises",
+    "frequency_per_week",
+    "duration_weeks",
+    "total_planned_sessions"
+  ]
+}
