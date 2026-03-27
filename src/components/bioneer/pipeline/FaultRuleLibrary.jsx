@@ -187,6 +187,50 @@ export const FaultRuleLibrary = {
     return r(hipRot > 0 && shrRot > hipRot * 1.1, CRITICAL, null, 'Let hips lead — delay shoulder turn');
   },
 
+  // ── NEW RULES ───────────────────────────────────────────────────────────────
+
+  buttWink(j, angles) {
+    if (!j.pelvis || !j.l_hip) return r(false, CRITICAL, null, 'Neutral pelvis at bottom');
+    const tuck = j.pelvis.y - j.l_hip.y;
+    return r(tuck < -0.04, CRITICAL, tuck, 'Stop before pelvis tucks under');
+  },
+
+  excessiveKneeTravelFwd(j, angles) {
+    if (!j.l_knee || !j.l_ankle) return r(false, MODERATE, null, 'Keep shin more vertical');
+    const travel = j.l_knee.x - j.l_ankle.x;
+    return r(travel < -0.12, MODERATE, travel, 'Drive knee back — more vertical shin');
+  },
+
+  barPathDrift(j, angles) {
+    if (!j.l_wrist || !j.l_ankle) return r(false, CRITICAL, null, 'Keep bar over mid-foot');
+    const drift = Math.abs(j.l_wrist.x - j.l_ankle.x);
+    return r(drift > 0.10, CRITICAL, drift, 'Bar stays over mid-foot — keep it close');
+  },
+
+  hipRiseBeforeChest(j, angles, velocities) {
+    if (!velocities?.l_hip || !velocities?.chest) return r(false, CRITICAL, null, 'Push floor away evenly');
+    const hipRising   = velocities.l_hip.y < -0.006;
+    const chestStatic = Math.abs(velocities.chest.y) < 0.002;
+    return r(hipRising && chestStatic, CRITICAL, null, 'Chest and hips rise together');
+  },
+
+  forwardHeadPosture(j, angles) {
+    if (!j.nose || !j.neck) return r(false, LOW, null, 'Head neutral');
+    const fwd = j.nose.x - j.neck.x;
+    return r(fwd > 0.10, LOW, fwd, 'Chin slightly back — neutral neck');
+  },
+
+  elbowFlaredOnPull(j, angles) {
+    if (!j.l_elbow || !j.l_shoulder || !j.l_wrist) return r(false, MODERATE, null, 'Elbows track back');
+    const elbowLat = Math.abs(j.l_elbow.x - j.l_shoulder.x);
+    return r(elbowLat > 0.16, MODERATE, elbowLat, 'Drive elbows back and down — not flared');
+  },
+
+  incompleteHipLockout(j, angles) {
+    const hip = angles?.hipHingeL ?? null;
+    return r(hip != null && hip < 165, MODERATE, hip, 'Squeeze glutes — fully extend at top');
+  },
+
   // ── BALANCE / STABILITY ─────────────────────────────────────────────────────
 
   lossOfBalance(j, angles) {
