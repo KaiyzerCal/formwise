@@ -42,10 +42,7 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Not authenticated — show landing
-  if (!isAuthenticated) {
-    return <Landing />;
-  }
+
 
   // Render the main app
   return (
