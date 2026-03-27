@@ -7,6 +7,7 @@ import CameraView from "../components/bioneer/CameraView";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import Disclaimer from "../components/bioneer/Disclaimer";
 import { createPageUrl } from "@/utils";
+import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
@@ -16,6 +17,7 @@ export default function FormCheck() {
   const [sessionData, setSessionData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const { processSessionLearning } = useSessionLearning();
 
   useEffect(() => {
     const accepted = localStorage.getItem(DISCLAIMER_KEY);
@@ -89,6 +91,15 @@ export default function FormCheck() {
 
     try {
       await base44.entities.FormSession.create(enrichedData);
+      // Non-blocking: run adaptive learning pipeline after save
+      processSessionLearning({
+        movement: enrichedData.movement_id,
+        reps: reps ?? [],
+        formScore: enrichedData.average_form_score,
+        faults: enrichedData.top_faults,
+        duration: enrichedData.duration_seconds,
+        repSummaries: sessionData?.rep_summaries ?? [],
+      }).catch(err => console.warn('[FormCheck] Learning pipeline error:', err));
     } catch (err) {
       console.warn('[FormCheck] Save error:', err);
     } finally {
