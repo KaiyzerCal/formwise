@@ -3,21 +3,21 @@
  */
 
 export const COLORS = {
-  bg: '#080808',
-  surface: '#0c0c0c',
-  surfaceHover: '#111111',
-  border: '#1a1a1a',
-  borderLight: '#252525',
+  bg: '#070707',
+  surface: '#0b0b0b',
+  surfaceHover: '#101010',
+  border: '#191919',
+  borderLight: '#242424',
   gold: '#c9a227',
-  goldDim: 'rgba(201,162,39,0.15)',
-  goldBorder: 'rgba(201,162,39,0.3)',
+  goldDim: 'rgba(201,162,39,0.12)',
+  goldBorder: 'rgba(201,162,39,0.25)',
   correct: '#00e5a0',
   warning: '#f59e0b',
   fault: '#ff4444',
   textPrimary: '#ffffff',
-  textSecondary: 'rgba(255,255,255,0.6)',
-  textTertiary: 'rgba(255,255,255,0.3)',
-  textMuted: 'rgba(255,255,255,0.15)',
+  textSecondary: 'rgba(255,255,255,0.65)',
+  textTertiary: 'rgba(255,255,255,0.35)',
+  textMuted: 'rgba(255,255,255,0.18)',
 };
 
 export const FONT_LINK = 'https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap';

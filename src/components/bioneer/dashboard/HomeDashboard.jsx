@@ -61,7 +61,7 @@ export default function HomeDashboard({ onStartSession }) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="px-6 py-8 border-b space-y-6"
+        className="px-6 py-7 border-b space-y-5"
         style={{ borderColor: COLORS.border }}
       >
         <div>
@@ -69,8 +69,8 @@ export default function HomeDashboard({ onStartSession }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="text-3xl font-bold tracking-[0.2em] uppercase"
-            style={{ color: COLORS.gold, fontFamily: FONT.heading }}
+            className="text-2xl font-bold tracking-[0.15em] uppercase"
+            style={{ color: COLORS.gold, fontFamily: FONT.heading, letterSpacing: '0.08em' }}
           >
             BIONEER
           </motion.h1>
@@ -78,10 +78,10 @@ export default function HomeDashboard({ onStartSession }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
-            className="text-xs tracking-[0.1em] uppercase mt-2"
+            className="text-[8px] tracking-[0.08em] uppercase mt-1.5 font-semibold"
             style={{ color: COLORS.textTertiary }}
           >
-            Your AI-powered form coach
+            Performance training system
           </motion.p>
         </div>
 
@@ -90,7 +90,7 @@ export default function HomeDashboard({ onStartSession }) {
           variants={itemVariants}
           initial="hidden"
           animate="visible"
-          className="pt-2"
+          className="pt-1"
         >
           <PrimaryButton onClick={onStartSession} icon={Play}>
             Start Workout
@@ -99,12 +99,12 @@ export default function HomeDashboard({ onStartSession }) {
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-5">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="space-y-8 max-w-4xl"
+          className="space-y-6 max-w-4xl"
         >
           {/* Key Metrics Row */}
           <motion.div
@@ -134,16 +134,16 @@ export default function HomeDashboard({ onStartSession }) {
 
           {/* Progress to Next Level */}
           <motion.div variants={itemVariants}>
-            <PremiumCard className="p-6 space-y-4">
+            <PremiumCard className="p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.textTertiary }}>
+                <span className="text-[8px] font-semibold tracking-[0.1em] uppercase" style={{ color: COLORS.textTertiary }}>
                   Progress to Level {nextLevel}
                 </span>
-                <span className="text-sm font-bold" style={{ color: COLORS.gold }}>
+                <span className="text-xs font-bold" style={{ color: COLORS.gold }}>
                   {Math.round(progressPercent)}%
                 </span>
               </div>
-              <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="w-full h-1.5 rounded-full bg-white/8 overflow-hidden border border-white/5">
                 <motion.div
                   className="h-full rounded-full"
                   style={{ background: COLORS.gold }}
@@ -157,11 +157,11 @@ export default function HomeDashboard({ onStartSession }) {
 
           {/* Recent Sessions */}
           {recentSessions.length > 0 && (
-            <motion.div variants={itemVariants} className="space-y-4">
-              <h3 className="text-xs font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.textTertiary }}>
+            <motion.div variants={itemVariants} className="space-y-3">
+              <h3 className="text-[8px] font-semibold tracking-[0.1em] uppercase" style={{ color: COLORS.textTertiary }}>
                 Recent Activity
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recentSessions.map((session, idx) => (
                   <motion.div
                     key={session.session_id}
@@ -169,24 +169,24 @@ export default function HomeDashboard({ onStartSession }) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 * (idx + 1) }}
                   >
-                    <PremiumCard className="p-4 hover:border-gold/50 cursor-pointer">
+                    <PremiumCard className="p-4 hover:border-gold/30 cursor-pointer transition-colors">
                       <div className="flex items-center justify-between">
-                        <div className="space-y-1 flex-1">
-                          <div className="text-sm font-bold" style={{ color: COLORS.textPrimary }}>
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <div className="text-xs font-semibold" style={{ color: COLORS.textPrimary }}>
                             {session.movement_name || 'Session'}
                           </div>
-                          <div className="text-[9px]" style={{ color: COLORS.textTertiary }}>
+                          <div className="text-[8px]" style={{ color: COLORS.textTertiary }}>
                             {new Date(session.started_at).toLocaleDateString()}
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right ml-4 flex-shrink-0">
                           <motion.div
-                            className="text-xl font-bold"
+                            className="text-lg font-bold"
                             style={{ color: session.average_form_score >= 80 ? COLORS.correct : COLORS.warning }}
                           >
                             {Math.round(session.average_form_score)}
                           </motion.div>
-                          <div className="text-[8px]" style={{ color: COLORS.textTertiary }}>
+                          <div className="text-[7px]" style={{ color: COLORS.textTertiary }}>
                             Form Score
                           </div>
                         </div>
@@ -197,43 +197,47 @@ export default function HomeDashboard({ onStartSession }) {
               </div>
               <Link
                 to="/SessionHistory"
-                className="inline-flex items-center gap-2 text-xs font-bold tracking-[0.1em] uppercase transition-all hover:translate-x-1"
+                className="inline-flex items-center gap-2 text-[8px] font-semibold tracking-[0.08em] uppercase transition-all hover:translate-x-1"
                 style={{ color: COLORS.gold }}
               >
-                View all sessions <ArrowRight size={14} />
+                View all sessions <ArrowRight size={12} />
               </Link>
             </motion.div>
           )}
 
           {/* Quick Links */}
-          <motion.div variants={itemVariants} className="space-y-4">
-            <h3 className="text-xs font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.textTertiary }}>
+          <motion.div variants={itemVariants} className="space-y-3">
+            <h3 className="text-[8px] font-semibold tracking-[0.1em] uppercase" style={{ color: COLORS.textTertiary }}>
               Explore
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Link to="/Analytics">
-                <PremiumCard className="h-full p-5 hover:border-gold/50">
-                  <div className="space-y-2">
-                    <Zap size={24} style={{ color: COLORS.gold }} />
-                    <div className="text-sm font-bold" style={{ color: COLORS.textPrimary }}>
-                      Analytics
-                    </div>
-                    <div className="text-[9px]" style={{ color: COLORS.textTertiary }}>
-                      View performance trends
+                <PremiumCard className="h-full p-5 hover:border-gold/30 transition-colors">
+                  <div className="space-y-3">
+                    <Zap size={20} style={{ color: COLORS.gold }} strokeWidth={1.5} />
+                    <div>
+                      <div className="text-xs font-semibold" style={{ color: COLORS.textPrimary }}>
+                        Analytics
+                      </div>
+                      <div className="text-[8px] mt-1" style={{ color: COLORS.textTertiary }}>
+                        View performance trends
+                      </div>
                     </div>
                   </div>
                 </PremiumCard>
               </Link>
 
               <Link to="/Progress">
-                <PremiumCard className="h-full p-5 hover:border-gold/50">
-                  <div className="space-y-2">
-                    <Trophy size={24} style={{ color: COLORS.gold }} />
-                    <div className="text-sm font-bold" style={{ color: COLORS.textPrimary }}>
-                      Progress
-                    </div>
-                    <div className="text-[9px]" style={{ color: COLORS.textTertiary }}>
-                      Track improvements
+                <PremiumCard className="h-full p-5 hover:border-gold/30 transition-colors">
+                  <div className="space-y-3">
+                    <Trophy size={20} style={{ color: COLORS.gold }} strokeWidth={1.5} />
+                    <div>
+                      <div className="text-xs font-semibold" style={{ color: COLORS.textPrimary }}>
+                        Progress
+                      </div>
+                      <div className="text-[8px] mt-1" style={{ color: COLORS.textTertiary }}>
+                        Track improvements
+                      </div>
                     </div>
                   </div>
                 </PremiumCard>

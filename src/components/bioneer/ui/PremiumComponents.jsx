@@ -11,13 +11,14 @@ export function PremiumCard({ children, onClick, className = '' }) {
   return (
     <motion.div
       onClick={onClick}
-      whileHover={{ scale: 1.02, y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className={`rounded-2xl border transition-all duration-200 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      whileHover={onClick ? { y: -1, boxShadow: '0 8px 16px rgba(0,0,0,0.2)' } : {}}
+      whileTap={onClick ? { scale: 0.995 } : {}}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className={`rounded-lg border transition-all duration-150 ${onClick ? 'cursor-pointer' : ''} ${className}`}
       style={{
         background: COLORS.surface,
         borderColor: COLORS.border,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       }}
     >
       {children}
@@ -31,24 +32,25 @@ export function PrimaryButton({ children, onClick, disabled = false, loading = f
     <motion.button
       onClick={onClick}
       disabled={disabled || loading}
-      whileHover={!disabled && !loading ? { scale: 1.05 } : {}}
-      whileTap={!disabled && !loading ? { scale: 0.95 } : {}}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm tracking-[0.1em] uppercase transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+      whileHover={!disabled && !loading ? { y: -1 } : {}}
+      whileTap={!disabled && !loading ? { y: 0 } : {}}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm tracking-[0.08em] uppercase transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
       style={{
         background: COLORS.gold,
         color: COLORS.bg,
         fontFamily: FONT.mono,
+        boxShadow: '0 4px 12px rgba(201,162,39,0.25)',
       }}
     >
       {loading && (
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-4 h-4 border-2 border-transparent border-t-current rounded-full"
+          transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+          className="w-3 h-3 border-2 border-transparent border-t-current rounded-full"
         />
       )}
-      {Icon && <Icon size={16} />}
+      {Icon && <Icon size={14} />}
       {children}
     </motion.button>
   );
@@ -60,18 +62,18 @@ export function SecondaryButton({ children, onClick, disabled = false, icon: Ico
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      whileHover={!disabled ? { scale: 1.05 } : {}}
-      whileTap={!disabled ? { scale: 0.95 } : {}}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm tracking-[0.1em] uppercase border transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+      whileHover={!disabled ? { backgroundColor: COLORS.goldDim } : {}}
+      whileTap={!disabled ? { y: 0 } : {}}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm tracking-[0.08em] uppercase border transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
       style={{
         background: 'transparent',
-        borderColor: COLORS.border,
+        borderColor: COLORS.goldBorder,
         color: COLORS.textSecondary,
         fontFamily: FONT.mono,
       }}
     >
-      {Icon && <Icon size={16} />}
+      {Icon && <Icon size={14} />}
       {children}
     </motion.button>
   );
@@ -80,26 +82,26 @@ export function SecondaryButton({ children, onClick, disabled = false, icon: Ico
 /* ==================== STAT CARD ==================== */
 export function StatCard({ label, value, color = COLORS.gold, icon: Icon, trend }) {
   return (
-    <PremiumCard className="p-6">
-      <div className="space-y-3">
+    <PremiumCard className="p-5">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] tracking-[0.15em] uppercase font-bold" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+          <span className="text-[9px] tracking-[0.12em] uppercase font-semibold" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono, letterSpacing: '0.05em' }}>
             {label}
           </span>
-          {Icon && <Icon size={18} style={{ color }} />}
+          {Icon && <Icon size={16} style={{ color, strokeWidth: 1.5 }} />}
         </div>
-        <div className="space-y-1">
+        <div className="space-y-2">
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="text-3xl font-bold"
+            transition={{ duration: 0.35 }}
+            className="text-4xl font-bold"
             style={{ color, fontFamily: FONT.heading }}
           >
             {value}
           </motion.div>
           {trend && (
-            <span className="text-[9px]" style={{ color: trend.positive ? COLORS.correct : COLORS.fault }}>
+            <span className="text-[8px] font-semibold" style={{ color: trend.positive ? COLORS.correct : COLORS.fault }}>
               {trend.positive ? '↑' : '↓'} {trend.text}
             </span>
           )}
@@ -150,24 +152,24 @@ export function ScoreRing({ score, size = 120 }) {
 /* ==================== PROGRESS BAR ==================== */
 export function ProgressBar({ value, label, color = COLORS.gold, animated = true }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {label && (
         <div className="flex items-center justify-between">
-          <span className="text-[9px] tracking-[0.1em] uppercase font-bold" style={{ color: COLORS.textTertiary }}>
+          <span className="text-[8px] tracking-[0.1em] uppercase font-semibold" style={{ color: COLORS.textTertiary }}>
             {label}
           </span>
-          <span className="text-[9px] font-bold" style={{ color: COLORS.textSecondary }}>
+          <span className="text-[8px] font-semibold" style={{ color: COLORS.textSecondary }}>
             {Math.round(value)}%
           </span>
         </div>
       )}
-      <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+      <div className="w-full h-1.5 rounded-full bg-white/8 overflow-hidden border border-white/5">
         <motion.div
           className="h-full rounded-full"
           style={{ background: color }}
           initial={{ width: 0 }}
           animate={{ width: `${value}%` }}
-          transition={animated ? { duration: 0.6, ease: 'easeOut' } : { duration: 0 }}
+          transition={animated ? { duration: 0.7, ease: 'easeOut' } : { duration: 0 }}
         />
       </div>
     </div>
@@ -228,18 +230,18 @@ export function SkeletonLoader({ count = 3, height = 80 }) {
 export function Badge({ label, color = COLORS.gold, icon: Icon }) {
   return (
     <motion.span
-      initial={{ scale: 0.9, opacity: 0 }}
+      initial={{ scale: 0.85, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-bold tracking-[0.1em] uppercase"
+      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[7px] font-semibold tracking-[0.08em] uppercase"
       style={{
-        background: `${color}20`,
-        borderColor: `${color}40`,
+        background: `${color}15`,
+        borderColor: `${color}30`,
         border: '1px solid',
         color,
         fontFamily: FONT.mono,
       }}
     >
-      {Icon && <Icon size={12} />}
+      {Icon && <Icon size={10} />}
       {label}
     </motion.span>
   );

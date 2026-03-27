@@ -30,15 +30,15 @@ export default function Achievements() {
       {/* Header */}
       <div className="px-5 py-4 border-b flex items-center justify-between flex-shrink-0"
         style={{ borderColor: COLORS.border }}>
-        <h1 className="text-xs font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.gold }}>
+        <h1 className="text-xs font-bold tracking-[0.12em] uppercase" style={{ color: COLORS.gold, letterSpacing: '0.05em' }}>
           Achievements
         </h1>
-        <span className="text-[9px] tracking-[0.1em] uppercase" style={{ color: COLORS.textTertiary }}>
+        <span className="text-[8px] tracking-[0.08em] uppercase font-semibold" style={{ color: COLORS.textTertiary }}>
           {earnedIds.size} / {ACHIEVEMENTS.length}
         </span>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-5 space-y-5">
         {/* XP Progress + Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <div className="lg:col-span-2">
@@ -56,7 +56,7 @@ export default function Achievements() {
         ) : (
           <>
             <div>
-              <h2 className="text-xs font-bold tracking-[0.15em] uppercase mb-3"
+              <h2 className="text-[8px] font-semibold tracking-[0.1em] uppercase mb-4"
                 style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
                 Earned Badges ({earnedIds.size})
               </h2>
@@ -66,34 +66,34 @@ export default function Achievements() {
                   const earnedRecord = earned.find(e => e.achievement_id === a.id);
                   return (
                     <motion.div key={a.id}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="rounded-lg border p-4 flex items-center gap-4"
+                      transition={{ delay: idx * 0.04 }}
+                      className="rounded-lg border p-4 flex items-center gap-3"
                       style={{
                         background: isEarned ? 'rgba(201,162,39,0.06)' : COLORS.surface,
                         borderColor: isEarned ? COLORS.goldBorder : COLORS.border,
-                        opacity: isEarned ? 1 : 0.45,
+                        opacity: isEarned ? 1 : 0.4,
                       }}>
-                      <span className="text-3xl flex-shrink-0" style={{ filter: isEarned ? 'none' : 'grayscale(1)' }}>
+                      <span className="text-2xl flex-shrink-0" style={{ filter: isEarned ? 'none' : 'grayscale(1) opacity(0.5)' }}>
                         {a.emoji}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold tracking-[0.08em]"
+                        <p className="text-[10px] font-semibold tracking-[0.07em]"
                           style={{ color: isEarned ? COLORS.gold : COLORS.textSecondary }}>
                           {a.title}
                         </p>
-                        <p className="text-[9px] mt-0.5 leading-relaxed" style={{ color: COLORS.textTertiary }}>
+                        <p className="text-[8px] mt-1 leading-relaxed" style={{ color: COLORS.textTertiary }}>
                           {a.desc}
                         </p>
                         {isEarned && earnedRecord?.earned_at && (
-                          <p className="text-[8px] mt-1" style={{ color: COLORS.textMuted }}>
+                          <p className="text-[7px] mt-1.5" style={{ color: COLORS.textMuted }}>
                             {new Date(earnedRecord.earned_at).toLocaleDateString()}
                           </p>
                         )}
                       </div>
                       {isEarned && (
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORS.gold }} />
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: COLORS.gold }} />
                       )}
                     </motion.div>
                   );
@@ -103,7 +103,7 @@ export default function Achievements() {
 
             {/* Leaderboard */}
             <div>
-              <h2 className="text-xs font-bold tracking-[0.15em] uppercase mb-3"
+              <h2 className="text-[8px] font-semibold tracking-[0.1em] uppercase mb-4"
                 style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
                 Global Rankings
               </h2>
@@ -119,26 +119,27 @@ export default function Achievements() {
 function StatsCard({ earned }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-lg border p-4 space-y-3"
+      className="rounded-lg border p-5 space-y-4"
       style={{
         background: COLORS.surface,
         borderColor: COLORS.border,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       }}
     >
-      <h3 className="text-[10px] font-bold tracking-[0.1em] uppercase"
+      <h3 className="text-[9px] font-semibold tracking-[0.1em] uppercase"
         style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
         Stats
       </h3>
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>Achievements</p>
-          <p className="text-sm font-bold" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>{earned.length}</p>
+          <p className="text-[8px] font-semibold" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>Achievements</p>
+          <p className="text-lg font-bold" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>{earned.length}</p>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>Completion</p>
-          <p className="text-sm font-bold" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
+          <p className="text-[8px] font-semibold" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>Completion</p>
+          <p className="text-lg font-bold" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
             {Math.round((earned.length / ACHIEVEMENTS.length) * 100)}%
           </p>
         </div>
