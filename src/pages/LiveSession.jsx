@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { getExerciseById } from "../components/bioneer/exerciseLibrary";
 import { getSportsMovementById } from "../components/bioneer/sportsLibrary";
 import CameraView from "../components/bioneer/CameraView";
@@ -18,16 +20,17 @@ import SessionRewardScreen from "@/components/SessionRewardScreen";
 import { recordSessionFaults, markResolvedFaults, generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
 
 export default function LiveSession() {
-  const [phase, setPhase] = useState("select");
-  const [selectedExercise, setSelectedExercise] = useState(null);
-  const [selectedMovementId, setSelectedMovementId] = useState(null);
-  const [sessionData, setSessionData] = useState(null);
-  const [savedSession, setSavedSession] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [showReward, setShowReward] = useState(false);
-  const sessionStartRef = useRef(null);
-  const rawDataRef = useRef(null); // holds rawData including recordedChunks
-  const { processSessionLearning } = useSessionLearning();
+   const navigate = useNavigate();
+   const [phase, setPhase] = useState("select");
+   const [selectedExercise, setSelectedExercise] = useState(null);
+   const [selectedMovementId, setSelectedMovementId] = useState(null);
+   const [sessionData, setSessionData] = useState(null);
+   const [savedSession, setSavedSession] = useState(null);
+   const [saving, setSaving] = useState(false);
+   const [showReward, setShowReward] = useState(false);
+   const sessionStartRef = useRef(null);
+   const rawDataRef = useRef(null); // holds rawData including recordedChunks
+   const { processSessionLearning } = useSessionLearning();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -178,6 +181,18 @@ export default function LiveSession() {
   // Select phase — movement library + movement profile selector
   return (
     <div className="flex flex-col h-screen" style={{ background: COLORS.bg }}>
+      {/* Back button */}
+      <div className="px-5 py-3 border-b" style={{ borderColor: COLORS.border }}>
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-[10px] tracking-[0.1em] uppercase transition-colors hover:opacity-80"
+          style={{ color: COLORS.gold, fontFamily: FONT.mono }}
+        >
+          <ArrowLeft size={14} />
+          Back to Dashboard
+        </button>
+      </div>
+
       <MovementLibrary
         selectedId={selectedExercise?.id}
         onSelect={handleStart}

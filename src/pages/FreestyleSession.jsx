@@ -3,6 +3,8 @@
  * Manages session lifecycle: camera → recording → history save
  */
 import React, { useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import MovementLibrary from '../components/bioneer/MovementLibrary';
 import FreestyleCameraView from '../components/bioneer/FreestyleCameraView';
 import FreestyleReplay from '../components/bioneer/history/FreestyleReplay';
@@ -16,11 +18,12 @@ const FREESTYLE_MODE = {
 };
 
 export default function FreestyleSession() {
-  const [phase, setPhase] = useState('select');
-  const [category, setCategory] = useState(SESSION_CATEGORIES.STRENGTH);
-  const [recordedSession, setRecordedSession] = useState(null);
-  const [saveError, setSaveError] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
+   const navigate = useNavigate();
+   const [phase, setPhase] = useState('select');
+   const [category, setCategory] = useState(SESSION_CATEGORIES.STRENGTH);
+   const [recordedSession, setRecordedSession] = useState(null);
+   const [saveError, setSaveError] = useState(null);
+   const [isSaving, setIsSaving] = useState(false);
 
   const handleSelectCategory = useCallback((categoryValue) => {
     setCategory(categoryValue);
@@ -101,6 +104,16 @@ export default function FreestyleSession() {
     return (
       <div className="min-h-screen bg-black text-white p-4">
         <div className="max-w-md mx-auto space-y-6 py-8">
+          {/* Back button */}
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-sm tracking-[0.1em] uppercase transition-colors hover:opacity-80"
+            style={{ color: '#C9A84C', fontFamily: "'DM Mono', monospace" }}
+          >
+            <ArrowLeft size={16} />
+            Back to Dashboard
+          </button>
+
           {/* Header */}
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold tracking-[0.2em] uppercase" style={{ fontFamily: "'DM Mono', monospace", color: '#C9A84C' }}>
