@@ -1,0 +1,165 @@
+{
+  "name": "FormSession",
+  "type": "object",
+  "properties": {
+    "exercise_id": {
+      "type": "string",
+      "description": "Exercise identifier (e.g. squat, golf_swing)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "strength",
+        "sports",
+        "athletic",
+        "rotational",
+        "locomotion"
+      ],
+      "default": "strength",
+      "description": "Movement category"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Total session duration in seconds"
+    },
+    "form_score_overall": {
+      "type": "number",
+      "description": "Overall form score 0-100"
+    },
+    "movement_score": {
+      "type": "number",
+      "description": "Weighted movement quality score 0-100"
+    },
+    "form_score_peak": {
+      "type": "number",
+      "description": "Highest form score during session"
+    },
+    "form_score_lowest": {
+      "type": "number",
+      "description": "Lowest form score during session"
+    },
+    "reps_detected": {
+      "type": "number",
+      "description": "Number of reps counted"
+    },
+    "rep_count": {
+      "type": "number",
+      "description": "Alias for reps_detected for analytics"
+    },
+    "average_form_score": {
+      "type": "number",
+      "description": "Average form score across session (for analytics)"
+    },
+    "highest_form_score": {
+      "type": "number",
+      "description": "Peak form score (for analytics)"
+    },
+    "lowest_form_score": {
+      "type": "number",
+      "description": "Lowest form score (for analytics)"
+    },
+    "mastery_avg": {
+      "type": "number",
+      "description": "Average mastery score from rep quality"
+    },
+    "alerts": {
+      "type": "array",
+      "description": "Form alerts triggered during session",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "number"
+          },
+          "joint": {
+            "type": "string"
+          },
+          "angle": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "phases": {
+      "type": "object",
+      "description": "Per-phase frame counts and average scores"
+    },
+    "form_timeline": {
+      "type": "array",
+      "description": "Form score over time for graphing",
+      "items": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "top_faults": {
+      "type": "array",
+      "description": "Most frequent faults in session",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk_flags": {
+      "type": "array",
+      "description": "Session risk indicators",
+      "items": {
+        "type": "string"
+      }
+    },
+    "body_side_bias": {
+      "type": "string",
+      "enum": [
+        "balanced",
+        "left",
+        "right"
+      ],
+      "description": "L/R asymmetry pattern"
+    },
+    "tracking_confidence": {
+      "type": "number",
+      "description": "Average pose tracking confidence 0-100"
+    },
+    "session_status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial"
+      ],
+      "default": "complete",
+      "description": "Session completion status"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when session started"
+    },
+    "movement_id": {
+      "type": "string",
+      "description": "Normalized movement identifier for analytics"
+    },
+    "movement_name": {
+      "type": "string",
+      "description": "Human-readable movement name"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Soft delete flag - true means session is marked for deletion"
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when session was soft-deleted"
+    }
+  },
+  "required": [
+    "exercise_id"
+  ]
+}

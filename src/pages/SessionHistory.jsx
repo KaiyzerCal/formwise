@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
-import { getAllSessions, syncFromCloud, deleteSession as deleteExerciseSession, clearAllSessions } from "../components/bioneer/data/unifiedSessionStore";
+import { getAllSessions, syncFromCloud, clearAllSessions } from "../components/bioneer/data/unifiedSessionStore";
 import toast from "react-hot-toast";
 import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl, clearAllFreestyleSessions } from "../components/bioneer/history/sessionStorage";
-import { deleteSessionVideoBlob } from "../components/bioneer/data/liveVideoStorage";
+import { deleteSessionPermanently, deleteSessionsPermanently } from "../components/bioneer/data/sessionDeletionService";
 import { getSessionVideoUrl } from "../components/bioneer/data/liveVideoStorage";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
@@ -164,12 +164,9 @@ export default function SessionHistory() {
   const handleDeleteExerciseSession = async (sessionId) => {
     setDeleting(sessionId);
     try {
-      // Delete from cloud and local storage
-      deleteExerciseSession(sessionId);
-      // Delete associated video from IndexedDB
-      await deleteSessionVideoBlob(sessionId);
+      await deleteSessionPermanently(sessionId);
       setLocalSessions(getAllSessions());
-      toast('Session deleted', {
+      toast('Session deleted permanently', {
         style: {
           background: '#1a1a1a',
           color: '#EF4444',
@@ -181,7 +178,18 @@ export default function SessionHistory() {
         duration: 2000,
       });
     } catch (error) {
-      console.error('Failed to delete exercise session:', error);
+      console.error('[SessionHistory] Delete failed:', error);
+      toast('Failed to delete session', {
+        style: {
+          background: '#1a1a1a',
+          color: '#EF4444',
+          border: '1px solid rgba(239,68,68,0.3)',
+          fontFamily: "'DM Mono', monospace",
+          fontSize: '11px',
+          letterSpacing: '0.05em',
+        },
+        duration: 2000,
+      });
     } finally {
       setDeleting(null);
     }
@@ -190,15 +198,17 @@ export default function SessionHistory() {
   const handleDeleteAllHistory = async () => {
     setDeleting('all');
     try {
-      clearAllSessions();
-      await clearAllFreestyleSessions();
-      // Delete all videos from IndexedDB
       const allSessions = getAllSessions();
-      await Promise.all(allSessions.map(s => deleteSessionVideoBlob(s.session_id)));
+      const sessionIds = allSessions.map(s => s.id || s.session_id);
+      
+      await deleteSessionsPermanently(sessionIds);
+      await clearAllFreestyleSessions();
+      
       setLocalSessions([]);
       setFreestyleSessions([]);
       setShowDeleteAllConfirm(false);
-      toast('All sessions deleted', {
+      
+      toast('All sessions deleted permanently', {
         style: {
           background: '#1a1a1a',
           color: '#EF4444',
@@ -210,7 +220,18 @@ export default function SessionHistory() {
         duration: 2000,
       });
     } catch (error) {
-      console.error('Failed to delete all sessions:', error);
+      console.error('[SessionHistory] Bulk delete failed:', error);
+      toast('Failed to delete some sessions', {
+        style: {
+          background: '#1a1a1a',
+          color: '#EF4444',
+          border: '1px solid rgba(239,68,68,0.3)',
+          fontFamily: "'DM Mono', monospace",
+          fontSize: '11px',
+          letterSpacing: '0.05em',
+        },
+        duration: 2000,
+      });
     } finally {
       setDeleting(null);
     }

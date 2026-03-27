@@ -160,9 +160,11 @@ export function saveSession(session) {
  }
 
 export function getAllSessions() {
-  return readAll().sort((a, b) =>
-    new Date(b.started_at || 0) - new Date(a.started_at || 0)
-  );
+  return readAll()
+    .filter(s => !s.is_deleted) // Filter out soft-deleted sessions
+    .sort((a, b) =>
+      new Date(b.started_at || 0) - new Date(a.started_at || 0)
+    );
 }
 
 export function getSessionById(id) {
@@ -257,11 +259,21 @@ export async function syncFromCloud(limit = 50) {
    emit('syncing');
    try {
      const cloudRecords = await base44.entities.FormSession.list('-started_at', limit);
-     const local = readAll().map(normalizeSession); // Normalize existing local sessions
+     const local = readAll().map(normalizeSession);
      const localIds = new Set(local.map(s => s._cloud_id || s.session_id).filter(Boolean));
 
      let added = 0;
      cloudRecords.forEach(record => {
+       // Skip deleted sessions from cloud
+       if (record.is_deleted === true) {
+         // If deleted locally but exists in memory, mark as deleted
+         const idx = local.findIndex(s => s._cloud_id === record.id || s.session_id === record.id);
+         if (idx >= 0) {
+           local.splice(idx, 1); // Remove from local if cloud says it's deleted
+         }
+         return;
+       }
+
        if (!localIds.has(record.id)) {
          const normalized = normalizeSession(fromCloudRecord(record));
          local.push(normalized);
@@ -270,7 +282,7 @@ export async function syncFromCloud(limit = 50) {
        }
      });
 
-     if (added > 0) writeAll(local);
+     if (added > 0 || cloudRecords.some(r => r.is_deleted)) writeAll(local);
      emit('synced');
      return added;
    } catch {
