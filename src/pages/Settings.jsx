@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
 import { getAllSessions, clearAllSessions } from '@/components/bioneer/data/sessionStore';
 import { getServerKeyStatus } from '@/components/bioneer/ai/GeminiCoach';
+import { useSubscription } from '@/lib/subscriptionGate';
+import { base44 } from '@/api/base44Client';
 
 function Section({ title, children }) {
   return (
@@ -62,7 +65,14 @@ function SelectRow({ label, value, options, onChange }) {
   );
 }
 
+const TIER_LABELS = { free: 'STARTER — FREE', pro: 'PRO — $9.99/MO', elite: 'ELITE — $19.99/MO' };
+const TIER_COLORS = { free: COLORS.textTertiary, pro: COLORS.gold, elite: '#c084fc' };
+
 export default function Settings() {
+  const navigate = useNavigate();
+  const { tier, isPro } = useSubscription();
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState(null);
   const [aiEnabled, setAiEnabled] = useState(() => localStorage.getItem('formwise_ai_enabled') !== 'false');
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('formwise_gemini_key') || '');
   const [aiAudio, setAiAudio] = useState(() => localStorage.getItem('formwise_ai_audio') === 'true');
@@ -124,6 +134,48 @@ export default function Settings() {
             Preferences & configuration
           </p>
         </div>
+
+        {/* Subscription */}
+        <Section title="Subscription">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] tracking-[0.08em]" style={{ color: COLORS.textPrimary, fontFamily: FONT.mono }}>Current Plan</p>
+            <span className="text-[10px] font-bold tracking-[0.1em] px-2 py-1 rounded border"
+              style={{ color: TIER_COLORS[tier] || COLORS.gold, borderColor: (TIER_COLORS[tier] || COLORS.gold) + '40', background: (TIER_COLORS[tier] || COLORS.gold) + '10', fontFamily: FONT.mono }}>
+              {TIER_LABELS[tier] || tier.toUpperCase()}
+            </span>
+          </div>
+
+          {!isPro ? (
+            <button onClick={() => navigate('/Paywall')}
+              className="w-full py-2.5 rounded text-[10px] font-bold tracking-[0.15em] uppercase"
+              style={{ background: COLORS.gold, color: '#000', fontFamily: FONT.mono }}>
+              UPGRADE PLAN
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <button
+                onClick={async () => {
+                  setPortalLoading(true); setPortalError(null);
+                  try {
+                    const res = await base44.functions.invoke('createStripeBillingPortal', {
+                      returnUrl: window.location.href,
+                    });
+                    if (res?.data?.url) window.open(res.data.url, '_blank');
+                    else setPortalError('Could not open billing portal.');
+                  } catch (e) { setPortalError(e?.message || 'Error'); }
+                  finally { setPortalLoading(false); }
+                }}
+                disabled={portalLoading}
+                className="w-full py-2.5 rounded border text-[10px] font-bold tracking-[0.15em] uppercase disabled:opacity-50"
+                style={{ borderColor: COLORS.goldBorder, color: COLORS.gold, fontFamily: FONT.mono }}>
+                {portalLoading ? 'LOADING...' : 'MANAGE BILLING'}
+              </button>
+              {portalError && (
+                <p className="text-[9px]" style={{ color: '#EF4444', fontFamily: FONT.mono }}>{portalError}</p>
+              )}
+            </div>
+          )}
+        </Section>
 
         {/* AI Coach */}
         <Section title="AI Coach">
