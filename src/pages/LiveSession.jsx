@@ -13,6 +13,8 @@ import MovementSelector from "../components/bioneer/movementProfiles/MovementSel
 import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
 import { checkAndAwardAchievements } from "@/lib/achievements";
+import { recordSession } from "@/lib/retentionEngine";
+import SessionRewardScreen from "@/components/SessionRewardScreen";
 
 export default function LiveSession() {
   const [phase, setPhase] = useState("select");
@@ -21,6 +23,7 @@ export default function LiveSession() {
   const [sessionData, setSessionData] = useState(null);
   const [savedSession, setSavedSession] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showReward, setShowReward] = useState(false);
   const sessionStartRef = useRef(null);
   const rawDataRef = useRef(null); // holds rawData including recordedChunks
   const { processSessionLearning } = useSessionLearning();
@@ -100,6 +103,22 @@ export default function LiveSession() {
       // Fire-and-forget: check achievements
       checkAndAwardAchievements().catch(() => {});
 
+      // Record session for streak/XP tracking
+      const user = await (async () => {
+        try {
+          const { base44 } = await import('@/api/base44Client');
+          return await base44.auth.me();
+        } catch {
+          return null;
+        }
+      })();
+      if (user) {
+        recordSession(user.email).catch(() => {});
+      }
+
+      // Show reward screen
+      setShowReward(true);
+
       // Fire-and-forget: fetch AI narrative and patch session async
       const sessionIdForNarrative = sessionWithVideo.session_id;
       getSessionNarrative(sessionWithVideo).then(narrative => {
@@ -109,9 +128,9 @@ export default function LiveSession() {
       console.error('[LiveSession] handleSave error:', err);
       // Still save metadata even if video persistence fails
       saveSession(savedSession);
+      setShowReward(true); // Show reward even on error
     } finally {
       setSaving(false);
-      handleDiscard();
     }
   };
 
@@ -121,8 +140,18 @@ export default function LiveSession() {
     setSelectedExercise(null);
     setSelectedMovementId(null);
     sessionStartRef.current = null;
+    setShowReward(false);
     setPhase("select");
   };
+
+  if (showReward && sessionData) {
+    return (
+      <SessionRewardScreen
+        sessionData={sessionData}
+        onClose={handleDiscard}
+      />
+    );
+  }
 
   if (phase === "camera" && selectedExercise) {
     return <CameraView exercise={selectedExercise} onStop={handleStop} />;

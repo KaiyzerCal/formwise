@@ -4,6 +4,7 @@ import { createPageUrl } from "@/utils";
 import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Menu, X, Medal } from "lucide-react";
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
+import StreakWidget from "@/components/bioneer/ui/StreakWidget";
 import { useT } from "@/lib/i18n";
 
 const NAV_ITEMS = [
@@ -61,6 +62,9 @@ export default function Layout({ children, currentPageName }) {
               );
             })}
           </nav>
+          <div className="border-t px-4 py-3" style={{ borderColor: COLORS.border }}>
+            <StreakWidget />
+          </div>
           <div className="border-t" style={{ borderColor: COLORS.border }}>
             <SyncStatusIndicator />
           </div>

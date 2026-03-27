@@ -1,0 +1,65 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "total_sessions": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of completed sessions"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Days in current workout streak"
+    },
+    "longest_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Longest streak ever achieved"
+    },
+    "last_session_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp of last completed session"
+    },
+    "xp_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Cumulative experience points"
+    },
+    "level": {
+      "type": "number",
+      "default": 1,
+      "description": "User level (1-50, based on XP)"
+    },
+    "push_notifications_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to send daily reminders"
+    },
+    "preferred_notification_time": {
+      "type": "string",
+      "description": "Time of day for reminders (HH:MM format)"
+    },
+    "goal": {
+      "type": "string",
+      "enum": [
+        "strength",
+        "aesthetics",
+        "confidence",
+        "health"
+      ],
+      "description": "User's primary fitness goal"
+    },
+    "experience_level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "description": "User's fitness experience level"
+    }
+  },
+  "required": []
+}
