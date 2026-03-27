@@ -392,33 +392,30 @@ export default function SessionHistory() {
                   })()}
 
                    {/* Video replay & technique buttons for live sessions */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {(session.hasVideo || liveVideoUrls[session.id]) && (
-                      <button
-                        onClick={() => setSelectedLiveReplay(session._rawSession)}
-                        className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border"
-                        style={{ borderColor: COLORS.goldBorder, color: COLORS.gold, background: COLORS.goldDim }}
-                      >
-                        <Play size={10} fill={COLORS.gold} />Replay
-                      </button>
-                    )}
-                    {(session.hasVideo || liveVideoUrls[session.id]) && (
-                      <button
-                        onClick={() => handleSendLiveToTechnique(session)}
-                        disabled={sending === session.id}
-                        className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border"
-                        style={{ borderColor: COLORS.goldBorder, color: COLORS.gold, background: COLORS.goldDim, opacity: sending === session.id ? 0.6 : 1 }}
-                      >
-                        <Send size={10} />{sending === session.id ? 'SENDING…' : 'Technique'}
-                      </button>
-                    )}
-                    <a href={createPageUrl('TechniqueCompare')} className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.1em] uppercase px-3 py-1.5 rounded border" style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>
-                      <BarChart3 size={10} />Compare
-                    </a>
-                  </div>
-                  {sendError && sending === session.id && (
-                    <div className="text-[9px] px-2 py-1.5 rounded bg-red-500/10 border border-red-500/30" style={{ color: '#EF4444' }}>{sendError}</div>
-                  )}
+                       <div className="flex items-center gap-2 flex-wrap">
+                         {(session.hasVideo || liveVideoUrls[session.id]) && (
+                           <button
+                             onClick={() => setSelectedLiveReplay(session._rawSession)}
+                             className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                             style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold }}
+                           >
+                             <Play size={10} fill={COLORS.gold} />Replay
+                           </button>
+                         )}
+                         {(session.hasVideo || liveVideoUrls[session.id]) && (
+                           <button
+                             onClick={() => handleSendLiveToTechnique(session)}
+                             disabled={sending === session.id}
+                             className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                             style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold, opacity: sending === session.id ? 0.6 : 1 }}
+                           >
+                             <Send size={10} />{sending === session.id ? 'Sending...' : 'Technique'}
+                           </button>
+                         )}
+                       </div>
+                       {sendError && sending === session.id && (
+                         <div className="text-[9px] px-2 py-1.5 rounded bg-red-500/10 border border-red-500/30" style={{ color: '#EF4444' }}>{sendError}</div>
+                       )}
                 </div>
               )}
 
