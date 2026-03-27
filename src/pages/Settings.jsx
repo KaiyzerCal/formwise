@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
 import { getAllSessions, clearAllSessions } from '@/components/bioneer/data/sessionStore';
+import { getServerKeyStatus } from '@/components/bioneer/ai/GeminiCoach';
 
 function Section({ title, children }) {
   return (
@@ -66,12 +67,14 @@ export default function Settings() {
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('formwise_gemini_key') || '');
   const [aiAudio, setAiAudio] = useState(() => localStorage.getItem('formwise_ai_audio') === 'true');
   const [coachTone, setCoachTone] = useState(() => localStorage.getItem('formwise_coach_tone') || 'Direct');
+  const [athleteLevel, setAthleteLevel] = useState(() => localStorage.getItem('formwise_athlete_level') || 'Intermediate');
   const [frontCamera, setFrontCamera] = useState(() => localStorage.getItem('bioneer_camera_facing') === 'user');
   const [trackingSensitivity, setTrackingSensitivity] = useState(() => localStorage.getItem('formwise_tracking_sensitivity') || 'Medium');
   const [poseModel, setPoseModel] = useState(() => localStorage.getItem('bioneer_pose_model') || 'full');
   const [sessionCount, setSessionCount] = useState(0);
   const [keySaved, setKeySaved] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const serverKeyStatus = getServerKeyStatus(); // null=unknown, true=active, false=unavailable
 
   useEffect(() => {
     setSessionCount(getAllSessions().length);
@@ -81,6 +84,7 @@ export default function Settings() {
   useEffect(() => { localStorage.setItem('formwise_ai_enabled', aiEnabled ? 'true' : 'false'); }, [aiEnabled]);
   useEffect(() => { localStorage.setItem('formwise_ai_audio', aiAudio ? 'true' : 'false'); }, [aiAudio]);
   useEffect(() => { localStorage.setItem('formwise_coach_tone', coachTone); }, [coachTone]);
+  useEffect(() => { localStorage.setItem('formwise_athlete_level', athleteLevel); }, [athleteLevel]);
   useEffect(() => { localStorage.setItem('bioneer_camera_facing', frontCamera ? 'user' : 'environment'); }, [frontCamera]);
   useEffect(() => { localStorage.setItem('formwise_tracking_sensitivity', trackingSensitivity); }, [trackingSensitivity]);
   useEffect(() => { localStorage.setItem('bioneer_pose_model', poseModel); }, [poseModel]);
@@ -130,16 +134,39 @@ export default function Settings() {
             onChange={setAiEnabled}
           />
 
+          {/* AI Status Badge */}
+          <div className="flex items-center gap-2 py-2 px-3 rounded border" style={{
+            borderColor: serverKeyStatus === true ? '#16a34a40' : serverKeyStatus === false && geminiKey ? '#d9770040' : '#ef444440',
+            background: serverKeyStatus === true ? '#16a34a10' : serverKeyStatus === false && geminiKey ? '#d9770010' : '#ef444410',
+          }}>
+            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{
+              background: serverKeyStatus === true ? '#22c55e' : serverKeyStatus === false && geminiKey ? '#f97316' : '#ef4444',
+            }} />
+            <span className="text-[9px] font-bold tracking-[0.12em] uppercase" style={{
+              color: serverKeyStatus === true ? '#22c55e' : serverKeyStatus === false && geminiKey ? '#f97316' : '#ef4444',
+              fontFamily: FONT.mono,
+            }}>
+              {serverKeyStatus === true
+                ? 'AI COACHING ACTIVE'
+                : serverKeyStatus === false && geminiKey
+                ? 'USING PERSONAL API KEY'
+                : serverKeyStatus === null
+                ? 'AI STATUS UNKNOWN — START A SESSION'
+                : 'AI COACHING DISABLED'}
+            </span>
+          </div>
+
+          {/* Personal API key fallback */}
           <div className="space-y-2">
             <p className="text-[10px] tracking-[0.08em]" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-              Gemini API Key
+              Personal API Key (fallback)
             </p>
             <div className="flex gap-2">
               <input
                 type="password"
                 value={geminiKey}
                 onChange={e => setGeminiKey(e.target.value)}
-                placeholder="AIza..."
+                placeholder="AIza... (optional)"
                 className="flex-1 px-3 py-2 rounded border text-[10px] outline-none"
                 style={{
                   background: COLORS.bg,
@@ -168,7 +195,7 @@ export default function Settings() {
               className="text-[9px] underline"
               style={{ color: COLORS.gold, fontFamily: FONT.mono }}
             >
-              Get your free key at aistudio.google.com
+              Get a free key at aistudio.google.com
             </a>
           </div>
 
@@ -184,6 +211,13 @@ export default function Settings() {
             value={coachTone}
             options={['Direct', 'Encouraging', 'Technical']}
             onChange={setCoachTone}
+          />
+
+          <SelectRow
+            label="Athlete Level"
+            value={athleteLevel}
+            options={['Beginner', 'Intermediate', 'Advanced']}
+            onChange={setAthleteLevel}
           />
         </Section>
 

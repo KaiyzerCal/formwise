@@ -17,7 +17,7 @@ import CameraToggle              from './CameraToggle';
 import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles, computeFormScore, setPoseCategory } from './poseEngine';
-import { initAudio, destroyAudio, beep } from './audioEngine';
+import { initAudio, destroyAudio, beep, speak } from './audioEngine';
 import { TemporalFilterEngine } from './pipeline/TemporalFilterEngine';
 import { SystemHealthMonitor } from './pipeline/runtime/SystemHealthMonitor';
 import JointIntelligenceRail from './live/JointIntelligenceRail';
@@ -39,9 +39,14 @@ export default function CameraView({ exercise, onStop }) {
   const [liveFormScore, setLiveFormScore] = useState(100);
   const [isSecure, setIsSecure] = useState(window.isSecureContext || false);
   const [geminiCue, setGeminiCue] = useState(null);
+  const [checkInCue, setCheckInCue] = useState(null);
   const geminiCueShownAtRef = useRef(null);
   const lastGeminiCueTextRef = useRef(null);
   const prevRepCountRef = useRef(0);
+  // Track recent form scores for fatigue detection
+  const recentScoresRef = useRef([]);
+  // Track fault history for check-in context
+  const faultHistoryRef = useRef([]);
 
   // Camera facing mode — persisted to localStorage
   const [cameraFacing, setCameraFacing] = useState(() => {
@@ -51,7 +56,7 @@ export default function CameraView({ exercise, onStop }) {
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
 
   // ── Gemini coach ──────────────────────────────────────────────────────────
-  const { getLiveCue } = useGeminiCoach();
+  const { getLiveCue, getCheckInCue, trackRep } = useGeminiCoach();
 
   // ── Video recorder ────────────────────────────────────────────────────────
   const { startRecording, finalizeRecording } = useVideoRecorder();
@@ -318,45 +323,61 @@ export default function CameraView({ exercise, onStop }) {
   useEffect(() => {
     if (repCount <= prevRepCountRef.current) return;
     prevRepCountRef.current = repCount;
+    trackRep();
 
-    // Only fire if deterministic cue is absent or has been shown >4s
+    // Track recent scores for trend analysis
+    recentScoresRef.current = [...recentScoresRef.current.slice(-4), liveFormScore];
+
+    // ── Check-in every 5 reps ────────────────────────────────────────────
+    if (repCount > 0 && repCount % 5 === 0) {
+      getCheckInCue({
+        exerciseId: exercise.id,
+        repNumber: repCount,
+        recentScores: recentScoresRef.current,
+        recurringFaults: faultHistoryRef.current.slice(-5),
+      }).then(cue => {
+        if (!cue) return;
+        setCheckInCue(cue);
+        speak(cue);
+        setTimeout(() => setCheckInCue(null), 7000);
+      });
+      return; // don't also fire per-rep cue on check-in reps
+    }
+
+    // ── Per-rep fault cue ─────────────────────────────────────────────────
     const cueIsStale = !activeCue || (geminiCueShownAtRef.current && Date.now() - geminiCueShownAtRef.current > 4000);
     if (!cueIsStale) return;
 
     const faults = frameRef.current?.faults ?? [];
-    if (!faults.length) return; // only fetch when there's a fault to report
+    if (!faults.length) return;
+
+    // Track fault history
+    faults.forEach(f => {
+      const id = typeof f === 'string' ? f : f?.id;
+      if (id) faultHistoryRef.current = [...faultHistoryRef.current.slice(-9), id];
+    });
 
     const payload = {
-      exercise:       exercise.id,
-      rep:            repCount,
-      phase:          frameRef.current?.phase ?? null,
-      knee_angle:     frameRef.current?.angles?.kneeL ?? null,
-      hip_angle:      frameRef.current?.angles?.hipL ?? null,
-      torso_angle:    frameRef.current?.angles?.torso ?? null,
-      symmetry_score: null,
-      depth_reached:  null,
-      active_faults:  faults,
-      form_score:     liveFormScore,
-      rep_velocity:   'normal',
-      fatigue_index:  1 - (liveFormScore / 100),
+      exercise:            exercise.id,
+      repNumber:           repCount,
+      exercisePhase:       frameRef.current?.phase ?? null,
+      active_faults:       faults,
+      sessionFaultHistory: faultHistoryRef.current.slice(-5),
+      formScoreTrend:      recentScoresRef.current,
+      form_score:          liveFormScore,
+      knee_angle:          frameRef.current?.angles?.kneeL ?? null,
+      hip_angle:           frameRef.current?.angles?.hipL ?? null,
+      torso_angle:         frameRef.current?.angles?.torso ?? null,
+      fatigue_index:       1 - (liveFormScore / 100),
+      athleteLevel:        localStorage.getItem('formwise_athlete_level') || 'Intermediate',
     };
 
     getLiveCue(payload).then(result => {
       if (!result || result.confidence < 0.7) return;
-      if (result.cue === lastGeminiCueTextRef.current) return;
       lastGeminiCueTextRef.current = result.cue;
       setGeminiCue(result.cue);
       geminiCueShownAtRef.current = Date.now();
-
-      // Audio cue via speech synthesis if enabled
-      if (localStorage.getItem('formwise_ai_audio') === 'true' && window.speechSynthesis) {
-        const utt = new SpeechSynthesisUtterance(result.cue);
-        utt.rate = 1.1;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utt);
-      }
-
-      // Auto-hide after 5s
+      speak(result.cue);
       setTimeout(() => setGeminiCue(null), 5000);
     });
   }, [repCount]);
@@ -632,7 +653,7 @@ export default function CameraView({ exercise, onStop }) {
       )}
 
       {/* ── Gemini AI cue banner ───────────────────────────────────────────── */}
-      {geminiCue && sessionActive && (
+      {geminiCue && sessionActive && !checkInCue && (
         <div className="absolute left-4 right-4 z-50 flex justify-center pointer-events-none"
           style={{ top: activeCue ? '10.5rem' : '8rem' }}>
           <div className="px-4 py-2.5 rounded-xl border text-center max-w-xs"
@@ -643,6 +664,25 @@ export default function CameraView({ exercise, onStop }) {
             <p className="text-sm font-bold tracking-wide uppercase"
               style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
               {geminiCue}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Coach Check-In banner (every 5 reps) ─────────────────────────── */}
+      {checkInCue && sessionActive && (
+        <div className="absolute left-4 right-4 z-50 flex justify-center pointer-events-none"
+          style={{ top: activeCue ? '10.5rem' : '8rem' }}>
+          <div className="px-4 py-3 rounded-xl border text-center max-w-xs"
+            style={{ background: 'rgba(56,132,220,0.12)', borderColor: 'rgba(56,132,220,0.5)', backdropFilter: 'blur(8px)' }}>
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <span className="text-[9px] font-bold tracking-[0.15em]" style={{ color: '#60a5fa', fontFamily: "'DM Mono', monospace" }}>
+                ◈ COACH CHECK-IN · REP {repCount}
+              </span>
+            </div>
+            <p className="text-sm font-bold tracking-wide uppercase"
+              style={{ color: '#93c5fd', fontFamily: "'DM Mono', monospace" }}>
+              {checkInCue}
             </p>
           </div>
         </div>

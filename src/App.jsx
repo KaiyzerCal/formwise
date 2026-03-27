@@ -79,6 +79,12 @@ const AuthenticatedApp = () => {
 };
 
 
+// Preload speech synthesis voices (async in Chrome — trigger early)
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener?.('voiceschanged', () => window.speechSynthesis.getVoices());
+}
+
 // Prefetch WASM files into browser cache after page load (low priority)
 const WASM_FILES = [
   'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_wasm_internal.js',
