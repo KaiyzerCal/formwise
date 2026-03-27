@@ -10,8 +10,10 @@ import { REFERENCE_POSES, REFERENCE_EXERCISE_LIST } from '../components/bioneer/
 import ReferenceSkeletonPlayer from '../components/bioneer/compare/ReferenceSkeletonPlayer';
 import { useComparisonReport } from '../components/bioneer/compare/useComparisonReport';
 import CompareReportCard from '../components/bioneer/compare/CompareReportCard';
-import { Upload, BookOpen, Film } from 'lucide-react';
+import { Upload, BookOpen, Film, Zap } from 'lucide-react';
 import { saveSession } from '../components/bioneer/data/unifiedSessionStore';
+import CustomVideoAnalyzer from '../components/bioneer/compare/CustomVideoAnalyzer';
+import AnalysisInsightsPanel from '../components/bioneer/compare/AnalysisInsightsPanel';
 
 const SPEEDS = [0.25, 0.5, 1, 2];
 
@@ -87,6 +89,10 @@ export default function TechniqueCompare() {
   const [showReport,     setShowReport]     = useState(false);
   const [reportData,     setReportData]     = useState(null);
   const { recordFrame, buildReport, resetReport } = useComparisonReport();
+
+  // ── AI Analysis ────────────────────────────────────────────────────────────
+  const [showAnalyzer,   setShowAnalyzer]   = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
   const videoLeftRef  = useRef(null);
   const videoRightRef = useRef(null);
@@ -329,19 +335,43 @@ export default function TechniqueCompare() {
             {/* Custom video upload */}
             {refMode === 'custom' && (
               <>
-                <button onClick={() => customFileRef.current?.click()}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed"
-                  style={{
-                    borderColor: customRefSrc ? `${COLORS.gold}60` : COLORS.border,
-                    background:  customRefSrc ? COLORS.goldDim       : 'transparent',
-                  }}>
-                  <Film size={14} strokeWidth={1.5} style={{ color: customRefSrc ? COLORS.gold : COLORS.textTertiary, flexShrink: 0 }} />
-                  <span className="text-[10px] truncate text-left" style={{ color: customRefSrc ? COLORS.gold : COLORS.textTertiary }}>
-                    {customRefSrc ? 'Reference loaded' : 'Upload reference video'}
-                  </span>
-                </button>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <button onClick={() => customFileRef.current?.click()}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed"
+                      style={{
+                        borderColor: customRefSrc ? `${COLORS.gold}60` : COLORS.border,
+                        background:  customRefSrc ? COLORS.goldDim       : 'transparent',
+                      }}>
+                      <Film size={14} strokeWidth={1.5} style={{ color: customRefSrc ? COLORS.gold : COLORS.textTertiary, flexShrink: 0 }} />
+                      <span className="text-[10px] truncate text-left" style={{ color: customRefSrc ? COLORS.gold : COLORS.textTertiary }}>
+                        {customRefSrc ? 'Reference loaded' : 'Upload reference video'}
+                      </span>
+                    </button>
+                  </div>
+                  <button onClick={() => setShowAnalyzer(!showAnalyzer)}
+                    className="px-3 py-3 rounded-xl border flex items-center gap-2 transition-colors"
+                    style={{
+                      borderColor: showAnalyzer ? COLORS.goldBorder : COLORS.border,
+                      background:  showAnalyzer ? COLORS.goldDim : 'transparent',
+                      color:       showAnalyzer ? COLORS.gold : COLORS.textTertiary,
+                    }}>
+                    <Zap size={14} strokeWidth={1.5} />
+                    <span className="text-[9px] font-bold tracking-[0.08em] uppercase hidden sm:inline">AI</span>
+                  </button>
+                </div>
                 <input ref={customFileRef} type="file" accept="video/*" className="hidden" onChange={handleCustomRefFile} />
               </>
+            )}
+
+            {/* AI Analyzer */}
+            {showAnalyzer && refMode === 'custom' && (
+              <CustomVideoAnalyzer 
+                referenceExercise={customRefSrc ? 'Custom Reference Video' : 'Exercise'}
+                onAnalysisComplete={(result) => {
+                  setAnalysisResult(result);
+                }}
+              />
             )}
           </div>
         </div>
@@ -472,19 +502,23 @@ export default function TechniqueCompare() {
           </div>
         </div>
 
-        {/* ── Metric Rail ─────────────────────────────────────────── */}
-        <div className="w-[200px] flex-shrink-0 border-l hidden md:block" style={{ borderColor: COLORS.border }}>
-          <MetricRail
-            userPoseState={userPoseState}
-            refPoseState={refPoseStateResolved}
-            deviations={deviations}
-            cues={cues}
-            score={score}
-            userConf={userConf}
-            refConf={refConf}
-            isPlaying={playing}
-            hasRef={hasRef}
-          />
+        {/* ── Metric Rail or Analysis ─────────────────────────────────────────── */}
+        <div className="w-[240px] flex-shrink-0 border-l hidden md:flex flex-col overflow-hidden" style={{ borderColor: COLORS.border, background: COLORS.bg }}>
+          {analysisResult ? (
+            <AnalysisInsightsPanel analysis={analysisResult} />
+          ) : (
+            <MetricRail
+              userPoseState={userPoseState}
+              refPoseState={refPoseStateResolved}
+              deviations={deviations}
+              cues={cues}
+              score={score}
+              userConf={userConf}
+              refConf={refConf}
+              isPlaying={playing}
+              hasRef={hasRef}
+            />
+          )}
         </div>
       </div>
 
