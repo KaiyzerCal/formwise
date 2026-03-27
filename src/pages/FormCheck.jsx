@@ -10,13 +10,16 @@ import HomeDashboard from "../components/bioneer/dashboard/HomeDashboard";
 import { createPageUrl } from "@/utils";
 import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
 import FirstLaunchWizard, { hasCompletedOnboarding } from "../components/bioneer/onboarding/FirstLaunchWizard";
+import FormCheckHistoryView from "../components/bioneer/history/FormCheckHistoryView";
+import FormCheckReplay from "../components/bioneer/history/FormCheckReplay";
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
 export default function FormCheck() {
-  const [phase, setPhase] = useState("select"); // select | camera | summary
+  const [phase, setPhase] = useState("select"); // select | camera | summary | history | replay
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [sessionData, setSessionData] = useState(null);
+  const [replaySession, setReplaySession] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -126,6 +129,42 @@ export default function FormCheck() {
     setSelectedExercise(null);
   };
 
+  const handleViewHistory = () => {
+    setPhase("history");
+  };
+
+  const handleSelectHistorySession = (session, action) => {
+    if (action === "replay") {
+      setReplaySession(session);
+      setPhase("replay");
+    } else {
+      setReplaySession(session);
+      setPhase("replay");
+    }
+  };
+
+  const handleDeleteReplaySession = async (sessionId) => {
+    try {
+      await base44.entities.FormSession.delete(sessionId);
+      setPhase("history");
+      setReplaySession(null);
+    } catch (err) {
+      console.error('[FormCheck] Delete error:', err);
+    }
+  };
+
+  const handleExportReplaySession = async (session) => {
+    // Placeholder for export to Technique
+    // This would integrate with the technique studio export flow
+    console.log('[FormCheck] Export session:', session);
+    alert('Export to Technique feature coming soon');
+  };
+
+  const handleCloseReplay = () => {
+    setPhase("history");
+    setReplaySession(null);
+  };
+
   if (showDisclaimer) {
     return <Disclaimer onAccept={handleAcceptDisclaimer} />;
   }
@@ -149,9 +188,34 @@ export default function FormCheck() {
     );
   }
 
+  if (phase === "history") {
+    return (
+      <FormCheckHistoryView
+        onSelectSession={handleSelectHistorySession}
+        onBack={() => setPhase("home")}
+      />
+    );
+  }
+
+  if (phase === "replay" && replaySession) {
+    return (
+      <FormCheckReplay
+        session={replaySession}
+        onClose={handleCloseReplay}
+        onDelete={handleDeleteReplaySession}
+        onExport={handleExportReplaySession}
+      />
+    );
+  }
+
   // Home dashboard or movement library
   if (phase === "home") {
-    return <HomeDashboard onStartSession={handleStartSession} />;
+    return (
+      <HomeDashboard 
+        onStartSession={handleStartSession}
+        onViewHistory={handleViewHistory}
+      />
+    );
   }
 
   if (phase === "select") {

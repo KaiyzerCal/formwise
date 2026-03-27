@@ -5,13 +5,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Flame, Trophy, Zap, Activity, ArrowRight, Play } from 'lucide-react';
+import { Flame, Trophy, Zap, Activity, ArrowRight, Play, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getAllSessions } from '../data/unifiedSessionStore';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { PremiumCard, StatCard, PrimaryButton, EmptyState } from '../ui/PremiumComponents';
 
-export default function HomeDashboard({ onStartSession }) {
+export default function HomeDashboard({ onStartSession, onViewHistory }) {
   const [userProfile, setUserProfile] = useState(null);
   const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -242,6 +242,27 @@ export default function HomeDashboard({ onStartSession }) {
                   </div>
                 </PremiumCard>
               </Link>
+
+              {onViewHistory && (
+                <button
+                  onClick={onViewHistory}
+                  className="w-full"
+                >
+                  <PremiumCard className="h-full p-5 hover:border-gold/30 transition-colors">
+                    <div className="space-y-3">
+                      <Clock size={20} style={{ color: COLORS.gold }} strokeWidth={1.5} />
+                      <div>
+                        <div className="text-xs font-semibold text-left" style={{ color: COLORS.textPrimary }}>
+                          History
+                        </div>
+                        <div className="text-[8px] mt-1 text-left" style={{ color: COLORS.textTertiary }}>
+                          Review form checks
+                        </div>
+                      </div>
+                    </div>
+                  </PremiumCard>
+                </button>
+              )}
             </div>
           </motion.div>
         </motion.div>
