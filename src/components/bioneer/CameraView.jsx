@@ -23,6 +23,8 @@ import { TemporalFilterEngine } from './pipeline/TemporalFilterEngine';
 import { SystemHealthMonitor } from './pipeline/runtime/SystemHealthMonitor';
 import JointIntelligenceRail from './live/JointIntelligenceRail';
 import FormStabilityRing from './live/FormStabilityRing';
+import { checkAndSavePR } from './analytics/PersonalRecordsPanel';
+import confetti from 'canvas-confetti';
 
 const GOLD = '#C9A84C';
 const RED  = '#EF4444';
@@ -52,6 +54,8 @@ export default function CameraView({ exercise, onStop }) {
   const [fatigueBannerDismissed, setFatigueBannerDismissed] = useState(false);
   const [showFatigueBanner, setShowFatigueBanner] = useState(false);
   const repScoresLiveRef = useRef([]);
+  const [isCalibrating, setIsCalibrating] = useState(true);
+  const [prToast, setPrToast] = useState(null);
 
   // Camera facing mode — persisted to localStorage
   const [cameraFacing, setCameraFacing] = useState(() => {
@@ -278,6 +282,11 @@ export default function CameraView({ exercise, onStop }) {
 
   const formScore = liveFormScore;
 
+  // ── Track calibration state via repCount ─────────────────────────────────
+  useEffect(() => {
+    if (repCount >= 2) setIsCalibrating(false);
+  }, [repCount]);
+
   // ── Stop session ──────────────────────────────────────────────────────────
   const handleStop = useCallback(async () => {
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
@@ -299,6 +308,16 @@ export default function CameraView({ exercise, onStop }) {
 
     // Finalize recording — wait for onstop to fire so all chunks are flushed
     const { chunks: recordedChunks, mimeType: recordingMimeType } = await finalizeRecording();
+
+    // ── PR check
+    if (avgMasteryScore > 0) {
+      const isNewPR = checkAndSavePR(exercise.id, avgMasteryScore);
+      if (isNewPR) {
+        setPrToast(`NEW PR — ${(exercise.displayName || exercise.name || exercise.id).toUpperCase()} ${avgMasteryScore}`);
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 }, colors: ['#C9A84C', '#fff', '#ffd700'] });
+        setTimeout(() => setPrToast(null), 4000);
+      }
+    }
 
     onStop({
       exercise_id:        exercise.id,
@@ -717,6 +736,34 @@ export default function CameraView({ exercise, onStop }) {
               style={{ borderColor: 'rgba(245,158,11,0.4)', color: '#f59e0b', fontFamily: "'DM Mono', monospace" }}>
               DISMISS
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Calibration HUD banner ───────────────────────────────────────── */}
+      {sessionActive && isCalibrating && (
+        <div className="absolute left-4 right-4 z-50 flex justify-center pointer-events-none"
+          style={{ bottom: '7.5rem' }}>
+          <div className="px-4 py-2 rounded-xl border text-center"
+            style={{ background: 'rgba(201,168,76,0.12)', borderColor: `${GOLD}50`, backdropFilter: 'blur(8px)' }}>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: GOLD }} />
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase"
+                style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
+                CALIBRATING — COMPLETE {Math.max(0, 2 - repCount)} MORE {Math.max(0, 2 - repCount) === 1 ? 'REP' : 'REPS'} NORMALLY
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PR Toast ─────────────────────────────────────────────────────── */}
+      {prToast && (
+        <div className="absolute top-20 left-0 right-0 z-[60] flex justify-center pointer-events-none">
+          <div className="px-5 py-3 rounded-xl border text-center"
+            style={{ background: 'rgba(201,168,76,0.15)', borderColor: GOLD, backdropFilter: 'blur(10px)' }}>
+            <span className="text-sm font-bold tracking-[0.15em]"
+              style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>🏆 {prToast}</span>
           </div>
         </div>
       )}

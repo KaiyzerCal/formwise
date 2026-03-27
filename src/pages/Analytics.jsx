@@ -20,6 +20,9 @@ import RiskSignalPanel         from "../components/bioneer/analytics/RiskSignalP
 import RecentInsightsPanel     from "../components/bioneer/analytics/RecentInsightsPanel";
 import MovementInsightsPanel   from "../components/bioneer/learning/MovementInsightsPanel";
 import ProgressionPanel        from "../components/bioneer/analytics/ProgressionPanel";
+import WeeklyPerformanceCard   from "../components/bioneer/analytics/WeeklyPerformanceCard";
+import MovementMasteryPanel    from "../components/bioneer/analytics/MovementMasteryPanel";
+import PersonalRecordsPanel    from "../components/bioneer/analytics/PersonalRecordsPanel";
 import { getAllSessions }       from "../components/bioneer/data/unifiedSessionStore";
 import { calculateMovementBaseline } from "../components/bioneer/learning/UserMovementModel";
 
@@ -159,6 +162,7 @@ export default function Analytics() {
           </div>
         ))}
 
+        <WeeklyPerformanceCard />
         <OverviewCards overview={overview} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <FormTrendChart trendData={trend} />
@@ -169,6 +173,7 @@ export default function Analytics() {
           <RiskSignalPanel riskData={risk} />
         </div>
         <RecentInsightsPanel insightData={insights} />
+        <MovementMasteryPanel />
 
         {/* Step 3: Progression + Insights sections */}
         {availableMovements.length > 0 && (
@@ -201,6 +206,7 @@ export default function Analytics() {
             )}
           </>
         )}
+        <PersonalRecordsPanel />
       </div>
     </div>
   );
