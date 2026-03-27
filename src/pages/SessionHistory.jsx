@@ -345,14 +345,16 @@ export default function SessionHistory() {
                   </div>
 
                   {/* Insights */}
-                  <div className="space-y-1">
-                    {session.insights.map((ins, i) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full mt-1" style={{ background: i === 0 ? COLORS.correct : COLORS.warning }} />
-                        <span className="text-[10px]" style={{ color: COLORS.textSecondary }}>{ins}</span>
-                      </div>
-                    ))}
-                  </div>
+                   <div className="space-y-1">
+                     {session.insights && session.insights.map((ins, i) => (
+                       <div key={i} className="flex items-start gap-2">
+                         <div className="w-1.5 h-1.5 rounded-full mt-1" style={{ background: i === 0 ? COLORS.correct : COLORS.warning }} />
+                         <span className="text-[10px]" style={{ color: COLORS.textSecondary }}>
+                           {typeof ins === 'object' ? (ins.message || ins.actionable || '') : ins}
+                         </span>
+                       </div>
+                     ))}
+                   </div>
 
                   {/* Learning section */}
                   {session.learning && (() => {
