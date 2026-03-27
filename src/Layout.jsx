@@ -5,6 +5,8 @@ import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Menu, X } fro
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
 import { useSubscription } from "@/lib/subscriptionGate";
+import InstallPrompt from "@/components/bioneer/pwa/InstallPrompt";
+import OfflineBanner from "@/components/bioneer/pwa/OfflineBanner";
 
 const NAV_ITEMS = [
   { name: 'LiveSession', label: 'LIVE SESSION', icon: Camera, pro: false },
@@ -112,6 +114,10 @@ export default function Layout({ children, currentPageName }) {
           {children}
         </main>
       </div>
+
+      {/* PWA overlays */}
+      <OfflineBanner />
+      <InstallPrompt />
     </>
   );
 }

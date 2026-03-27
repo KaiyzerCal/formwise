@@ -110,6 +110,16 @@ export default function CameraView({ exercise, onStop }) {
     }
   }, [camState]);
 
+  // Fullscreen on mobile when camera is active
+  useEffect(() => {
+    if (camState === 'active' && document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    return () => {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    };
+  }, [camState]);
+
   // ── Pose runtime ─────────────────────────────────────────────────────────
   const { poseState, phase, poseError, delegate, delegateBadge, landmarkerRef, retry } = usePoseRuntime();
   useEffect(() => { healthRef.current?.reportPose(poseState); }, [poseState]);
