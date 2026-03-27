@@ -15,6 +15,8 @@ import PublicSession from './pages/PublicSession';
 import CoachPortal from './pages/CoachPortal';
 import Achievements from './pages/Achievements';
 import Progress from './pages/Progress';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import ErrorBoundary from './lib/ErrorBoundary';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -87,6 +89,8 @@ const AuthenticatedApp = () => {
           <ErrorBoundary section="Progress"><Progress /></ErrorBoundary>
         </LayoutWrapper>
       } />
+      <Route path="/PrivacyPolicy" element={<ErrorBoundary section="Privacy Policy"><PrivacyPolicy /></ErrorBoundary>} />
+      <Route path="/TermsOfService" element={<ErrorBoundary section="Terms of Service"><TermsOfService /></ErrorBoundary>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

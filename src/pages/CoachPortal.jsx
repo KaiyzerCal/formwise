@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { COLORS, FONT, scoreColor, FONT_LINK } from '@/components/bioneer/ui/DesignTokens';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, ChevronRight, MessageSquare, Flag, ArrowLeft, Users } from 'lucide-react';
+import { UserPlus, ChevronRight, MessageSquare, Flag, ArrowLeft, Users, Sparkles } from 'lucide-react';
 
 // ── Hooks ──────────────────────────────────────────────────────────────────
 function useCurrentUser() {
@@ -96,19 +96,88 @@ function ClientDetail({ client, onBack }) {
   const [notesBySession, setNotesBySession] = useState({});
   const [flagged, setFlagged] = useState({});
   const [noteInput, setNoteInput] = useState({});
+  const [savingNotes, setSavingNotes] = useState({});
+  const [saveError, setSaveError] = useState({});
+  const [summaries, setSummaries] = useState({});
+  const [summaryVisible, setSummaryVisible] = useState({});
 
   useEffect(() => {
     base44.entities.FormSession.filter({ created_by: client.email }, '-started_at', 20)
-      .then(data => setSessions(data || []))
+      .then(data => {
+        setSessions(data || []);
+        // Initialize notes and flags from entity data
+        const notesMap = {};
+        const flagsMap = {};
+        (data || []).forEach(s => {
+          notesMap[s.id] = s.coaching_notes || [];
+          flagsMap[s.id] = s.coach_flagged || false;
+        });
+        setNotesBySession(notesMap);
+        setFlagged(flagsMap);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [client.email]);
 
-  const handleAddNote = (sessionId) => {
+  const handleAddNote = async (sessionId) => {
     const note = noteInput[sessionId];
     if (!note?.trim()) return;
-    setNotesBySession(prev => ({ ...prev, [sessionId]: [...(prev[sessionId] || []), note.trim()] }));
-    setNoteInput(prev => ({ ...prev, [sessionId]: '' }));
+    
+    setSavingNotes(prev => ({ ...prev, [sessionId]: true }));
+    setSaveError(prev => ({ ...prev, [sessionId]: null }));
+    
+    try {
+      const updatedNotes = [...(notesBySession[sessionId] || []), note.trim()];
+      await base44.entities.FormSession.update(sessionId, { coaching_notes: updatedNotes });
+      setNotesBySession(prev => ({ ...prev, [sessionId]: updatedNotes }));
+      setNoteInput(prev => ({ ...prev, [sessionId]: '' }));
+    } catch (err) {
+      setSaveError(prev => ({ ...prev, [sessionId]: 'Failed to save note' }));
+      setTimeout(() => setSaveError(prev => ({ ...prev, [sessionId]: null })), 3000);
+    } finally {
+      setSavingNotes(prev => ({ ...prev, [sessionId]: false }));
+    }
+  };
+
+  const handleToggleFlag = async (sessionId, session) => {
+    const newFlagState = !flagged[sessionId];
+    setFlagged(prev => ({ ...prev, [sessionId]: newFlagState }));
+    try {
+      await base44.entities.FormSession.update(sessionId, { coach_flagged: newFlagState });
+    } catch (err) {
+      setFlagged(prev => ({ ...prev, [sessionId]: !newFlagState }));
+    }
+  };
+
+  const handleSummary = async (sessionId, session) => {
+    if (summaryVisible[sessionId]) {
+      setSummaryVisible(prev => ({ ...prev, [sessionId]: false }));
+      return;
+    }
+    
+    if (summaries[sessionId] && summaries[sessionId] !== 'loading' && summaries[sessionId] !== 'error') {
+      setSummaryVisible(prev => ({ ...prev, [sessionId]: true }));
+      return;
+    }
+
+    setSummaries(prev => ({ ...prev, [sessionId]: 'loading' }));
+    try {
+      const res = await base44.functions.invoke('aiCoach', {
+        sessionData: {
+          exercise: session.movement_name || session.exercise_id,
+          reps: session.reps_detected,
+          formScore: session.movement_score ?? session.form_score_overall,
+          faults: session.top_faults || [],
+          notes: notesBySession[sessionId] || [],
+        },
+        requestType: 'sessionSummary',
+      });
+      const summary = res?.data?.summary || res?.data?.message || 'No summary available.';
+      setSummaries(prev => ({ ...prev, [sessionId]: summary }));
+      setSummaryVisible(prev => ({ ...prev, [sessionId]: true }));
+    } catch (err) {
+      setSummaries(prev => ({ ...prev, [sessionId]: 'error' }));
+    }
   };
 
   return (
@@ -149,7 +218,15 @@ function ClientDetail({ client, onBack }) {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-bold" style={{ color: scoreColor(score), fontFamily: FONT.mono }}>{score}</span>
-                    <button onClick={() => setFlagged(p => ({ ...p, [s.id]: !p[s.id] }))}
+                    <button
+                      onClick={() => handleSummary(s.id, s)}
+                      disabled={summaries[s.id] === 'loading'}
+                      title="AI coaching summary"
+                      className="p-1.5 rounded"
+                      style={{ color: summaries[s.id] && summaries[s.id] !== 'loading' && summaries[s.id] !== 'error' ? COLORS.gold : COLORS.textTertiary }}>
+                      <Sparkles size={12} />
+                    </button>
+                    <button onClick={() => handleToggleFlag(s.id, s)}
                       title="Flag for review"
                       className="p-1.5 rounded"
                       style={{ color: isFlagged ? '#EF4444' : COLORS.textTertiary }}>
@@ -157,6 +234,17 @@ function ClientDetail({ client, onBack }) {
                     </button>
                   </div>
                 </div>
+
+                {/* AI Summary */}
+                {summaryVisible[s.id] && summaries[s.id] && summaries[s.id] !== 'loading' && (
+                  <div className="px-3 py-2 rounded text-[9px]" style={{ background: COLORS.goldDim, color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+                    {summaries[s.id] === 'error' ? (
+                      <span style={{ color: COLORS.textTertiary }}>Summary unavailable.</span>
+                    ) : (
+                      <p className="leading-relaxed">{summaries[s.id]}</p>
+                    )}
+                  </div>
+                )}
 
                 {/* Coaching notes */}
                 {notes.length > 0 && (
@@ -171,19 +259,27 @@ function ClientDetail({ client, onBack }) {
                   </div>
                 )}
 
+                {saveError[s.id] && (
+                  <div className="px-2 py-1.5 rounded text-[9px]" style={{ background: '#EF444410', color: '#EF4444', fontFamily: FONT.mono }}>
+                    {saveError[s.id]}
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <input
                     value={noteInput[s.id] || ''}
                     onChange={e => setNoteInput(p => ({ ...p, [s.id]: e.target.value }))}
                     onKeyDown={e => e.key === 'Enter' && handleAddNote(s.id)}
                     placeholder="Add coaching note..."
-                    className="flex-1 px-2 py-1.5 rounded border text-[9px] outline-none"
+                    disabled={savingNotes[s.id]}
+                    className="flex-1 px-2 py-1.5 rounded border text-[9px] outline-none disabled:opacity-50"
                     style={{ background: COLORS.bg, borderColor: COLORS.border, color: COLORS.textPrimary, fontFamily: FONT.mono }}
                   />
                   <button onClick={() => handleAddNote(s.id)}
-                    className="px-2 py-1.5 rounded text-[9px] font-bold tracking-[0.08em]"
+                    disabled={savingNotes[s.id]}
+                    className="px-2 py-1.5 rounded text-[9px] font-bold tracking-[0.08em] disabled:opacity-50"
                     style={{ background: COLORS.goldDim, color: COLORS.gold, border: `1px solid ${COLORS.goldBorder}`, fontFamily: FONT.mono }}>
-                    ADD
+                    {savingNotes[s.id] ? '...' : 'ADD'}
                   </button>
                 </div>
               </div>

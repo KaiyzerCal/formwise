@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
 import { getAllSessions, clearAllSessions } from '@/components/bioneer/data/sessionStore';
 import { getServerKeyStatus } from '@/components/bioneer/ai/GeminiCoach';
@@ -66,6 +67,7 @@ function SelectRow({ label, value, options, onChange }) {
 }
 
 export default function Settings() {
+  const navigate = useNavigate();
   const [aiEnabled, setAiEnabled] = useState(() => localStorage.getItem('formwise_ai_enabled') !== 'false');
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('formwise_gemini_key') || '');
   const [aiAudio, setAiAudio] = useState(() => localStorage.getItem('formwise_ai_audio') === 'true');
@@ -329,6 +331,20 @@ export default function Settings() {
             )}
           </div>
         </Section>
+
+        {/* Legal links footer */}
+        <div className="flex gap-6 justify-center pt-4 pb-2 border-t" style={{ borderColor: COLORS.border }}>
+          <button onClick={() => navigate('/PrivacyPolicy')}
+            className="text-[9px] tracking-[0.1em] uppercase"
+            style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+            Privacy Policy
+          </button>
+          <button onClick={() => navigate('/TermsOfService')}
+            className="text-[9px] tracking-[0.1em] uppercase"
+            style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+            Terms of Service
+          </button>
+        </div>
       </div>
     </div>
   );

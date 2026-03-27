@@ -13,7 +13,33 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { repData = [], jointTrends = {}, commonFaults = [], exercise = 'squat' } = await req.json();
+    const body = await req.json();
+    const { requestType } = body;
+
+    // ── Session Summary Request ──────────────────────────────────────────
+    if (requestType === 'sessionSummary') {
+      const { sessionData } = body;
+      const prompt = `You are a strength and conditioning coach reviewing a completed training session.
+Session: ${JSON.stringify(sessionData)}
+Write a 2-3 sentence coaching summary: what went well, the main fault to address, and one actionable cue for next session.
+Output ONLY a JSON object: { "summary": "..." }`;
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            summary: { type: 'string' },
+          },
+          required: ['summary'],
+        },
+      });
+
+      return Response.json({ summary: result.summary || 'No summary available.' });
+    }
+
+    // ── Live Rep Coaching (default) ──────────────────────────────────────
+    const { repData = [], jointTrends = {}, commonFaults = [], exercise = 'squat' } = body;
 
     const faultSummary = commonFaults.length
       ? commonFaults.slice(0, 3).join(', ')
