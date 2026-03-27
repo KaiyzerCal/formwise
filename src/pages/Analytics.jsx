@@ -23,6 +23,9 @@ import ProgressionPanel        from "../components/bioneer/analytics/Progression
 import WeeklyPerformanceCard   from "../components/bioneer/analytics/WeeklyPerformanceCard";
 import MovementMasteryPanel    from "../components/bioneer/analytics/MovementMasteryPanel";
 import PersonalRecordsPanel    from "../components/bioneer/analytics/PersonalRecordsPanel";
+import AdvancedFormScoreTrend  from "../components/bioneer/analytics/AdvancedFormScoreTrend";
+import FaultCategoryBreakdown  from "../components/bioneer/analytics/FaultCategoryBreakdown";
+import MuscleGroupProgress     from "../components/bioneer/analytics/MuscleGroupProgress";
 import { getAllSessions }       from "../components/bioneer/data/unifiedSessionStore";
 import { calculateMovementBaseline } from "../components/bioneer/learning/UserMovementModel";
 
@@ -164,6 +167,15 @@ export default function Analytics() {
 
         <WeeklyPerformanceCard />
         <OverviewCards overview={overview} />
+        
+        {/* Premium Analytics Upgrades */}
+        <AdvancedFormScoreTrend />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <FaultCategoryBreakdown />
+          <MuscleGroupProgress />
+        </div>
+
+        {/* Original analytics components */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <FormTrendChart trendData={trend} />
           <FaultIntelligencePanel faultData={faults} />
