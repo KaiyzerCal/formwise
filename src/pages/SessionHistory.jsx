@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
-import { getAllSessions, syncFromCloud } from "../components/bioneer/data/unifiedSessionStore";
+import { getAllSessions, syncFromCloud, deleteSession as deleteExerciseSession, clearAllSessions } from "../components/bioneer/data/unifiedSessionStore";
 import toast from "react-hot-toast";
-import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl } from "../components/bioneer/history/sessionStorage";
+import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl, clearAllFreestyleSessions } from "../components/bioneer/history/sessionStorage";
 import { getSessionVideoUrl } from "../components/bioneer/data/liveVideoStorage";
-import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send } from "lucide-react";
+import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
@@ -57,6 +57,7 @@ export default function SessionHistory() {
   const [localSessions, setLocalSessions] = useState(() => getAllSessions());
   // hydrated live sessions: session_id → videoSrc
   const [liveVideoUrls, setLiveVideoUrls] = useState({});
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
   // Load freestyle sessions
   useEffect(() => {
@@ -159,6 +160,55 @@ export default function SessionHistory() {
     }
   };
 
+  const handleDeleteExerciseSession = (sessionId) => {
+    setDeleting(sessionId);
+    try {
+      deleteExerciseSession(sessionId);
+      setLocalSessions(getAllSessions());
+      toast('Session deleted', {
+        style: {
+          background: '#1a1a1a',
+          color: '#EF4444',
+          border: '1px solid rgba(239,68,68,0.3)',
+          fontFamily: "'DM Mono', monospace",
+          fontSize: '11px',
+          letterSpacing: '0.05em',
+        },
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Failed to delete exercise session:', error);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const handleDeleteAllHistory = async () => {
+    setDeleting('all');
+    try {
+      clearAllSessions();
+      await clearAllFreestyleSessions();
+      setLocalSessions([]);
+      setFreestyleSessions([]);
+      setShowDeleteAllConfirm(false);
+      toast('All sessions deleted', {
+        style: {
+          background: '#1a1a1a',
+          color: '#EF4444',
+          border: '1px solid rgba(239,68,68,0.3)',
+          fontFamily: "'DM Mono', monospace",
+          fontSize: '11px',
+          letterSpacing: '0.05em',
+        },
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Failed to delete all sessions:', error);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   const handleSendToTechnique = async (session) => {
     setSending(session.sessionId);
     setSendError(null);
@@ -211,6 +261,14 @@ export default function SessionHistory() {
           <button className="px-3 py-1 rounded text-[9px] tracking-[0.1em] uppercase border" style={{ borderColor: COLORS.goldBorder, color: COLORS.gold }}>
             <Download size={12} className="inline mr-1" />Export
           </button>
+          {allSessions.length > 0 && (
+            <button
+              onClick={() => setShowDeleteAllConfirm(true)}
+              className="px-3 py-1 rounded text-[9px] tracking-[0.1em] uppercase border"
+              style={{ borderColor: 'rgba(239,68,68,0.3)', color: '#EF4444' }}>
+              <Trash2 size={11} className="inline mr-1" />Delete All
+            </button>
+          )}
         </div>
       </div>
 
@@ -408,30 +466,39 @@ export default function SessionHistory() {
                   })()}
 
                    {/* Video replay & technique buttons for live sessions */}
-                       <div className="flex items-center gap-2 flex-wrap">
-                         {(session.hasVideo || liveVideoUrls[session.id]) && (
-                           <button
-                             onClick={() => setSelectedLiveReplay(session._rawSession)}
-                             className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
-                             style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold }}
-                           >
-                             <Play size={10} fill={COLORS.gold} />Replay
-                           </button>
-                         )}
-                         {(session.hasVideo || liveVideoUrls[session.id]) && (
-                           <button
-                             onClick={() => handleSendLiveToTechnique(session)}
-                             disabled={sending === session.id}
-                             className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
-                             style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold, opacity: sending === session.id ? 0.6 : 1 }}
-                           >
-                             <Send size={10} />{sending === session.id ? 'Sending...' : 'Technique'}
-                           </button>
-                         )}
-                       </div>
-                       {sendError && sending === session.id && (
-                         <div className="text-[9px] px-2 py-1.5 rounded bg-red-500/10 border border-red-500/30" style={{ color: '#EF4444' }}>{sendError}</div>
-                       )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {(session.hasVideo || liveVideoUrls[session.id]) && (
+                            <button
+                              onClick={() => setSelectedLiveReplay(session._rawSession)}
+                              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                              style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold }}
+                            >
+                              <Play size={10} fill={COLORS.gold} />Replay
+                            </button>
+                          )}
+                          {(session.hasVideo || liveVideoUrls[session.id]) && (
+                            <button
+                              onClick={() => handleSendLiveToTechnique(session)}
+                              disabled={sending === session.id}
+                              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                              style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold, opacity: sending === session.id ? 0.6 : 1 }}
+                            >
+                              <Send size={10} />{sending === session.id ? 'Sending...' : 'Technique'}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteExerciseSession(session.id)}
+                            disabled={deleting === session.id}
+                            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                            style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', opacity: deleting === session.id ? 0.5 : 1 }}
+                          >
+                            <Trash2 size={10} />
+                            {deleting === session.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                        {sendError && sending === session.id && (
+                          <div className="text-[9px] px-2 py-1.5 rounded bg-red-500/10 border border-red-500/30" style={{ color: '#EF4444' }}>{sendError}</div>
+                        )}
                 </div>
               )}
 
@@ -474,6 +541,38 @@ export default function SessionHistory() {
           );
         })}
       </div>
+
+      {/* Delete all confirmation modal */}
+      {showDeleteAllConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-slate-900 rounded-lg border border-slate-700 max-w-sm w-full space-y-4 p-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle size={20} style={{ color: '#EF4444' }} />
+              <h2 className="text-sm font-bold tracking-[0.1em] uppercase" style={{ color: '#EF4444' }}>
+                Delete All Sessions
+              </h2>
+            </div>
+            <p className="text-[10px] text-slate-400">
+              This will permanently delete all {allSessions.length} sessions from your history. This action cannot be undone.
+            </p>
+            <div className="flex items-center gap-2 flex-wrap justify-end pt-2">
+              <button
+                onClick={() => setShowDeleteAllConfirm(false)}
+                className="px-4 py-2 rounded text-[9px] tracking-[0.1em] uppercase font-bold border"
+                style={{ borderColor: COLORS.border, color: COLORS.textTertiary }}>
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAllHistory}
+                disabled={deleting === 'all'}
+                className="px-4 py-2 rounded text-[9px] tracking-[0.1em] uppercase font-bold"
+                style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444', opacity: deleting === 'all' ? 0.5 : 1 }}>
+                {deleting === 'all' ? 'Deleting...' : 'Delete All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Freestyle replay modal */}
       {selectedReplay && (
