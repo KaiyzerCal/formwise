@@ -1,0 +1,23 @@
+{
+  "name": "UserAchievement",
+  "type": "object",
+  "properties": {
+    "achievement_id": {
+      "type": "string",
+      "description": "Unique achievement identifier key"
+    },
+    "title": {
+      "type": "string",
+      "description": "Display title"
+    },
+    "earned_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when earned"
+    }
+  },
+  "required": [
+    "achievement_id",
+    "title"
+  ]
+}

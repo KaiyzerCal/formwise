@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import ScoreTooltip from "./onboarding/ScoreTooltip";
 import { getSetAnalysis } from "./ai/GeminiCoach";
+import SessionShareButton from "./share/SessionShareCard";
 
 function ScoreBar({ score }) {
   const color = score >= 80 ? "#22C55E" : score >= 65 ? "#EAB308" : "#EF4444";
@@ -275,6 +276,9 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
             </p>
           </div>
         )}
+
+        {/* Share */}
+        <SessionShareButton sessionData={sessionData} />
 
         {/* Actions */}
         <div className="flex gap-3">

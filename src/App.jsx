@@ -11,6 +11,9 @@ import FreestyleSession from './pages/FreestyleSession';
 import TechniqueStudio from './components/bioneer/technique/studio/TechniqueStudio';
 import Settings from './pages/Settings';
 import Landing from './pages/Landing';
+import PublicSession from './pages/PublicSession';
+import CoachPortal from './pages/CoachPortal';
+import Achievements from './pages/Achievements';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -60,6 +63,20 @@ const AuthenticatedApp = () => {
       <Route path="/Settings" element={
         <LayoutWrapper currentPageName="Settings">
           <Settings />
+        </LayoutWrapper>
+      } />
+      {/* Public session share */}
+      <Route path="/session/:session_id/public" element={<PublicSession />} />
+      {/* Coach portal */}
+      <Route path="/CoachPortal" element={
+        <LayoutWrapper currentPageName="CoachPortal">
+          <CoachPortal />
+        </LayoutWrapper>
+      } />
+      {/* Achievements */}
+      <Route path="/Achievements" element={
+        <LayoutWrapper currentPageName="Achievements">
+          <Achievements />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (

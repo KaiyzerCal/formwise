@@ -12,6 +12,7 @@ import { getMovementProfile } from "../components/bioneer/movementProfiles/movem
 import MovementSelector from "../components/bioneer/movementProfiles/MovementSelector";
 import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
+import { checkAndAwardAchievements } from "@/lib/achievements";
 
 export default function LiveSession() {
   const [phase, setPhase] = useState("select");
@@ -95,6 +96,9 @@ export default function LiveSession() {
       }).catch(() => {
         saveSession(sessionWithVideo);
       });
+
+      // Fire-and-forget: check achievements
+      checkAndAwardAchievements().catch(() => {});
 
       // Fire-and-forget: fetch AI narrative and patch session async
       const sessionIdForNarrative = sessionWithVideo.session_id;
