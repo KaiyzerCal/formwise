@@ -1,23 +1,33 @@
 /**
- * PremiumComponents — World-class UI components with smooth animations
- * Consistent spacing (4, 8, 16, 24, 32px), visual hierarchy, and engagement
+ * Premium UI Components for Bioneer
+ * Minimal, powerful, performance-driven design
  */
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { COLORS, FONT } from './DesignTokens';
+import { SPACING, MOTION, ELEVATION } from '@/lib/spacingSystem';
 
-/* ==================== CARD COMPONENT ==================== */
-export function PremiumCard({ children, onClick, className = '' }) {
+/**
+ * Premium Card / Module
+ * Clean container with subtle elevation, strong alignment
+ */
+export function PremiumCard({ children, className = '', highlight = false, onClick = null }) {
   return (
     <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={onClick ? { borderColor: COLORS.gold } : {}}
       onClick={onClick}
-      whileHover={{ scale: 1.02, y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className={`rounded-2xl border transition-all duration-200 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`rounded-lg border transition-colors ${onClick ? 'cursor-pointer' : ''} ${className}`}
       style={{
-        background: COLORS.surface,
-        borderColor: COLORS.border,
+        background: highlight
+          ? `linear-gradient(135deg, ${COLORS.surface} 0%, rgba(201,162,39,0.03) 100%)`
+          : COLORS.surface,
+        borderColor: highlight ? COLORS.goldBorder : COLORS.border,
+        borderWidth: ELEVATION.borderStandard,
+        padding: SPACING.padStandard,
       }}
     >
       {children}
@@ -25,248 +35,346 @@ export function PremiumCard({ children, onClick, className = '' }) {
   );
 }
 
-/* ==================== PRIMARY BUTTON ==================== */
-export function PrimaryButton({ children, onClick, disabled = false, loading = false, icon: Icon }) {
+/**
+ * Stat Card (metric display)
+ * Hero number with supporting label, color-coded
+ */
+export function StatCard({ label, value, color, icon: Icon, trend }) {
   return (
-    <motion.button
-      onClick={onClick}
-      disabled={disabled || loading}
-      whileHover={!disabled && !loading ? { scale: 1.05 } : {}}
-      whileTap={!disabled && !loading ? { scale: 0.95 } : {}}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm tracking-[0.1em] uppercase transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-      style={{
-        background: COLORS.gold,
-        color: COLORS.bg,
-        fontFamily: FONT.mono,
-      }}
-    >
-      {loading && (
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-4 h-4 border-2 border-transparent border-t-current rounded-full"
-        />
-      )}
-      {Icon && <Icon size={16} />}
-      {children}
-    </motion.button>
-  );
-}
-
-/* ==================== SECONDARY BUTTON ==================== */
-export function SecondaryButton({ children, onClick, disabled = false, icon: Icon }) {
-  return (
-    <motion.button
-      onClick={onClick}
-      disabled={disabled}
-      whileHover={!disabled ? { scale: 1.05 } : {}}
-      whileTap={!disabled ? { scale: 0.95 } : {}}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm tracking-[0.1em] uppercase border transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-      style={{
-        background: 'transparent',
-        borderColor: COLORS.border,
-        color: COLORS.textSecondary,
-        fontFamily: FONT.mono,
-      }}
-    >
-      {Icon && <Icon size={16} />}
-      {children}
-    </motion.button>
-  );
-}
-
-/* ==================== STAT CARD ==================== */
-export function StatCard({ label, value, color = COLORS.gold, icon: Icon, trend }) {
-  return (
-    <PremiumCard className="p-6">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] tracking-[0.15em] uppercase font-bold" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+    <PremiumCard highlight={true}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
+        {/* Icon + Label */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.sm }}>
+          {Icon && <Icon size={16} color={color} strokeWidth={1.5} />}
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: '600',
+              letterSpacing: '0.08em',
+              color: COLORS.textTertiary,
+              textTransform: 'uppercase',
+              fontFamily: FONT.mono,
+            }}
+          >
             {label}
           </span>
-          {Icon && <Icon size={18} style={{ color }} />}
         </div>
-        <div className="space-y-1">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="text-3xl font-bold"
-            style={{ color, fontFamily: FONT.heading }}
+
+        {/* Hero Value */}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          style={{
+            fontSize: '28px',
+            fontWeight: '700',
+            color,
+            fontFamily: FONT.mono,
+            letterSpacing: '-1px',
+          }}
+        >
+          {value}
+        </motion.div>
+
+        {/* Trend indicator */}
+        {trend && (
+          <span
+            style={{
+              fontSize: '9px',
+              fontWeight: '500',
+              color: trend.positive ? COLORS.correct : COLORS.warning,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
           >
-            {value}
-          </motion.div>
-          {trend && (
-            <span className="text-[9px]" style={{ color: trend.positive ? COLORS.correct : COLORS.fault }}>
-              {trend.positive ? '↑' : '↓'} {trend.text}
-            </span>
-          )}
-        </div>
+            {trend.text}
+          </span>
+        )}
       </div>
     </PremiumCard>
   );
 }
 
-/* ==================== SCORE RING ==================== */
-export function ScoreRing({ score, size = 120 }) {
-  const circumference = 2 * Math.PI * (size / 2 - 8);
-  const offset = circumference - (score / 100) * circumference;
+/**
+ * Primary Action Button
+ * Large, confident, dominates the screen
+ */
+export function PrimaryButton({ onClick, children, icon: Icon, loading = false, disabled = false }) {
+  return (
+    <motion.button
+      whileHover={!disabled && !loading ? { scale: 1.02, boxShadow: `0 8px 24px rgba(201,162,39,0.2)` } : {}}
+      whileTap={!disabled && !loading ? { scale: 0.98 } : {}}
+      onClick={onClick}
+      disabled={disabled || loading}
+      style={{
+        width: '100%',
+        padding: `${SPACING.lg} ${SPACING.xl}`,
+        background: COLORS.gold,
+        color: COLORS.bg,
+        border: 'none',
+        borderRadius: SPACING.radiusStandard,
+        fontSize: '14px',
+        fontWeight: '700',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        cursor: disabled || loading ? 'not-allowed' : 'pointer',
+        opacity: disabled || loading ? 0.5 : 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: SPACING.md,
+        fontFamily: FONT.mono,
+        transition: `opacity ${MOTION.standard}, transform ${MOTION.fast}`,
+      }}
+    >
+      {loading && (
+        <div
+          style={{
+            width: '16px',
+            height: '16px',
+            border: '2px solid rgba(8,8,8,0.3)',
+            borderTop: '2px solid rgba(8,8,8,0.8)',
+            borderRadius: '50%',
+            animation: `spin 0.8s linear infinite`,
+          }}
+        >
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+      {Icon && !loading && <Icon size={16} strokeWidth={2} />}
+      {children}
+    </motion.button>
+  );
+}
+
+/**
+ * Secondary Button
+ * Outline style for secondary actions
+ */
+export function SecondaryButton({ onClick, children, icon: Icon }) {
+  return (
+    <motion.button
+      whileHover={{ borderColor: COLORS.gold, color: COLORS.gold }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      style={{
+        padding: `${SPACING.md} ${SPACING.lg}`,
+        background: 'transparent',
+        color: COLORS.textSecondary,
+        border: `${ELEVATION.borderStandard} solid ${COLORS.border}`,
+        borderRadius: SPACING.radiusStandard,
+        fontSize: '13px',
+        fontWeight: '600',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: SPACING.sm,
+        fontFamily: FONT.mono,
+        transition: `all ${MOTION.fast}`,
+      }}
+    >
+      {Icon && <Icon size={14} strokeWidth={1.5} />}
+      {children}
+    </motion.button>
+  );
+}
+
+/**
+ * Empty State
+ * Guides user when no data is available
+ */
+export function EmptyState({ icon: Icon, title, subtitle, action, actionText }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.xl,
+        gap: SPACING.lg,
+        textAlign: 'center',
+        minHeight: '300px',
+      }}
+    >
+      {Icon && <Icon size={48} color={COLORS.textTertiary} strokeWidth={0.8} opacity={0.4} />}
+      <div style={{ space: SPACING.md }}>
+        <h3
+          style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            color: COLORS.textPrimary,
+            margin: 0,
+          }}
+        >
+          {title}
+        </h3>
+        {subtitle && (
+          <p
+            style={{
+              fontSize: '13px',
+              color: COLORS.textTertiary,
+              margin: `${SPACING.sm} 0 0 0`,
+              lineHeight: '1.5',
+            }}
+          >
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {action && actionText && (
+        <PrimaryButton onClick={action}>{actionText}</PrimaryButton>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Score Ring / Metric Display
+ * Circular visualization for form/performance scores
+ */
+export function ScoreRing({ score = 0, max = 100, size = 120, color = COLORS.gold, label }) {
+  const radius = size / 2 - 8;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (score / max) * circumference;
 
   return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} className="transform -rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={size / 2 - 8} fill="none" stroke={COLORS.border} strokeWidth="6" />
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={size / 2 - 8}
-          fill="none"
-          stroke={score >= 80 ? COLORS.correct : score >= 60 ? COLORS.warning : COLORS.fault}
-          strokeWidth="6"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="absolute text-center">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="text-4xl font-bold"
-          style={{ color: COLORS.gold, fontFamily: FONT.heading }}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.md }}>
+      <div style={{ position: 'relative', width: size, height: size }}>
+        {/* Background circle */}
+        <svg
+          width={size}
+          height={size}
+          style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }}
         >
-          {Math.round(score)}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={COLORS.border}
+            strokeWidth="3"
+          />
+          {/* Progress circle */}
+          <motion.circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth="3"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: MOTION.smooth, ease: 'easeOut' }}
+            strokeLinecap="round"
+          />
+        </svg>
+
+        {/* Center text */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              color: color,
+              fontFamily: FONT.mono,
+            }}
+          >
+            {Math.round(score)}
+          </div>
+          {label && (
+            <div
+              style={{
+                fontSize: '10px',
+                color: COLORS.textTertiary,
+                marginTop: SPACING.xs,
+              }}
+            >
+              {label}
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
   );
 }
 
-/* ==================== PROGRESS BAR ==================== */
-export function ProgressBar({ value, label, color = COLORS.gold, animated = true }) {
+/**
+ * Progress Bar (linear metric display)
+ * For XP, form consistency, etc.
+ */
+export function ProgressBar({ value = 0, max = 100, color = COLORS.gold, label, showPercent = true }) {
+  const percent = (value / max) * 100;
+
   return (
-    <div className="space-y-2">
-      {label && (
-        <div className="flex items-center justify-between">
-          <span className="text-[9px] tracking-[0.1em] uppercase font-bold" style={{ color: COLORS.textTertiary }}>
-            {label}
-          </span>
-          <span className="text-[9px] font-bold" style={{ color: COLORS.textSecondary }}>
-            {Math.round(value)}%
-          </span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm, width: '100%' }}>
+      {(label || showPercent) && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {label && (
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: '600',
+                color: COLORS.textTertiary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {label}
+            </span>
+          )}
+          {showPercent && (
+            <span
+              style={{
+                fontSize: '12px',
+                fontWeight: '700',
+                color,
+              }}
+            >
+              {Math.round(percent)}%
+            </span>
+          )}
         </div>
       )}
-      <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: color }}
-          initial={{ width: 0 }}
-          animate={{ width: `${value}%` }}
-          transition={animated ? { duration: 0.6, ease: 'easeOut' } : { duration: 0 }}
-        />
-      </div>
-    </div>
-  );
-}
 
-/* ==================== FEEDBACK MESSAGE ==================== */
-export function FeedbackMessage({ message, type = 'info' }) {
-  const bgColor = {
-    success: 'rgba(34, 197, 94, 0.1)',
-    error: 'rgba(239, 68, 68, 0.1)',
-    warning: 'rgba(245, 158, 11, 0.1)',
-    info: 'rgba(201, 168, 76, 0.1)',
-  }[type];
-
-  const textColor = {
-    success: '#22C55E',
-    error: '#EF4444',
-    warning: '#F59E0B',
-    info: COLORS.gold,
-  }[type];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }}
-      className="rounded-lg px-4 py-3 text-[10px] font-bold tracking-[0.1em] uppercase"
-      style={{ background: bgColor, color: textColor, fontFamily: FONT.mono }}
-    >
-      {message}
-    </motion.div>
-  );
-}
-
-/* ==================== LOADING SKELETON ==================== */
-export function SkeletonLoader({ count = 3, height = 80 }) {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: count }).map((_, i) => (
-        <motion.div
-          key={i}
-          className="rounded-xl"
-          style={{
-            background: COLORS.border,
-            height: `${height}px`,
-          }}
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ==================== BADGE ==================== */
-export function Badge({ label, color = COLORS.gold, icon: Icon }) {
-  return (
-    <motion.span
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-bold tracking-[0.1em] uppercase"
-      style={{
-        background: `${color}20`,
-        borderColor: `${color}40`,
-        border: '1px solid',
-        color,
-        fontFamily: FONT.mono,
-      }}
-    >
-      {Icon && <Icon size={12} />}
-      {label}
-    </motion.span>
-  );
-}
-
-/* ==================== EMPTY STATE ==================== */
-export function EmptyState({ icon: Icon, title, description, action }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 gap-6">
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 200 }}
-        className="w-20 h-20 rounded-full flex items-center justify-center"
-        style={{ background: COLORS.goldDim, border: `2px solid ${COLORS.goldBorder}` }}
+      {/* Progress track */}
+      <div
+        style={{
+          width: '100%',
+          height: '4px',
+          background: COLORS.border,
+          borderRadius: '2px',
+          overflow: 'hidden',
+        }}
       >
-        {Icon && <Icon size={40} style={{ color: COLORS.gold }} />}
-      </motion.div>
-      <div className="text-center space-y-3 max-w-sm">
-        <h3 className="text-sm font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-          {title}
-        </h3>
-        <p className="text-[10px] leading-relaxed" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
-          {description}
-        </p>
+        {/* Progress fill */}
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percent}%` }}
+          transition={{ duration: MOTION.smooth, ease: 'easeOut' }}
+          style={{
+            height: '100%',
+            background: color,
+            borderRadius: '2px',
+          }}
+        />
       </div>
-      {action && action}
     </div>
   );
 }
