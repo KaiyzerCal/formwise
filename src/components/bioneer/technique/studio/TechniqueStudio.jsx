@@ -18,7 +18,7 @@ import { useFrameSync } from './useFrameSync';
 import { useAnnotationEditor, TOOLS } from './useAnnotationEditor';
 import { getTechniqueDraft } from '../techniqueStorage';
 import { saveTechniqueProject } from '../TechniqueProjectStore';
-import { X } from 'lucide-react';
+import { X, HelpCircle } from 'lucide-react';
 
 export default function TechniqueStudio() {
   // ── Router & session state ───────────────────────────────────────────────
@@ -43,11 +43,7 @@ export default function TechniqueStudio() {
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
   const [showExport, setShowExport] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(() => {
-    // Show welcome only on first visit
-    const seen = localStorage.getItem('techniqueStudio_welcome_seen');
-    return !seen;
-  });
+  const [showWelcome, setShowWelcome] = useState(false); // Only on demand now
 
   // ── Annotation editor ────────────────────────────────────────────────────
   const annotationEditor = useAnnotationEditor();
@@ -358,10 +354,7 @@ export default function TechniqueStudio() {
   if (showWelcome) {
     return (
       <CoachWelcomeScreen
-        onClose={() => {
-          setShowWelcome(false);
-          localStorage.setItem('techniqueStudio_welcome_seen', 'true');
-        }}
+        onClose={() => setShowWelcome(false)}
       />
     );
   }
@@ -385,6 +378,13 @@ export default function TechniqueStudio() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowWelcome(true)}
+            className="p-2 rounded hover:bg-white/10"
+            title="Quick tips & keyboard shortcuts"
+          >
+            <HelpCircle size={18} style={{ color: COLORS.textSecondary }} />
+          </button>
           <button onClick={() => setShowExport(true)}
             className="px-3 py-1.5 rounded border text-[9px] font-bold"
             style={{ borderColor: COLORS.goldBorder, color: COLORS.gold }}>
