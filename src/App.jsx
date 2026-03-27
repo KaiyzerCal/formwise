@@ -14,6 +14,7 @@ import Landing from './pages/Landing';
 import PublicSession from './pages/PublicSession';
 import CoachPortal from './pages/CoachPortal';
 import Achievements from './pages/Achievements';
+import ErrorBoundary from './lib/ErrorBoundary';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -56,27 +57,27 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       {/* Freestyle session route (no layout) */}
-      <Route path="/FreestyleSession" element={<FreestyleSession />} />
+      <Route path="/FreestyleSession" element={<ErrorBoundary section="Freestyle Session"><FreestyleSession /></ErrorBoundary>} />
       {/* Technique Studio route (no layout) */}
-      <Route path="/TechniqueStudio" element={<TechniqueStudio />} />
+      <Route path="/TechniqueStudio" element={<ErrorBoundary section="Technique Studio"><TechniqueStudio /></ErrorBoundary>} />
       {/* Settings route */}
       <Route path="/Settings" element={
         <LayoutWrapper currentPageName="Settings">
-          <Settings />
+          <ErrorBoundary section="Settings"><Settings /></ErrorBoundary>
         </LayoutWrapper>
       } />
       {/* Public session share */}
-      <Route path="/session/:session_id/public" element={<PublicSession />} />
+      <Route path="/session/:session_id/public" element={<ErrorBoundary section="Public Session"><PublicSession /></ErrorBoundary>} />
       {/* Coach portal */}
       <Route path="/CoachPortal" element={
         <LayoutWrapper currentPageName="CoachPortal">
-          <CoachPortal />
+          <ErrorBoundary section="Coach Portal"><CoachPortal /></ErrorBoundary>
         </LayoutWrapper>
       } />
       {/* Achievements */}
       <Route path="/Achievements" element={
         <LayoutWrapper currentPageName="Achievements">
-          <Achievements />
+          <ErrorBoundary section="Achievements"><Achievements /></ErrorBoundary>
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (

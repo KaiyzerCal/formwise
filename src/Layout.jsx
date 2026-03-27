@@ -4,17 +4,20 @@ import { createPageUrl } from "@/utils";
 import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Menu, X, Medal } from "lucide-react";
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
+import { useT } from "@/lib/i18n";
+
 const NAV_ITEMS = [
-  { name: 'LiveSession',        label: 'LIVE SESSION',  icon: Camera    },
-  { name: 'TechniqueCompare',   label: 'TECHNIQUE',     icon: GitCompare },
-  { name: 'Analytics',          label: 'ANALYTICS',     icon: BarChart3  },
-  { name: 'MovementLibraryPage',label: 'LIBRARY',       icon: BookOpen   },
-  { name: 'SessionHistory',     label: 'HISTORY',       icon: Clock      },
-  { name: 'Achievements',       label: 'ACHIEVEMENTS',  icon: Medal      },
+  { name: 'LiveSession',        labelKey: 'LIVE SESSION',  icon: Camera,     ariaLabel: 'Live Session — start form analysis' },
+  { name: 'TechniqueCompare',   labelKey: 'TECHNIQUE',     icon: GitCompare,  ariaLabel: 'Technique — compare your form to reference' },
+  { name: 'Analytics',          labelKey: 'ANALYTICS',     icon: BarChart3,   ariaLabel: 'Analytics — view performance trends' },
+  { name: 'MovementLibraryPage',labelKey: 'LIBRARY',       icon: BookOpen,    ariaLabel: 'Library — browse movement exercises' },
+  { name: 'SessionHistory',     labelKey: 'HISTORY',       icon: Clock,       ariaLabel: 'History — past session records' },
+  { name: 'Achievements',       labelKey: 'ACHIEVEMENTS',  icon: Medal,       ariaLabel: 'Achievements — earned milestones' },
 ];
 
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const t = useT();
 
   return (
     <>
@@ -35,7 +38,7 @@ export default function Layout({ children, currentPageName }) {
               BIONEER
             </span>
           </div>
-          <nav className="flex-1 py-3">
+          <nav className="flex-1 py-3" aria-label="Main navigation">
             {NAV_ITEMS.map(item => {
               const active = currentPageName === item.name;
               const Icon = item.icon;
@@ -43,6 +46,8 @@ export default function Layout({ children, currentPageName }) {
                 <Link
                   key={item.name}
                   to={createPageUrl(item.name)}
+                  aria-label={item.ariaLabel}
+                  aria-current={active ? 'page' : undefined}
                   className="flex items-center gap-3 px-5 py-2.5 text-[10px] tracking-[0.15em] uppercase transition-colors relative"
                   style={{
                     color: active ? COLORS.gold : COLORS.textSecondary,
@@ -50,9 +55,8 @@ export default function Layout({ children, currentPageName }) {
                   }}
                 >
                   {active && <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ background: COLORS.gold }} />}
-                  <Icon size={14} strokeWidth={1.5} />
-                  <span className="flex-1">{item.label}</span>
-
+                  <Icon size={14} strokeWidth={1.5} aria-hidden="true" />
+                  <span className="flex-1">{t(item.labelKey)}</span>
                 </Link>
               );
             })}
@@ -61,9 +65,15 @@ export default function Layout({ children, currentPageName }) {
             <SyncStatusIndicator />
           </div>
           <div className="px-5 py-4 border-t" style={{ borderColor: COLORS.border }}>
-            <Link to="/Settings" className="flex items-center gap-3 text-[10px] tracking-[0.15em] uppercase" style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textTertiary }}>
-              <Settings size={14} strokeWidth={1.5} />
-              <span>SETTINGS</span>
+            <Link
+              to="/Settings"
+              aria-label="Settings — preferences and configuration"
+              aria-current={currentPageName === 'Settings' ? 'page' : undefined}
+              className="flex items-center gap-3 text-[10px] tracking-[0.15em] uppercase"
+              style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textSecondary }}
+            >
+              <Settings size={14} strokeWidth={1.5} aria-hidden="true" />
+              <span>{t('SETTINGS')}</span>
             </Link>
           </div>
         </aside>
@@ -71,15 +81,20 @@ export default function Layout({ children, currentPageName }) {
         {/* Mobile header */}
         <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
           <span className="text-xs font-bold tracking-[0.25em] uppercase" style={{ color: COLORS.gold, fontFamily: FONT.heading }}>BIONEER</span>
-          <button onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X size={18} style={{ color: COLORS.textSecondary }} /> : <Menu size={18} style={{ color: COLORS.textSecondary }} />}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav"
+          >
+            {mobileOpen ? <X size={18} style={{ color: COLORS.textSecondary }} aria-hidden="true" /> : <Menu size={18} style={{ color: COLORS.textSecondary }} aria-hidden="true" />}
           </button>
         </div>
 
         {/* Mobile nav overlay */}
         {mobileOpen && (
-          <div className="md:hidden fixed inset-0 z-40 pt-12" style={{ background: COLORS.surface }}>
-            <nav className="py-4">
+          <div id="mobile-nav" className="md:hidden fixed inset-0 z-40 pt-12" style={{ background: COLORS.surface }}>
+            <nav className="py-4" aria-label="Main navigation">
               {NAV_ITEMS.map(item => {
                 const active = currentPageName === item.name;
                 const Icon = item.icon;
@@ -88,19 +103,26 @@ export default function Layout({ children, currentPageName }) {
                     key={item.name}
                     to={createPageUrl(item.name)}
                     onClick={() => setMobileOpen(false)}
+                    aria-label={item.ariaLabel}
+                    aria-current={active ? 'page' : undefined}
                     className="flex items-center gap-3 px-6 py-3.5 text-xs tracking-[0.15em] uppercase"
                     style={{ color: active ? COLORS.gold : COLORS.textSecondary, background: active ? COLORS.goldDim : 'transparent' }}
                   >
-                    <Icon size={16} strokeWidth={1.5} />
-                    <span>{item.label}</span>
+                    <Icon size={16} strokeWidth={1.5} aria-hidden="true" />
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 );
               })}
-              <Link to="/Settings" onClick={() => setMobileOpen(false)}
+              <Link
+                to="/Settings"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Settings — preferences and configuration"
+                aria-current={currentPageName === 'Settings' ? 'page' : undefined}
                 className="flex items-center gap-3 px-6 py-3.5 text-xs tracking-[0.15em] uppercase"
-                style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textSecondary }}>
-                <Settings size={16} strokeWidth={1.5} />
-                <span>SETTINGS</span>
+                style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textSecondary }}
+              >
+                <Settings size={16} strokeWidth={1.5} aria-hidden="true" />
+                <span>{t('SETTINGS')}</span>
               </Link>
             </nav>
           </div>

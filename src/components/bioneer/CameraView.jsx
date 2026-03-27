@@ -447,8 +447,32 @@ export default function CameraView({ exercise, onStop }) {
     };
   }, [sessionActive]);
 
+  // ── Space key stops session ───────────────────────────────────────────────
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.code === 'Space' && sessionActive && !e.target.matches('input,textarea,button')) {
+        e.preventDefault();
+        handleStop();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [sessionActive, handleStop]);
+
+  // ── Reduced motion preference ─────────────────────────────────────────────
+  const prefersReducedMotion = typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   return (
-    <div className="fixed inset-0 z-40 bg-black">
+    <div className="fixed inset-0 z-40 bg-black" role="main" aria-label={`Live session — ${exercise.displayName || exercise.name}`}>
+      {/* Screen reader live region */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {sessionActive ? `Live session active — form analysis running. Form score: ${formScore} percent. Reps: ${repCount}.` : ''}
+      </div>
+      {/* Score live region */}
+      <div aria-live="polite" aria-atomic="true" aria-label={`Form score ${formScore} percent`} className="sr-only">
+        {formScore}
+      </div>
 
       {/* Secure context error — shown before camera attempt */}
       {!isSecure && (
@@ -557,8 +581,8 @@ export default function CameraView({ exercise, onStop }) {
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
       <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3"
         style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
-        <button onClick={handleStop} className="p-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
-          <ArrowLeft className="w-5 h-5 text-white" />
+        <button onClick={handleStop} aria-label="End session and go back" className="p-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+          <ArrowLeft className="w-5 h-5 text-white" aria-hidden="true" />
         </button>
         <span className="text-sm font-bold tracking-[0.2em] uppercase"
           style={{ color: GOLD, fontFamily: "'DM Mono', monospace" }}>
@@ -614,11 +638,13 @@ export default function CameraView({ exercise, onStop }) {
       {/* ── Mute ─────────────────────────────────────────────────────────── */}
       <div className="absolute top-16 right-4 z-50">
         <button onClick={() => setMuted(m => !m)}
+          aria-label={muted ? 'Unmute audio cues' : 'Mute audio cues'}
+          aria-pressed={muted}
           className="p-2.5 rounded-full border"
           style={{ background: 'rgba(0,0,0,0.5)', borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
           {muted
-            ? <VolumeX className="w-4 h-4 text-white/50" />
-            : <Volume2 className="w-4 h-4 text-white" />}
+            ? <VolumeX className="w-4 h-4 text-white/50" aria-hidden="true" />
+            : <Volume2 className="w-4 h-4 text-white" aria-hidden="true" />}
         </button>
       </div>
 
@@ -732,6 +758,7 @@ export default function CameraView({ exercise, onStop }) {
               </p>
             </div>
             <button onClick={() => { setFatigueBannerDismissed(true); setShowFatigueBanner(false); }}
+              aria-label="Dismiss fatigue warning"
               className="text-[9px] px-2 py-1 rounded border flex-shrink-0"
               style={{ borderColor: 'rgba(245,158,11,0.4)', color: '#f59e0b', fontFamily: "'DM Mono', monospace" }}>
               DISMISS
@@ -798,6 +825,7 @@ export default function CameraView({ exercise, onStop }) {
             </span>
           </div>
           <button onClick={handleStop}
+            aria-label="Stop session and view results"
             className="w-full py-3.5 rounded-xl border text-white font-bold text-sm tracking-wider transition-colors"
             style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.1)', fontFamily: "'DM Mono', monospace" }}>
             STOP SESSION

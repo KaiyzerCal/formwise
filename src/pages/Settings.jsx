@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
 import { getAllSessions, clearAllSessions } from '@/components/bioneer/data/sessionStore';
 import { getServerKeyStatus } from '@/components/bioneer/ai/GeminiCoach';
+import { LANGUAGES, LANG_KEY, setLanguage, getCurrentLang } from '@/lib/i18n';
 
 function Section({ title, children }) {
   return (
@@ -23,9 +24,11 @@ function ToggleRow({ label, sublabel, checked, onChange }) {
       </div>
       <button
         onClick={() => onChange(!checked)}
+        onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); onChange(!checked); } }}
         className="relative w-10 h-5 rounded-full transition-colors flex-shrink-0"
         style={{ background: checked ? COLORS.gold : COLORS.border }}
         aria-checked={checked}
+        aria-label={label}
         role="switch"
       >
         <span
@@ -74,6 +77,7 @@ export default function Settings() {
   const [sessionCount, setSessionCount] = useState(0);
   const [keySaved, setKeySaved] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [lang, setLang] = useState(() => getCurrentLang());
   const serverKeyStatus = getServerKeyStatus(); // null=unknown, true=active, false=unavailable
 
   useEffect(() => {
@@ -88,6 +92,11 @@ export default function Settings() {
   useEffect(() => { localStorage.setItem('bioneer_camera_facing', frontCamera ? 'user' : 'environment'); }, [frontCamera]);
   useEffect(() => { localStorage.setItem('formwise_tracking_sensitivity', trackingSensitivity); }, [trackingSensitivity]);
   useEffect(() => { localStorage.setItem('bioneer_pose_model', poseModel); }, [poseModel]);
+
+  const handleLangChange = (code) => {
+    setLang(code);
+    setLanguage(code);
+  };
 
   const handleSaveKey = () => {
     localStorage.setItem('formwise_gemini_key', geminiKey.trim());
@@ -252,6 +261,24 @@ export default function Settings() {
           <p className="text-[9px]" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
             Takes effect on next session start
           </p>
+        </Section>
+
+        {/* Language */}
+        <Section title="Language">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[11px] tracking-[0.08em]" style={{ color: COLORS.textPrimary, fontFamily: FONT.mono }}>Interface Language</p>
+            <select
+              value={lang}
+              onChange={e => handleLangChange(e.target.value)}
+              aria-label="Select interface language"
+              className="text-[10px] px-2 py-1.5 rounded border outline-none"
+              style={{ background: COLORS.bg, borderColor: COLORS.border, color: COLORS.textSecondary, fontFamily: FONT.mono }}
+            >
+              {LANGUAGES.map(l => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </div>
         </Section>
 
         {/* Data */}
