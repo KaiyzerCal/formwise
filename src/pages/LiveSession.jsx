@@ -175,16 +175,25 @@ export default function LiveSession() {
   // Select phase — movement library + movement profile selector
   return (
     <div className="flex flex-col h-screen" style={{ background: COLORS.bg }}>
-      {/* Back button */}
-      <div className="px-5 py-3 border-b" style={{ borderColor: COLORS.border }}>
+      {/* Header with intro */}
+      <div className="px-6 py-8 border-b" style={{ borderColor: COLORS.border }}>
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-[10px] tracking-[0.1em] uppercase transition-colors hover:opacity-80"
-          style={{ color: COLORS.gold, fontFamily: FONT.mono }}
+          className="flex items-center gap-2 text-[9px] tracking-[0.1em] uppercase mb-6 transition-colors hover:opacity-70"
+          style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}
         >
-          <ArrowLeft size={14} />
-          Back to Dashboard
+          <ArrowLeft size={13} />
+          Back to Home
         </button>
+        
+        <div>
+          <h1 className="text-2xl font-bold tracking-[0.05em] mb-2" style={{ color: COLORS.textPrimary, fontFamily: FONT.heading }}>
+            Record & Analyze
+          </h1>
+          <p className="text-sm leading-relaxed" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+            Record 30 seconds of movement. We'll analyze your form and provide real-time feedback.
+          </p>
+        </div>
       </div>
 
       <MovementLibrary
