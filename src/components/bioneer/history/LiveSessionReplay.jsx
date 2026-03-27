@@ -3,9 +3,9 @@
  * Uses actual recorded video from IndexedDB; skeleton overlay optional if poseFrames present.
  */
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Play, Pause, X, Eye, EyeOff } from 'lucide-react';
+import { Play, Pause, X, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
-import { getSessionVideoUrl } from '../data/liveVideoStorage';
+import { getSessionVideoUrl, deleteSessionVideoBlob } from '../data/liveVideoStorage';
 import { useVideoPose } from '../compare/useVideoPose';
 
 // Skeleton rendering from VideoPanel
@@ -18,16 +18,18 @@ const POSE_CONNECTIONS = [
 
 const KEY_JOINTS = new Set([11,12,13,14,15,16,23,24,25,26,27,28]);
 
-function drawSkeleton(ctx, lm, w, h, accentColor) {
+function drawSkeleton(ctx, lm, w, h) {
   if (!lm || !lm.length) return;
   ctx.save();
+
+  const goldHex = COLORS.gold;
 
   // Connectors
   POSE_CONNECTIONS.forEach(([a, b]) => {
     const pa = lm[a], pb = lm[b];
     if (!pa || !pb || pa.visibility < 0.3 || pb.visibility < 0.3) return;
     const alpha = Math.min(pa.visibility, pb.visibility);
-    ctx.strokeStyle = `rgba(255,255,255,${(alpha * 0.65).toFixed(2)})`;
+    ctx.strokeStyle = `rgba(201,162,39,${(alpha * 0.65).toFixed(2)})`;
     ctx.lineWidth   = 1.5;
     ctx.setLineDash([]);
     ctx.beginPath();
@@ -42,7 +44,7 @@ function drawSkeleton(ctx, lm, w, h, accentColor) {
     const x = p.x * w, y = p.y * h;
     const isKey = KEY_JOINTS.has(i);
     const radius = isKey ? 5 : 3;
-    const color  = isKey ? accentColor : 'rgba(255,255,255,0.6)';
+    const color  = isKey ? goldHex : `rgba(201,162,39,0.6)`;
 
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -53,7 +55,7 @@ function drawSkeleton(ctx, lm, w, h, accentColor) {
     if (isKey) {
       ctx.beginPath();
       ctx.arc(x, y, radius + 2.5, 0, Math.PI * 2);
-      ctx.strokeStyle = `${accentColor}60`;
+      ctx.strokeStyle = `${goldHex}60`;
       ctx.lineWidth   = 1;
       ctx.stroke();
     }
@@ -142,6 +144,14 @@ export default function LiveSessionReplay({ session, onClose }) {
     setCurrentTime(t);
   }, []);
 
+  const handleDelete = useCallback(async () => {
+    const key = session.video_storage_key || session.session_id;
+    if (key) {
+      await deleteSessionVideoBlob(key);
+    }
+    onClose();
+  }, [session.video_storage_key, session.session_id, onClose]);
+
   const syncCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const el = containerRef.current;
@@ -164,7 +174,7 @@ export default function LiveSessionReplay({ session, onClose }) {
     ctx.clearRect(0, 0, w, h);
 
     if (landmarks && showSkeleton) {
-      drawSkeleton(ctx, landmarks, w, h, COLORS.gold);
+      drawSkeleton(ctx, landmarks, w, h);
     }
   }, [landmarks, showSkeleton, syncCanvas]);
 
@@ -205,9 +215,14 @@ export default function LiveSessionReplay({ session, onClose }) {
             {session.average_form_score ? ` · Score: ${session.average_form_score}` : ''}
           </p>
         </div>
-        <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition">
-          <X className="w-5 h-5" style={{ color: COLORS.textSecondary }} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleDelete} className="p-2 rounded-full hover:bg-white/10 transition" title="Delete video">
+            <Trash2 className="w-5 h-5" style={{ color: COLORS.fault }} />
+          </button>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition">
+            <X className="w-5 h-5" style={{ color: COLORS.textSecondary }} />
+          </button>
+        </div>
       </div>
 
       {/* Video area */}
