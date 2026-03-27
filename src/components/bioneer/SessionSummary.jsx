@@ -4,6 +4,8 @@ import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle } f
 import ScoreTooltip from "./onboarding/ScoreTooltip";
 import { getSetAnalysis } from "./ai/GeminiCoach";
 import SessionShareButton from "./share/SessionShareCard";
+import { generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
+import FaultHistoryPanel from "./ui/FaultHistoryPanel";
 
 function ScoreBar({ score }) {
   const color = score >= 80 ? "#22C55E" : score >= 65 ? "#EAB308" : "#EF4444";
@@ -81,9 +83,17 @@ function buildCoachingText(exerciseDef, jointData) {
 export default function SessionSummary({ sessionData, onSave, onDiscard, saving, saveOutcome }) {
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [adaptiveCue, setAdaptiveCue] = useState(null);
 
   useEffect(() => {
     if (!sessionData) return;
+    
+    // Generate adaptive cue based on form score
+    const score = Math.max(0, Math.min(100, sessionData.movement_score ?? sessionData.form_score_overall ?? 0));
+    const cue = generateAdaptiveCue(sessionData.exercise_id, score);
+    if (cue) setAdaptiveCue(cue);
+
+    // Fetch AI analysis
     const reps = sessionData.reps ?? [];
     const exerciseName = sessionData.exercise_def?.name || sessionData.exercise_id;
     if (!reps.length) return;
@@ -92,7 +102,7 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
       if (result) setAiAnalysis(result);
       setAiLoading(false);
     });
-  }, []);
+  }, [sessionData]);
 
   // Defensive guards — ensure all required data exists
   if (!sessionData) return null;
@@ -239,7 +249,17 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
           </div>
         )}
 
-        {/* Coaching */}
+        {/* Adaptive Coaching Cue */}
+        {adaptiveCue && (
+          <div className="rounded-xl bg-[#7C3AED]/10 border border-[#7C3AED]/30 p-3">
+            <p className="text-[10px] text-[#A78BFA]/70 uppercase tracking-widest mb-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
+              Next Session Focus
+            </p>
+            <p className="text-xs text-white/70 leading-relaxed">"{adaptiveCue}"</p>
+          </div>
+        )}
+
+        {/* Traditional Coaching */}
         {coachingText && (
           <div className="rounded-xl bg-[#C9A84C]/10 border border-[#C9A84C]/20 p-3">
             <p className="text-[10px] text-[#C9A84C]/70 uppercase tracking-widest mb-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
@@ -247,6 +267,11 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
             </p>
             <p className="text-xs text-white/60 leading-relaxed">"{coachingText}"</p>
           </div>
+        )}
+
+        {/* Fault History Panel */}
+        {sessionData.exercise_id && (
+          <FaultHistoryPanel exerciseId={sessionData.exercise_id} />
         )}
 
         {/* Fallback alerts */}

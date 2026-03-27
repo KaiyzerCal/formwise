@@ -15,6 +15,7 @@ import { useSessionLearning } from "../components/bioneer/learning/useSessionLea
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { recordSession } from "@/lib/retentionEngine";
 import SessionRewardScreen from "@/components/SessionRewardScreen";
+import { recordSessionFaults, markResolvedFaults, generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
 
 export default function LiveSession() {
   const [phase, setPhase] = useState("select");
@@ -102,6 +103,10 @@ export default function LiveSession() {
 
       // Fire-and-forget: check achievements
       checkAndAwardAchievements().catch(() => {});
+
+      // Record fault history and check for improvements
+      recordSessionFaults(sessionWithVideo).catch(() => {});
+      markResolvedFaults(sessionWithVideo.exercise_id, sessionWithVideo.form_score_overall).catch(() => {});
 
       // Record session for streak/XP tracking
       const user = await (async () => {

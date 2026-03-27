@@ -1,0 +1,48 @@
+{
+  "name": "ExerciseFaultHistory",
+  "type": "object",
+  "properties": {
+    "exercise_id": {
+      "type": "string",
+      "description": "Exercise identifier (e.g. squat, deadlift)"
+    },
+    "fault_id": {
+      "type": "string",
+      "description": "Unique fault identifier (e.g. knee_valgus, early_extension)"
+    },
+    "fault_name": {
+      "type": "string",
+      "description": "Human-readable fault name"
+    },
+    "first_occurrence": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this fault was first recorded"
+    },
+    "last_occurrence": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last session this fault appeared"
+    },
+    "total_occurrences": {
+      "type": "number",
+      "default": 1,
+      "description": "Number of sessions where this fault appeared"
+    },
+    "is_resolved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the fault no longer appears in recent sessions"
+    },
+    "improvement_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date when fault was last fixed (stopped appearing)"
+    }
+  },
+  "required": [
+    "exercise_id",
+    "fault_id",
+    "fault_name"
+  ]
+}
