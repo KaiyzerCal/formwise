@@ -9,8 +9,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { COLORS, FONT } from '../../ui/DesignTokens';
 import TechniqueVideoPlayer from './TechniqueVideoPlayer';
 import TechniqueFrameControls from './TechniqueFrameControls';
-import TechniqueToolbar from './TechniqueToolbar';
-import TechniqueNotesPanel from './TechniqueNotesPanel';
+import MinimalToolbar from './MinimalToolbar';
+import CoachConnectionPanel from './CoachConnectionPanel';
+import CoachWelcomeScreen from './CoachWelcomeScreen';
 import TechniqueExportPanel from './TechniqueExportPanel';
 import { normalizeToTechniqueSession } from './techniqueSessionNormalizer';
 import { useFrameSync } from './useFrameSync';
@@ -42,6 +43,11 @@ export default function TechniqueStudio() {
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
   const [showExport, setShowExport] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => {
+    // Show welcome only on first visit
+    const seen = localStorage.getItem('techniqueStudio_welcome_seen');
+    return !seen;
+  });
 
   // ── Annotation editor ────────────────────────────────────────────────────
   const annotationEditor = useAnnotationEditor();
@@ -347,6 +353,19 @@ export default function TechniqueStudio() {
     );
   }
 
+  // ── Welcome modal ──────────────────────────────────────────────────────────
+
+  if (showWelcome) {
+    return (
+      <CoachWelcomeScreen
+        onClose={() => {
+          setShowWelcome(false);
+          localStorage.setItem('techniqueStudio_welcome_seen', 'true');
+        }}
+      />
+    );
+  }
+
   // ── Main render ───────────────────────────────────────────────────────────
 
   return (
@@ -379,8 +398,8 @@ export default function TechniqueStudio() {
 
       {/* Main content */}
       <div className="flex-1 overflow-hidden flex" style={{ minHeight: 0 }}>
-        {/* Toolbar */}
-        <TechniqueToolbar
+        {/* Minimal Toolbar */}
+        <MinimalToolbar
           activeTool={annotationEditor.activeTool}
           onToolChange={annotationEditor.setActiveTool}
           onClearFrame={handleClearFrame}
@@ -393,10 +412,6 @@ export default function TechniqueStudio() {
           onToggleSkeleton={() => setShowSkeleton(v => !v)}
           showAnnotations={showAnnotations}
           onToggleAnnotations={() => setShowAnnotations(v => !v)}
-          showJointLabels={showJointLabels}
-          onToggleJointLabels={() => setShowJointLabels(v => !v)}
-          showAngleLabels={showAngleLabels}
-          onToggleAngleLabels={() => setShowAngleLabels(v => !v)}
         />
 
         {/* Video + controls */}
@@ -443,10 +458,10 @@ export default function TechniqueStudio() {
           />
         </div>
 
-        {/* Notes panel */}
+        {/* Coach Connection Panel */}
         {showNotes && (
-          <div className="w-64 border-l flex flex-col flex-shrink-0 overflow-hidden" style={{ borderColor: COLORS.border }}>
-            <TechniqueNotesPanel
+          <div className="w-80 border-l flex flex-col flex-shrink-0 overflow-hidden" style={{ borderColor: COLORS.border }}>
+            <CoachConnectionPanel
               session={techniqueSession}
               onSessionUpdate={setTechniqueSession}
               onClose={() => setShowNotes(false)}
