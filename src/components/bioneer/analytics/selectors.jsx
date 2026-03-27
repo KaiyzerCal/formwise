@@ -4,7 +4,7 @@
  * Reads from sessionStore; outputs chart-ready or display-ready data.
  */
 
-import { getAllSessions } from '../data/sessionStore';
+import { getAllSessions } from '../data/unifiedSessionStore';
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 

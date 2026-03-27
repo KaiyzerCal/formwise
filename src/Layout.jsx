@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Menu, X } from "lucide-react";
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
+import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
 
 const NAV_ITEMS = [
   { name: 'LiveSession', label: 'LIVE SESSION', icon: Camera },
@@ -56,6 +57,9 @@ export default function Layout({ children, currentPageName }) {
               );
             })}
           </nav>
+          <div className="border-t" style={{ borderColor: COLORS.border }}>
+            <SyncStatusIndicator />
+          </div>
           <div className="px-5 py-4 border-t" style={{ borderColor: COLORS.border }}>
             <Link to="/Settings" className="flex items-center gap-3 text-[10px] tracking-[0.15em] uppercase" style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textTertiary }}>
               <Settings size={14} strokeWidth={1.5} />

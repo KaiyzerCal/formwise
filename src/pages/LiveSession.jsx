@@ -5,7 +5,7 @@ import CameraView from "../components/bioneer/CameraView";
 import MovementLibrary from "../components/bioneer/MovementLibrary";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import { normalizeSession, sessionSaveMessage } from "../components/bioneer/data/sessionNormalizer";
-import { saveSession, updateSession } from "../components/bioneer/data/sessionStore";
+import { saveSession, updateSession } from "../components/bioneer/data/unifiedSessionStore";
 import { persistRecordedSessionVideo } from "../components/bioneer/data/persistRecordedSessionVideo";
 import { getSessionNarrative } from "../components/bioneer/ai/GeminiCoach";
 import { getMovementProfile } from "../components/bioneer/movementProfiles/movementProfiles";

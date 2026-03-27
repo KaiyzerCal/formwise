@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as HotToaster } from "react-hot-toast";
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { pagesConfig } from './pages.config'
@@ -9,6 +10,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import FreestyleSession from './pages/FreestyleSession';
 import TechniqueStudio from './components/bioneer/technique/studio/TechniqueStudio';
 import Settings from './pages/Settings';
+import Landing from './pages/Landing';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -35,10 +37,14 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
+      // Show landing page instead of auto-redirect
+      return <Landing />;
     }
+  }
+
+  // Not authenticated — show landing
+  if (!isAuthenticated) {
+    return <Landing />;
   }
 
   // Render the main app
@@ -85,6 +91,7 @@ function App() {
           <AuthenticatedApp />
         </Router>
         <Toaster />
+        <HotToaster position="bottom-right" />
       </QueryClientProvider>
     </AuthProvider>
   )

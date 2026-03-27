@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
-import { getAllSessions } from "../components/bioneer/data/sessionStore";
+import { getAllSessions, syncFromCloud } from "../components/bioneer/data/unifiedSessionStore";
+import toast from "react-hot-toast";
 import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl } from "../components/bioneer/history/sessionStorage";
 import { getSessionVideoUrl } from "../components/bioneer/data/liveVideoStorage";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send } from "lucide-react";
@@ -49,6 +50,8 @@ export default function SessionHistory() {
   const [deleting, setDeleting] = useState(null);
   const [sending, setSending] = useState(null);
   const [sendError, setSendError] = useState(null);
+  const [cloudSyncing, setCloudSyncing] = useState(false);
+  const [localSessions, setLocalSessions] = useState(() => getAllSessions());
   // hydrated live sessions: session_id → videoSrc
   const [liveVideoUrls, setLiveVideoUrls] = useState({});
 
@@ -57,6 +60,28 @@ export default function SessionHistory() {
     getAllFreestyleSessions()
       .then(sessions => setFreestyleSessions(sessions || []))
       .catch(err => console.error('Failed to load freestyle sessions:', err));
+  }, []);
+
+  // Cloud sync on mount
+  useEffect(() => {
+    setCloudSyncing(true);
+    syncFromCloud(50).then(added => {
+      setCloudSyncing(false);
+      if (added > 0) {
+        setLocalSessions(getAllSessions());
+        toast(`${added} session${added === 1 ? '' : 's'} synced from cloud`, {
+          style: {
+            background: '#1a1a1a',
+            color: '#C9A84C',
+            border: '1px solid rgba(201,168,76,0.3)',
+            fontFamily: "'DM Mono', monospace",
+            fontSize: '11px',
+            letterSpacing: '0.05em',
+          },
+          duration: 3000,
+        });
+      }
+    });
   }, []);
 
   // Hydrate videoSrc for live sessions from IndexedDB
@@ -76,8 +101,7 @@ export default function SessionHistory() {
     });
   }, []);
 
-  const rawSessions = useMemo(() => getAllSessions(), []);
-  const sessions = useMemo(() => rawSessions.map(adaptSession), [rawSessions]);
+  const sessions = useMemo(() => localSessions.map(adaptSession), [localSessions]);
   
   // Combine exercise and freestyle sessions
   const allSessions = [
@@ -191,7 +215,18 @@ export default function SessionHistory() {
 
       {/* Session list */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-5 space-y-2">
-        {allSessions.length === 0 && (
+        {/* Cloud sync skeleton */}
+        {cloudSyncing && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded border mb-2"
+            style={{ borderColor: 'rgba(201,168,76,0.2)', background: 'rgba(201,168,76,0.05)' }}>
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#C9A84C' }} />
+            <span className="text-[9px] tracking-[0.15em] uppercase" style={{ color: '#C9A84C', fontFamily: FONT.mono }}>
+              Loading cloud sessions...
+            </span>
+          </div>
+        )}
+
+        {allSessions.length === 0 && !cloudSyncing && (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <div className="w-12 h-12 rounded-full flex items-center justify-center"
               style={{ background: COLORS.goldDim, border: `1px solid ${COLORS.goldBorder}` }}>
