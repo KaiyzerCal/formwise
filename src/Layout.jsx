@@ -34,51 +34,54 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
 
       <div className="flex h-screen w-screen overflow-hidden" style={{ fontFamily: FONT.mono, background: COLORS.bg, color: COLORS.textPrimary }}>
-        {/* Desktop Sidebar */}
-        <aside className="hidden md:flex flex-col w-[200px] flex-shrink-0 border-r" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
-          <div className="px-4 py-4 border-b" style={{ borderColor: COLORS.border }}>
-            <span className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: COLORS.gold, fontFamily: FONT.heading, letterSpacing: '0.1em' }}>
-              BIONEER
-            </span>
-          </div>
-          <nav className="flex-1 py-2" aria-label="Main navigation">
-            {NAV_ITEMS.map(item => {
-              const active = currentPageName === item.name;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  to={createPageUrl(item.name)}
-                  aria-label={item.ariaLabel}
-                  aria-current={active ? 'page' : undefined}
-                  className="flex items-center gap-3 px-4 py-2 text-[9px] tracking-[0.12em] uppercase transition-colors relative"
-                  style={{
-                    color: active ? COLORS.gold : COLORS.textSecondary,
-                    background: active ? COLORS.goldDim : 'transparent',
-                  }}
-                >
-                  {active && <div className="absolute left-0 top-1 bottom-1 w-px" style={{ background: COLORS.gold }} />}
-                  <Icon size={13} strokeWidth={1.5} aria-hidden="true" />
-                  <span className="flex-1 font-medium">{t(item.labelKey)}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="border-t px-4 py-3" style={{ borderColor: COLORS.border }}>
+         {/* Desktop Sidebar */}
+         <aside className="hidden md:flex flex-col w-[180px] flex-shrink-0 border-r" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
+           <div className="px-4 py-4 border-b" style={{ borderColor: COLORS.border }}>
+             <span className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: COLORS.gold, fontFamily: FONT.heading }}>
+               BIONEER
+             </span>
+           </div>
+           <nav className="flex-1 py-3 px-2 space-y-1" aria-label="Main navigation">
+             {NAV_ITEMS.map(item => {
+               const active = currentPageName === item.name;
+               const Icon = item.icon;
+               return (
+                 <Link
+                   key={item.name}
+                   to={createPageUrl(item.name)}
+                   aria-label={item.ariaLabel}
+                   aria-current={active ? 'page' : undefined}
+                   className="flex items-center gap-2.5 px-3 py-2 text-[8.5px] tracking-[0.12em] uppercase rounded-md transition-all duration-120"
+                   style={{
+                     color: active ? COLORS.gold : COLORS.textSecondary,
+                     background: active ? COLORS.goldDim : 'transparent',
+                     ...(active && { borderLeft: `2px solid ${COLORS.gold}` }),
+                   }}
+                 >
+                   <Icon size={12} strokeWidth={1.5} aria-hidden="true" />
+                   <span className="flex-1 font-medium">{t(item.labelKey)}</span>
+                 </Link>
+               );
+             })}
+           </nav>
+          <div className="border-t px-3 py-3" style={{ borderColor: COLORS.border }}>
             <StreakWidget />
           </div>
-          <div className="border-t" style={{ borderColor: COLORS.border }}>
+          <div className="border-t px-3 py-2" style={{ borderColor: COLORS.border }}>
             <SyncStatusIndicator />
           </div>
-          <div className="px-5 py-4 border-t" style={{ borderColor: COLORS.border }}>
+          <div className="px-3 py-3 border-t" style={{ borderColor: COLORS.border }}>
             <Link
               to="/Settings"
               aria-label="Settings — preferences and configuration"
               aria-current={currentPageName === 'Settings' ? 'page' : undefined}
-              className="flex items-center gap-3 text-[10px] tracking-[0.15em] uppercase"
-              style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textSecondary }}
+              className="flex items-center gap-2.5 px-3 py-2 text-[8.5px] tracking-[0.12em] uppercase rounded-md"
+              style={{ 
+                color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textSecondary,
+                background: currentPageName === 'Settings' ? COLORS.goldDim : 'transparent',
+              }}
             >
-              <Settings size={14} strokeWidth={1.5} aria-hidden="true" />
+              <Settings size={12} strokeWidth={1.5} aria-hidden="true" />
               <span>{t('SETTINGS')}</span>
             </Link>
           </div>
