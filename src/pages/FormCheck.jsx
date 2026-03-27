@@ -7,11 +7,8 @@ import CameraView from "../components/bioneer/CameraView";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import Disclaimer from "../components/bioneer/Disclaimer";
 import { createPageUrl } from "@/utils";
-import { useNavigate } from "react-router-dom";
 import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
 import FirstLaunchWizard, { hasCompletedOnboarding } from "../components/bioneer/onboarding/FirstLaunchWizard";
-import { useSubscription, incrementWeeklySession } from "../lib/subscriptionGate";
-import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
@@ -23,8 +20,6 @@ export default function FormCheck() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const { processSessionLearning } = useSessionLearning();
-  const { tier, weeklySessionsRemaining } = useSubscription();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const accepted = localStorage.getItem(DISCLAIMER_KEY);
@@ -49,12 +44,6 @@ export default function FormCheck() {
   const handleStartAnalysis = (movement) => {
     const ex = movement || selectedExercise;
     if (!ex) return;
-    // Free tier session gate
-    if (tier === 'free' && weeklySessionsRemaining === 0) {
-      navigate('/Paywall');
-      return;
-    }
-    if (tier === 'free') incrementWeeklySession();
     // Prevent double-start by ensuring clean state
     setSessionData(null);
     setSelectedExercise(ex);
@@ -154,28 +143,11 @@ export default function FormCheck() {
     );
   }
 
-  // Movement library selection screen — with free tier banner
+  // Movement library selection screen
   return (
-    <div className="flex flex-col h-full">
-      {tier === 'free' && (
-        <div className="flex-shrink-0 flex items-center justify-between px-5 py-2 border-b"
-          style={{ background: 'rgba(245,158,11,0.07)', borderColor: 'rgba(245,158,11,0.2)', fontFamily: FONT.mono }}>
-          <span className="text-[9px] font-bold tracking-[0.12em] uppercase" style={{ color: '#f59e0b' }}>
-            {weeklySessionsRemaining} OF {3} FREE SESSIONS THIS WEEK
-          </span>
-          <button onClick={() => navigate('/Paywall')}
-            className="text-[9px] font-bold tracking-[0.12em] uppercase underline"
-            style={{ color: COLORS.gold }}>
-            UPGRADE
-          </button>
-        </div>
-      )}
-      <div className="flex-1 overflow-hidden">
-        <MovementLibrary
-          selectedId={selectedExercise?.id}
-          onSelect={handleStartAnalysis}
-        />
-      </div>
-    </div>
+    <MovementLibrary
+      selectedId={selectedExercise?.id}
+      onSelect={handleStartAnalysis}
+    />
   );
 }

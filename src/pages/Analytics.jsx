@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { BarChart3 } from "lucide-react";
-import { useSubscription } from "../lib/subscriptionGate";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
 import {
   getAnalyticsOverview,
@@ -113,7 +112,6 @@ export default function Analytics() {
   }, []);
 
   const navigate = useNavigate();
-  const { canUseAI } = useSubscription();
 
   if (overview.isEmpty) {
     return (
@@ -198,25 +196,7 @@ export default function Analytics() {
             {selectedMovement && (
               <>
                 <ProgressionPanel movement={selectedMovement} />
-                {/* AI Insights — gated for free users */}
-                <div className="relative">
-                  <div style={{ filter: canUseAI ? 'none' : 'blur(4px)', pointerEvents: canUseAI ? 'auto' : 'none', userSelect: canUseAI ? 'auto' : 'none' }}>
-                    <MovementInsightsPanel movement={selectedMovement} />
-                  </div>
-                  {!canUseAI && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg"
-                      style={{ background: 'rgba(8,8,8,0.75)', backdropFilter: 'blur(2px)' }}>
-                      <p className="text-[10px] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
-                        AI INSIGHTS — PRO FEATURE
-                      </p>
-                      <button onClick={() => navigate('/Paywall')}
-                        className="px-5 py-2 rounded text-[10px] font-bold tracking-[0.15em] uppercase"
-                        style={{ background: COLORS.gold, color: '#000', fontFamily: FONT.mono }}>
-                        UPGRADE TO PRO
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <MovementInsightsPanel movement={selectedMovement} />
               </>
             )}
           </>

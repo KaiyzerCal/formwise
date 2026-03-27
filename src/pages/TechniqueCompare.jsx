@@ -10,10 +10,8 @@ import { REFERENCE_POSES, REFERENCE_EXERCISE_LIST } from '../components/bioneer/
 import ReferenceSkeletonPlayer from '../components/bioneer/compare/ReferenceSkeletonPlayer';
 import { useComparisonReport } from '../components/bioneer/compare/useComparisonReport';
 import CompareReportCard from '../components/bioneer/compare/CompareReportCard';
-import { Upload, BookOpen, Film, Lock } from 'lucide-react';
+import { Upload, BookOpen, Film } from 'lucide-react';
 import { saveSession } from '../components/bioneer/data/unifiedSessionStore';
-import { useSubscription } from '../lib/subscriptionGate';
-import { useNavigate } from 'react-router-dom';
 
 const SPEEDS = [0.25, 0.5, 1, 2];
 
@@ -55,8 +53,6 @@ function ModeTab({ label, icon: Icon, active, onClick }) {
 
 export default function TechniqueCompare() {
   const [searchParams] = useSearchParams();
-  const { canUseCompare } = useSubscription();
-  const navigate = useNavigate();
 
   // ── Reference mode: 'library' | 'custom' ────────────────────────────────
   const [refMode,        setRefMode]        = useState('library');
@@ -248,36 +244,6 @@ export default function TechniqueCompare() {
   }, [searchParams]);
 
   // ── Render ────────────────────────────────────────────────────────────────
-  if (!canUseCompare) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center gap-6 px-6 text-center"
-        style={{ background: COLORS.bg, fontFamily: FONT.mono }}>
-        <div className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: COLORS.goldDim, border: `1px solid ${COLORS.goldBorder}` }}>
-          <Lock size={22} style={{ color: COLORS.gold }} />
-        </div>
-        <div className="space-y-2">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: COLORS.gold }}>
-            Technique Compare
-          </p>
-          <p className="text-[10px] leading-relaxed max-w-xs" style={{ color: COLORS.textSecondary }}>
-            Compare your movement against ideal reference skeletons. Available on PRO and ELITE plans.
-          </p>
-        </div>
-        <button onClick={() => navigate('/Paywall')}
-          className="px-8 py-3 rounded text-[10px] font-bold tracking-[0.15em] uppercase"
-          style={{ background: COLORS.gold, color: '#000' }}>
-          UPGRADE TO PRO
-        </button>
-        <button onClick={() => navigate(-1)}
-          className="text-[9px] tracking-[0.1em] uppercase underline"
-          style={{ color: COLORS.textTertiary }}>
-          Go Back
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full flex flex-col relative" style={{ fontFamily: FONT.mono, background: COLORS.bg }}>
 

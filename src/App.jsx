@@ -11,7 +11,6 @@ import FreestyleSession from './pages/FreestyleSession';
 import TechniqueStudio from './components/bioneer/technique/studio/TechniqueStudio';
 import Settings from './pages/Settings';
 import Landing from './pages/Landing';
-import Paywall from './pages/Paywall';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -57,8 +56,6 @@ const AuthenticatedApp = () => {
       <Route path="/FreestyleSession" element={<FreestyleSession />} />
       {/* Technique Studio route (no layout) */}
       <Route path="/TechniqueStudio" element={<TechniqueStudio />} />
-      {/* Paywall route */}
-      <Route path="/Paywall" element={<Paywall />} />
       {/* Settings route */}
       <Route path="/Settings" element={
         <LayoutWrapper currentPageName="Settings">

@@ -85,9 +85,4 @@
   body {
     @apply bg-background text-foreground;
   }
-
-  /* Remove 300ms tap delay on mobile */
-  button, a, [role="button"], input, select, textarea {
-    touch-action: manipulation;
-  }
 }

@@ -4,22 +4,18 @@ import { createPageUrl } from "@/utils";
 import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Menu, X } from "lucide-react";
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
-import { useSubscription } from "@/lib/subscriptionGate";
-import InstallPrompt from "@/components/bioneer/pwa/InstallPrompt";
-import OfflineBanner from "@/components/bioneer/pwa/OfflineBanner";
 
 const NAV_ITEMS = [
-  { name: 'LiveSession', label: 'LIVE SESSION', icon: Camera, pro: false },
-  { name: 'TechniqueCompare', label: 'TECHNIQUE', icon: GitCompare, pro: true },
-  { name: 'Analytics', label: 'ANALYTICS', icon: BarChart3, pro: false },
-  { name: 'MovementLibraryPage', label: 'LIBRARY', icon: BookOpen, pro: false },
-  { name: 'SessionHistory', label: 'HISTORY', icon: Clock, pro: false },
-  { name: 'Settings', label: 'SETTINGS', icon: Settings, pro: false },
+  { name: 'LiveSession', label: 'LIVE SESSION', icon: Camera },
+  { name: 'TechniqueCompare', label: 'TECHNIQUE', icon: GitCompare },
+  { name: 'Analytics', label: 'ANALYTICS', icon: BarChart3 },
+  { name: 'MovementLibraryPage', label: 'LIBRARY', icon: BookOpen },
+  { name: 'SessionHistory', label: 'HISTORY', icon: Clock },
+  { name: 'Settings', label: 'SETTINGS', icon: Settings },
 ];
 
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isPro } = useSubscription();
 
   return (
     <>
@@ -56,12 +52,7 @@ export default function Layout({ children, currentPageName }) {
                 >
                   {active && <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ background: COLORS.gold }} />}
                   <Icon size={14} strokeWidth={1.5} />
-                  <span className="flex-1">{item.label}</span>
-                  {item.pro && !isPro && (
-                    <span className="text-[7px] font-bold px-1 py-0.5 rounded" style={{ background: COLORS.goldDim, color: COLORS.gold, border: `1px solid ${COLORS.goldBorder}`, fontFamily: FONT.mono }}>
-                      PRO
-                    </span>
-                  )}
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
@@ -114,10 +105,6 @@ export default function Layout({ children, currentPageName }) {
           {children}
         </main>
       </div>
-
-      {/* PWA overlays */}
-      <OfflineBanner />
-      <InstallPrompt />
     </>
   );
 }
