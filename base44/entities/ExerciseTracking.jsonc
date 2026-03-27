@@ -1,0 +1,48 @@
+{
+  "name": "ExerciseTracking",
+  "type": "object",
+  "properties": {
+    "workout_plan_id": {
+      "type": "string",
+      "description": "Reference to the workout plan"
+    },
+    "exercise_id": {
+      "type": "string",
+      "description": "Exercise identifier"
+    },
+    "exercise_name": {
+      "type": "string",
+      "description": "Human-readable exercise name"
+    },
+    "weight": {
+      "type": "number",
+      "description": "Weight in lbs/kg"
+    },
+    "reps": {
+      "type": "number",
+      "description": "Number of repetitions"
+    },
+    "sets": {
+      "type": "number",
+      "description": "Number of sets"
+    },
+    "logged_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the workout was logged"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about the session"
+    }
+  },
+  "required": [
+    "workout_plan_id",
+    "exercise_id",
+    "exercise_name",
+    "weight",
+    "reps",
+    "sets",
+    "logged_date"
+  ]
+}
