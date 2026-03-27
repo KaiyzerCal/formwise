@@ -18,6 +18,9 @@ import Progress from './pages/Progress';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import WorkoutPlans from './pages/WorkoutPlans';
+import CoachingHub from './pages/CoachingHub';
+import ImmersiveSession from './pages/ImmersiveSession';
+import TechniqueInsights from './pages/TechniqueInsights';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -55,14 +58,22 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
+        <LayoutWrapper currentPageName="CoachingHub">
+          <CoachingHub />
         </LayoutWrapper>
       } />
       {/* Freestyle session route (no layout) */}
       <Route path="/FreestyleSession" element={<FreestyleSession />} />
       {/* Technique Studio route (no layout) */}
       <Route path="/TechniqueStudio" element={<TechniqueStudio />} />
+      {/* Immersive Session (no layout) */}
+      <Route path="/ImmersiveSession" element={<ImmersiveSession />} />
+      {/* Technique Insights (with layout) */}
+      <Route path="/TechniqueInsights" element={
+        <LayoutWrapper currentPageName="TechniqueInsights">
+          <TechniqueInsights />
+        </LayoutWrapper>
+      } />
       {/* Settings route */}
       <Route path="/Settings" element={
         <LayoutWrapper currentPageName="Settings">
