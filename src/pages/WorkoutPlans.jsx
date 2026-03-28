@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Zap, Share2, Trash2 } from 'lucide-react';
+import { Plus, Zap, Share2, Trash2, CalendarDays, LayoutGrid } from 'lucide-react';
 import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
 import PlanGenerator from '@/components/workout/PlanGenerator';
 import PlanCard from '@/components/workout/PlanCard';
 import PlanDetail from '@/components/workout/PlanDetail';
+import WorkoutCalendar from '@/components/workout/WorkoutCalendar';
 
 export default function WorkoutPlans() {
   const [showGenerator, setShowGenerator] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [activeTab, setActiveTab] = useState('plans'); // 'plans' | 'calendar'
   const queryClient = useQueryClient();
 
   const { data: plans = [], isLoading } = useQuery({
@@ -91,6 +93,32 @@ export default function WorkoutPlans() {
             </p>
           </div>
           <div className="flex gap-2">
+            {/* Tab Toggle */}
+            <div className="flex rounded border overflow-hidden" style={{ borderColor: COLORS.border }}>
+              <button
+                onClick={() => setActiveTab('plans')}
+                className="flex items-center gap-1.5 px-3 py-2 text-[8px] tracking-[0.1em] uppercase font-bold transition"
+                style={{
+                  background: activeTab === 'plans' ? COLORS.goldDim : COLORS.surface,
+                  color: activeTab === 'plans' ? COLORS.gold : COLORS.textTertiary,
+                  borderRight: `1px solid ${COLORS.border}`,
+                }}
+              >
+                <LayoutGrid size={10} />
+                Plans
+              </button>
+              <button
+                onClick={() => setActiveTab('calendar')}
+                className="flex items-center gap-1.5 px-3 py-2 text-[8px] tracking-[0.1em] uppercase font-bold transition"
+                style={{
+                  background: activeTab === 'calendar' ? COLORS.goldDim : COLORS.surface,
+                  color: activeTab === 'calendar' ? COLORS.gold : COLORS.textTertiary,
+                }}
+              >
+                <CalendarDays size={10} />
+                Calendar
+              </button>
+            </div>
             {plans.length > 0 && (
               <>
                 <button
@@ -127,6 +155,28 @@ export default function WorkoutPlans() {
             </button>
           </div>
         </div>
+
+        {/* Calendar Tab */}
+        {activeTab === 'calendar' && (
+          <div className="rounded-lg border p-4" style={{ background: COLORS.surface, borderColor: COLORS.border }}>
+            {plans.length === 0 ? (
+              <div className="text-center py-8">
+                <CalendarDays size={24} className="mx-auto mb-3" style={{ color: COLORS.textTertiary }} />
+                <p className="text-[9px]" style={{ color: COLORS.textTertiary }}>
+                  Create a workout plan to see your schedule here.
+                </p>
+              </div>
+            ) : (
+              <WorkoutCalendar
+                plans={plans}
+                onLogProgress={(plan) => setSelectedPlan(plan)}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Plans Tab Content */}
+        {activeTab === 'plans' && <>
 
         {/* Generator Modal */}
         {showGenerator && (
@@ -267,6 +317,8 @@ export default function WorkoutPlans() {
             </div>
           )}
         </div>
+
+        </> /* end plans tab */}
       </div>
 
       {/* Plan Detail Modal */}
