@@ -13,6 +13,7 @@ import FirstLaunchWizard, { hasCompletedOnboarding } from "../components/bioneer
 import FormCheckHistoryView from "../components/bioneer/history/FormCheckHistoryView";
 import FormCheckReplay from "../components/bioneer/history/FormCheckReplay";
 import { saveFreestyleSession, loadFreestyleSession } from '../components/bioneer/history/sessionStorage';
+import { saveSessionVideoBlob } from '../components/bioneer/data/liveVideoStorage';
 import FreestyleReplay from '../components/bioneer/history/FreestyleReplay';
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
@@ -109,13 +110,16 @@ export default function FormCheck() {
     };
 
     try {
-      await base44.entities.FormSession.create(enrichedData);
+      const savedRecord = await base44.entities.FormSession.create(enrichedData);
+      const cloudId = savedRecord?.id || savedRecord?.session_id;
       // Save video + pose data to IndexedDB for full replay
       if (pendingRecording?.videoBlob instanceof Blob) {
         const { sessionId, videoBlob, poseFrames, angleFrames, cameraFacing } = pendingRecording;
+        const storageKey = sessionId || `formcheck-${Date.now()}`;
         try {
+          // Save to freestyle store (for FreestyleReplay)
           await saveFreestyleSession({
-            sessionId:   sessionId || enrichedData.session_id || `formcheck-${Date.now()}`,
+            sessionId:   storageKey,
             mode:        'formcheck',
             category:    enrichedData.category || 'strength',
             duration:    enrichedData.duration_seconds || 0,
@@ -124,6 +128,15 @@ export default function FormCheck() {
             angleFrames: angleFrames || [],
             cameraFacing: cameraFacing || 'environment',
           });
+          // Also save to liveVideoStorage under the cloud entity ID so
+          // SessionHistory → LiveSessionReplay can find it
+          if (cloudId) {
+            await saveSessionVideoBlob(cloudId, videoBlob, videoBlob.type || 'video/webm');
+          }
+          // And under the local sessionId as fallback
+          if (storageKey !== cloudId) {
+            await saveSessionVideoBlob(storageKey, videoBlob, videoBlob.type || 'video/webm');
+          }
         } catch (idbErr) {
           console.warn('[FormCheck] IndexedDB save failed:', idbErr.message);
         }
