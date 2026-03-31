@@ -56,29 +56,32 @@ export function normalizeToTechniqueSession(source) {
     // Note: live sessions don't have video blobs directly — they come from elsewhere
   }
 
-  // Extract video metadata if blob exists (always safe)
-  let videoMetadata = {
-    url: null,
-    width: null,
-    height: null,
-    fps: null,
-    durationMs: null,
-  };
+  // Extract video URL: prefer blob objectURL, fall back to cloud URL string
+  let videoUrl = null;
 
   if (videoBlob instanceof Blob) {
     try {
-      videoMetadata = {
-        url: URL.createObjectURL(videoBlob),
-        width: null,
-        height: null,
-        fps: 30, // Default assumption
-        durationMs: typeof duration === 'number' ? duration * 1000 : null,
-      };
+      videoUrl = URL.createObjectURL(videoBlob);
     } catch (error) {
       console.warn('Failed to create object URL from blob:', error);
-      videoBlob = null; // Fallback to null on error
+      videoBlob = null;
     }
   }
+
+  // Fall back to cloud video_url if no blob
+  if (!videoUrl) {
+    videoUrl = source.videoUrl || source.video_url || null;
+  }
+
+  const hasVideoSource = !!(videoBlob instanceof Blob) || !!videoUrl;
+
+  let videoMetadata = {
+    url: videoUrl,
+    width: null,
+    height: null,
+    fps: videoUrl ? 30 : null,
+    durationMs: typeof duration === 'number' ? duration * 1000 : null,
+  };
 
   // Validate and coerce poseFrames to always be an array
   const safePoseFrames = Array.isArray(poseFrames) ? poseFrames : [];
@@ -130,10 +133,10 @@ export function normalizeToTechniqueSession(source) {
 
     // FLAGS FOR UI/UX DEGRADATION (always valid)
     flags: {
-      hasVideo: videoBlob instanceof Blob,
+      hasVideo: hasVideoSource,
       hasPoseData: safePoseFrames.length > 0,
-      isComplete: (videoBlob instanceof Blob) && (safePoseFrames.length > 0),
-      isFallback: !(videoBlob instanceof Blob) || (safePoseFrames.length === 0),
+      isComplete: hasVideoSource && (safePoseFrames.length > 0),
+      isFallback: !hasVideoSource || (safePoseFrames.length === 0),
     },
   };
 

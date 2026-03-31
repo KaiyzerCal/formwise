@@ -44,22 +44,29 @@ export async function createTechniqueDraftFromFreestyleSession(session) {
 
 /**
  * Create a technique draft from a saved live (strength/sports) session.
- * Loads the video blob from IndexedDB using the stored video_storage_key.
+ * Tries IndexedDB first for the video blob, falls back to cloud video_url.
  */
 export async function createTechniqueDraftFromLiveSession(session) {
   if (!session) throw new Error('Unable to send to Technique: session is missing.');
 
   const storageKey = session.video_storage_key || session.session_id;
   let videoBlob = null;
+  let videoUrl = null;
 
+  // Try local IndexedDB first
   try {
     const record = await getSessionVideoBlob(storageKey);
     videoBlob = record?.blob || null;
   } catch (err) {
-    console.warn('[techniqueConverter] Could not load video blob:', err);
+    console.warn('[techniqueConverter] Could not load video blob from IndexedDB:', err);
   }
 
-  if (!videoBlob) {
+  // Fall back to cloud video_url
+  if (!videoBlob && session.video_url) {
+    videoUrl = session.video_url;
+  }
+
+  if (!videoBlob && !videoUrl) {
     throw new Error('Unable to send to Technique: no video found for this session. The video may not have been recorded.');
   }
 
@@ -73,6 +80,7 @@ export async function createTechniqueDraftFromLiveSession(session) {
     category: session.category || session.movement_name || 'live',
     duration: session.duration_seconds || 0,
     videoBlob,
+    videoUrl,
     thumbnail: null,
     poseFrames: session.poseFrames || [],
     angleFrames: [],
