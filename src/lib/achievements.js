@@ -3,7 +3,7 @@
  */
 import confetti from 'canvas-confetti';
 import toast from 'react-hot-toast';
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 import { getAllSessions } from '@/components/bioneer/data/unifiedSessionStore';
 
 export const ACHIEVEMENTS = [
@@ -78,26 +78,25 @@ function checkEarned(sessions, extraFlags = {}) {
 }
 
 export async function checkAndAwardAchievements(extraFlags = {}) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  const authed = await base44.auth.isAuthenticated();
+  if (!authed) return;
 
   const sessions = getAllSessions();
   const earned   = checkEarned(sessions, extraFlags);
 
   let existing = [];
   try {
-    const { data } = await supabase.from('user_achievements').select('achievement_id').eq('user_id', user.id);
-    existing = data ?? [];
+    existing = await base44.entities.UserAchievement.list();
   } catch { return; }
 
-  const existingIds = new Set(existing.map(a => a.achievement_id));
+  const existingIds = new Set((existing || []).map(a => a.achievement_id));
   const newlyEarned = [...earned].filter(id => !existingIds.has(id));
 
   for (const id of newlyEarned) {
     const def = ACHIEVEMENTS.find(a => a.id === id);
     if (!def) continue;
     try {
-      await supabase.from('user_achievements').insert({ user_id: user.id, achievement_id: id, title: def.title, earned_at: new Date().toISOString() });
+      await base44.entities.UserAchievement.create({ achievement_id: id, title: def.title, earned_at: new Date().toISOString() });
       toast(`${def.emoji} ACHIEVEMENT UNLOCKED — ${def.title}`, { duration: 4000, style: { background: '#0c0c0c', border: '1px solid rgba(201,162,39,0.5)', color: '#C9A84C', fontFamily:"'DM Mono',monospace", fontSize: 11, fontWeight: 700, letterSpacing: '0.12em' } });
       confetti({ particleCount: 60, spread: 55, origin: { y: 0.7 }, colors: ['#C9A84C','#fff','#ffd700'] });
     } catch { /* duplicate — ignore */ }

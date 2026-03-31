@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 
 const AuthContext = createContext();
 
@@ -12,52 +12,51 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings]                   = useState({ id: 'formwise' });
 
   useEffect(() => {
-    // Check existing session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        setIsAuthenticated(true);
-        setAuthError(null);
+    base44.auth.isAuthenticated().then(async (authed) => {
+      if (authed) {
+        try {
+          const me = await base44.auth.me();
+          setUser(me);
+          setIsAuthenticated(true);
+          setAuthError(null);
+        } catch (err) {
+          if (err?.message?.includes('not registered')) {
+            setAuthError({ type: 'user_not_registered', message: err.message });
+          } else {
+            setAuthError({ type: 'auth_required', message: 'Authentication required' });
+          }
+        }
       } else {
         setAuthError({ type: 'auth_required', message: 'Authentication required' });
       }
       setIsLoadingAuth(false);
-    });
-
-    // Listen for sign-in / sign-out / token refresh
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        setIsAuthenticated(true);
-        setAuthError(null);
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
-        setAuthError({ type: 'auth_required', message: 'Authentication required' });
-      }
+    }).catch(() => {
+      setAuthError({ type: 'auth_required', message: 'Authentication required' });
       setIsLoadingAuth(false);
     });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const logout = async (shouldRedirect = true) => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setIsAuthenticated(false);
-    if (shouldRedirect) window.location.href = '/';
+    await base44.auth.logout(shouldRedirect ? '/' : undefined);
   };
 
-  const navigateToLogin = () => { window.location.href = '/'; };
+  const navigateToLogin = () => {
+    base44.auth.redirectToLogin();
+  };
 
   const checkAppState = async () => {
     setIsLoadingAuth(true);
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setIsAuthenticated(true);
-      setAuthError(null);
-    } else {
+    try {
+      const authed = await base44.auth.isAuthenticated();
+      if (authed) {
+        const me = await base44.auth.me();
+        setUser(me);
+        setIsAuthenticated(true);
+        setAuthError(null);
+      } else {
+        setAuthError({ type: 'auth_required', message: 'Authentication required' });
+      }
+    } catch {
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
     }
     setIsLoadingAuth(false);

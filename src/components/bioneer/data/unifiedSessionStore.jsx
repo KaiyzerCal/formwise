@@ -3,7 +3,7 @@
  * localStorage (instant) + Supabase cloud (background sync).
  * Same exported API as the original.
  */
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 
 const STORE_KEY = 'bioneer_sessions_v1';
 const SYNC_KEY  = 'bioneer_last_sync';
@@ -102,10 +102,9 @@ function normalize(s) {
 async function pushToCloud(session) {
   emit('syncing');
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { emit('offline'); return; }
-    const { error } = await supabase.from('form_sessions').insert({ ...toCloud(session), user_id: user.id });
-    if (error) throw error;
+    const authed = await base44.auth.isAuthenticated();
+    if (!authed) { emit('offline'); return; }
+    await base44.entities.FormSession.create(toCloud(session));
     emit('synced');
   } catch { emit('offline'); }
 }
@@ -174,10 +173,9 @@ export function getAggregateStats() {
 export async function syncFromCloud(limit = 50) {
   emit('syncing');
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { emit('offline'); return 0; }
-    const { data, error } = await supabase.from('form_sessions').select('*').eq('user_id', user.id).eq('is_deleted', false).order('started_at', { ascending: false }).limit(limit);
-    if (error) throw error;
+    const authed = await base44.auth.isAuthenticated();
+    if (!authed) { emit('offline'); return 0; }
+    const data = await base44.entities.FormSession.filter({ is_deleted: false }, '-started_at', limit);
     const local = readAll().map(normalize);
     const localIds = new Set(local.map(s => s._cloud_id || s.session_id).filter(Boolean));
     let added = 0;
