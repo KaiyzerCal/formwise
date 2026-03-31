@@ -88,6 +88,15 @@ export async function getExerciseFaultHistory(exerciseId) {
   return data ?? [];
 }
 
+export async function getExerciseFaultStats(exerciseId) {
+  const history = await getExerciseFaultHistory(exerciseId);
+  const activeFaults = history.filter(f => !f.is_resolved);
+  const resolvedFaults = history.filter(f => f.is_resolved);
+  const total = history.length;
+  const improvementRate = total > 0 ? (resolvedFaults.length / total) * 100 : 0;
+  return { total, active: activeFaults.length, resolved: resolvedFaults.length, activeFaults, resolvedFaults, improvementRate };
+}
+
 export async function getAdaptiveCue(exerciseId, formScore, currentFaults = []) {
   const history = await getExerciseFaultHistory(exerciseId);
   const persistent = history.filter(f => f.total_occurrences >= 3 && !f.is_resolved);

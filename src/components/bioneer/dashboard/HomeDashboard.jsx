@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Flame, Trophy, Zap, Activity, ArrowRight, Play, Clock } from 'lucide-react';
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 import { getAllSessions } from '../data/unifiedSessionStore';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { PremiumCard, StatCard, PrimaryButton, EmptyState } from '../ui/PremiumComponents';
@@ -15,10 +15,10 @@ export default function HomeDashboard({ onStartSession, onViewHistory }) {
   useEffect(() => {
     async function load() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await base44.auth.me();
         if (user) {
-          const { data: profile } = await supabase.from('user_profiles').select('*').eq('user_id', user.id).single();
-          setUserProfile(profile || null);
+          const profiles = await base44.entities.UserProfile.filter({ created_by: user.email });
+          setUserProfile(profiles?.[0] || null);
           setRecentSessions(getAllSessions().slice(0, 3));
         }
       } catch (e) { console.error('Dashboard load error:', e); }
