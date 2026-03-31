@@ -94,14 +94,14 @@ export default function Layout({ children, currentPageName }) {
 
         {/* ── Main content area ────────────────────────────────────────────── */}
         {/* On mobile: leave room for bottom tab bar (56px) */}
-        <main className="flex-1 min-h-screen md:pb-0 pb-14" style={{ background: COLORS.bg }}>
+        <main className="flex-1 min-h-screen md:pb-0 pb-[72px]" style={{ background: COLORS.bg }}>
           {children}
         </main>
 
         {/* ── Mobile Bottom Tab Bar ────────────────────────────────────────── */}
         {/* Visible on mobile only — replaces the hamburger menu */}
         <nav className="bottom-tab-bar md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch border-t"
-          style={{ background: COLORS.surface, borderColor: COLORS.border, height: 56 }}
+          style={{ background: COLORS.surface, borderColor: COLORS.border, height: 56, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           aria-label="Main navigation">
 
           {NAV_ITEMS.map(item => {

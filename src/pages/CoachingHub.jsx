@@ -100,7 +100,7 @@ export default function CoachingHub() {
 
   if (loading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center" style={{ background: COLORS.bg }}>
+      <div className="w-full min-h-[50vh] flex items-center justify-center" style={{ background: COLORS.bg }}>
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-4 border-slate-800 border-t-slate-400 rounded-full animate-spin mx-auto" />
           <p className="text-xs" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>Loading dashboard</p>
@@ -111,7 +111,7 @@ export default function CoachingHub() {
 
   return (
     <div
-      className="w-full h-screen overflow-y-auto flex flex-col"
+      className="w-full min-h-full flex flex-col"
       style={{ background: COLORS.bg, fontFamily: FONT.mono, color: COLORS.textPrimary }}
     >
       {/* Header */}
@@ -136,7 +136,7 @@ export default function CoachingHub() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col px-6 py-8 space-y-8 overflow-y-auto">
+      <div className="flex-1 flex flex-col px-6 py-8 space-y-8">
 
         {/* SECTION 1: Performance Score (40% of screen) */}
         <div className="flex flex-col items-center space-y-4 py-8">
