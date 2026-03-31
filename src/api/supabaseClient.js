@@ -1,11 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials not found — Supabase features will be unavailable.');
-}
+const supabaseUrl     = 'https://cofrsqjbmncqnuozrmfy.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZnJzcWpibW5jcW51b3pybWZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MjIyNjMsImV4cCI6MjA4MTI5ODI2M30.MhLDHSyTj3f-eExNm3P59XuGN3kz9MKbndXJfdkGOT0';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
