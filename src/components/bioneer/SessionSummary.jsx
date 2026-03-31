@@ -4,7 +4,7 @@ import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle, Pl
 import ScoreTooltip from "./onboarding/ScoreTooltip";
 import { getSetAnalysis } from "./ai/GeminiCoach";
 import SessionShareButton from "./share/SessionShareCard";
-import { generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
+import { generateRegressionCue } from "@/lib/adaptiveFeedbackEngine";
 import FaultHistoryPanel from "./ui/FaultHistoryPanel";
 import FreestyleReplay from "./history/FreestyleReplay";
 
@@ -94,7 +94,7 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
     
     // Generate adaptive cue based on form score
     const score = Math.max(0, Math.min(100, sessionData.movement_score ?? sessionData.form_score_overall ?? 0));
-    const cue = generateAdaptiveCue(sessionData.exercise_id, score);
+    const cue = generateRegressionCue(sessionData.exercise_id, score);
     if (cue) setAdaptiveCue(cue);
 
     // Fetch AI analysis
