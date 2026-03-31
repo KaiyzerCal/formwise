@@ -29,26 +29,39 @@ export function getBestMimeType() {
 }
 
 /**
- * Build a Blob from recorded chunks, upload to cloud storage, and persist to IndexedDB as fallback.
+ * Persist a recorded session video: upload to cloud storage + save to IndexedDB as fallback.
+ *
+ * Accepts EITHER:
+ *   - recordedChunks (Blob[]) — raw MediaRecorder chunks that will be assembled into a Blob
+ *   - videoBlob (Blob) — a pre-built video Blob (from useSessionRecorder / useVideoRecorder)
  *
  * @param {object} options
- * @param {Blob[]}  options.recordedChunks  - raw MediaRecorder chunks
- * @param {string}  options.mimeType        - mime type used during recording
- * @param {string}  options.sessionId       - canonical session ID
+ * @param {Blob[]}  [options.recordedChunks]  - raw MediaRecorder chunks
+ * @param {Blob}    [options.videoBlob]        - pre-built video Blob (takes priority)
+ * @param {string}  options.mimeType           - mime type used during recording
+ * @param {string}  options.sessionId          - canonical session ID
  * @returns {Promise<{videoBlob, videoSrc, mimeType, storageKey, fileUrl} | null>}
  */
-export async function persistRecordedSessionVideo({ recordedChunks, mimeType, sessionId }) {
-   if (!Array.isArray(recordedChunks) || recordedChunks.length === 0) {
-     console.warn('[persistVideo] No recorded chunks to persist');
-     return null;
-   }
+export async function persistRecordedSessionVideo({ recordedChunks, videoBlob: preBuiltBlob, mimeType, sessionId }) {
    if (!sessionId) {
      console.warn('[persistVideo] sessionId is required');
      return null;
    }
 
-   const safeMime    = mimeType || getBestMimeType();
-   const videoBlob   = new Blob(recordedChunks, { type: safeMime });
+   const safeMime = mimeType || getBestMimeType();
+
+   // Use pre-built blob if available, otherwise assemble from chunks
+   let videoBlob = null;
+   if (preBuiltBlob instanceof Blob && preBuiltBlob.size > 0) {
+     videoBlob = preBuiltBlob;
+   } else if (Array.isArray(recordedChunks) && recordedChunks.length > 0) {
+     videoBlob = new Blob(recordedChunks, { type: safeMime });
+   }
+
+   if (!videoBlob || videoBlob.size === 0) {
+     console.warn('[persistVideo] No video data to persist (no blob and no chunks)');
+     return null;
+   }
 
    if (videoBlob.size === 0) {
      console.warn('[persistVideo] Blob is empty after building');

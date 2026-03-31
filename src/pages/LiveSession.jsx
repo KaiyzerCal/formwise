@@ -71,12 +71,13 @@ export default function LiveSession() {
     setSaving(true);
     try {
       const rawData = rawDataRef.current || {};
-      const { recordedChunks, recordingMimeType } = rawData;
 
-      // Persist video first (wait for full blob finalization)
+      // CameraView passes videoBlob (pre-built Blob from useSessionRecorder/useVideoRecorder)
+      // Persist video first (upload to cloud + IndexedDB fallback)
       const persistedVideo = await persistRecordedSessionVideo({
-        recordedChunks: recordedChunks || [],
-        mimeType: recordingMimeType || 'video/webm',
+        videoBlob: rawData.videoBlob || null,
+        recordedChunks: rawData.recordedChunks || [],
+        mimeType: rawData.recordingMimeType || 'video/webm',
         sessionId: savedSession.session_id,
       });
 
