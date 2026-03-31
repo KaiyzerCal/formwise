@@ -317,6 +317,14 @@ export const MOVEMENT_PROFILES = {
 
   // ── New athletic movements ────────────────────────────────────────────────
 
+  sprint: {
+    category: 'locomotion', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
+    lockoutAngle: 150, minRepMs: 300,
+    phases: ['drive','transition','maxvel','float'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.020, ascentVel:0.015, bottomAngle:80, lockoutAngle:150 },
+  },
+
   acceleration_start: {
     category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: null,
     lockoutAngle: 150, minRepMs: 300,
@@ -447,6 +455,14 @@ export const MOVEMENT_PROFILES = {
     phases: ['set','push','receive','reset'],
     repVelJoint: 'pelvis', angleKey: 'kneeL',
     thresholds: { descentVel:0.012, ascentVel:0.010, bottomAngle:100, lockoutAngle:155 },
+  },
+
+  jump_landing: {
+    category: 'athletic', primaryAngleKey: 'kneeL', secondaryAngleKey: 'kneeR',
+    lockoutAngle: 158, minRepMs: 400,
+    phases: ['flight','contact','absorption','stabilize'],
+    repVelJoint: 'pelvis', angleKey: 'kneeL',
+    thresholds: { descentVel:0.025, ascentVel:0.020, bottomAngle:90, lockoutAngle:158 },
   },
 };
 

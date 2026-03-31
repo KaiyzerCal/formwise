@@ -1,4 +1,4 @@
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 
 // Regression cue library (unchanged from original)
 const REGRESSION_CUES = {
@@ -28,28 +28,25 @@ export function generateRegressionCue(exerciseId, formScore) {
 }
 
 export async function updateFaultHistory(exerciseId, detectedFaults = []) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || !detectedFaults.length) return;
+  const authed = await base44.auth.isAuthenticated();
+  if (!authed || !detectedFaults.length) return;
 
   for (const fault of detectedFaults) {
     try {
-      const { data: existing } = await supabase
-        .from('exercise_fault_history')
-        .select('id, total_occurrences')
-        .eq('user_id', user.id)
-        .eq('exercise_id', exerciseId)
-        .eq('fault_id', fault.id)
-        .maybeSingle();
+      const existing = await base44.entities.ExerciseFaultHistory.filter({
+        exercise_id: exerciseId,
+        fault_id: fault.id,
+      });
+      const match = existing?.[0];
 
-      if (existing) {
-        await supabase.from('exercise_fault_history').update({
+      if (match) {
+        await base44.entities.ExerciseFaultHistory.update(match.id, {
           last_occurrence:   new Date().toISOString(),
-          total_occurrences: (existing.total_occurrences || 1) + 1,
+          total_occurrences: (match.total_occurrences || 1) + 1,
           is_resolved:       false,
-        }).eq('id', existing.id);
+        });
       } else {
-        await supabase.from('exercise_fault_history').insert({
-          user_id:          user.id,
+        await base44.entities.ExerciseFaultHistory.create({
           exercise_id:      exerciseId,
           fault_id:         fault.id,
           fault_name:       fault.name || fault.id,
@@ -62,23 +59,20 @@ export async function updateFaultHistory(exerciseId, detectedFaults = []) {
 }
 
 export async function checkForImprovements(exerciseId, currentFaultIds = []) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  const authed = await base44.auth.isAuthenticated();
+  if (!authed) return [];
 
-  const { data: unresolved } = await supabase
-    .from('exercise_fault_history')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('exercise_id', exerciseId)
-    .eq('is_resolved', false)
-    .order('last_occurrence', { ascending: false });
+  const unresolved = await base44.entities.ExerciseFaultHistory.filter({
+    exercise_id: exerciseId,
+    is_resolved: false,
+  }, '-last_occurrence');
 
   const resolved = [];
   for (const fault of (unresolved ?? [])) {
     if (currentFaultIds.includes(fault.fault_id)) continue;
     const daysSince = (Date.now() - new Date(fault.last_occurrence).getTime()) / 86400000;
     if (daysSince >= 7) {
-      await supabase.from('exercise_fault_history').update({ is_resolved: true, improvement_date: new Date().toISOString() }).eq('id', fault.id);
+      await base44.entities.ExerciseFaultHistory.update(fault.id, { is_resolved: true, improvement_date: new Date().toISOString() });
       resolved.push(fault);
     }
   }
@@ -86,27 +80,12 @@ export async function checkForImprovements(exerciseId, currentFaultIds = []) {
 }
 
 export async function getExerciseFaultHistory(exerciseId) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
-  const { data } = await supabase
-    .from('exercise_fault_history')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('exercise_id', exerciseId)
-    .order('last_occurrence', { ascending: false })
-    .limit(100);
+  const authed = await base44.auth.isAuthenticated();
+  if (!authed) return [];
+  const data = await base44.entities.ExerciseFaultHistory.filter({
+    exercise_id: exerciseId,
+  }, '-last_occurrence', 100);
   return data ?? [];
-}
-
-export async function getExerciseFaultStats(exerciseId) {
-  const history = await getExerciseFaultHistory(exerciseId);
-  const activeFaults = history.filter(f => !f.is_resolved);
-  const resolvedFaults = history.filter(f => f.is_resolved);
-  const total = history.length;
-  const resolved = resolvedFaults.length;
-  const active = activeFaults.length;
-  const improvementRate = total > 0 ? (resolved / total) * 100 : 0;
-  return { total, active, resolved, improvementRate, activeFaults, resolvedFaults };
 }
 
 export async function getAdaptiveCue(exerciseId, formScore, currentFaults = []) {

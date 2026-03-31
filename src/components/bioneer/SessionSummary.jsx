@@ -4,7 +4,7 @@ import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle, Pl
 import ScoreTooltip from "./onboarding/ScoreTooltip";
 import { getSetAnalysis } from "./ai/GeminiCoach";
 import SessionShareButton from "./share/SessionShareCard";
-import { getAdaptiveCue as generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
+import { generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
 import FaultHistoryPanel from "./ui/FaultHistoryPanel";
 import FreestyleReplay from "./history/FreestyleReplay";
 

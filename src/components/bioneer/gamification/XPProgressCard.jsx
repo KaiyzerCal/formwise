@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { COLORS, FONT } from '../ui/DesignTokens';
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 import { calculateLevel, getLevelProgress, getXPToNextLevel, MAX_LEVEL } from '@/lib/gamificationEngine';
 import { Zap } from 'lucide-react';
 
@@ -12,9 +12,10 @@ export default function XPProgressCard() {
   useEffect(() => {
     async function load() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data } = await supabase.from('user_profiles').select('xp_total, level').eq('user_id', user.id).single();
+        const authed = await base44.auth.isAuthenticated();
+        if (!authed) return;
+        const profiles = await base44.entities.UserProfile.list();
+        const data = profiles?.[0];
         setProfile(data || { level: 1, xp_total: 0 });
       } catch { setProfile({ level: 1, xp_total: 0 }); }
       finally { setLoading(false); }

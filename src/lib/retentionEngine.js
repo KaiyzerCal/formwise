@@ -1,4 +1,4 @@
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 
 const XP_PER_SESSION = 50;
 const XP_PER_LEVEL   = 500;
@@ -13,17 +13,16 @@ export function calculateStreak(lastSessionDate) {
 
 export async function recordSession() {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    const authed = await base44.auth.isAuthenticated();
+    if (!authed) return null;
 
-    let { data: profile, error } = await supabase.from('user_profiles').select('*').eq('user_id', user.id).single();
-    if (error && error.code !== 'PGRST116') throw error;
+    const profiles = await base44.entities.UserProfile.list();
+    let profile = profiles?.[0];
 
     if (!profile) {
-      const { data: np } = await supabase.from('user_profiles')
-        .insert({ user_id: user.id, total_sessions: 0, current_streak: 0, longest_streak: 0, xp_total: 0, level: 1 })
-        .select().single();
-      profile = np;
+      profile = await base44.entities.UserProfile.create({
+        total_sessions: 0, current_streak: 0, longest_streak: 0, xp_total: 0, level: 1,
+      });
     }
 
     const newStreak     = Math.max(profile.current_streak || 0, calculateStreak(profile.last_session_date)) + 1;
@@ -31,17 +30,25 @@ export async function recordSession() {
     const newXP         = (profile.xp_total || 0) + XP_PER_SESSION;
     const newLevel      = Math.floor(newXP / XP_PER_LEVEL) + 1;
 
-    await supabase.from('user_profiles').update({ total_sessions: (profile.total_sessions || 0) + 1, current_streak: newStreak, longest_streak: longestStreak, last_session_date: new Date().toISOString(), xp_total: newXP, level: newLevel }).eq('user_id', user.id);
+    await base44.entities.UserProfile.update(profile.id, {
+      total_sessions: (profile.total_sessions || 0) + 1,
+      current_streak: newStreak,
+      longest_streak: longestStreak,
+      last_session_date: new Date().toISOString(),
+      xp_total: newXP,
+      level: newLevel,
+    });
 
     return { newStreak, xpGained: XP_PER_SESSION, newLevel, streakMilestone: newStreak % 7 === 0 };
   } catch (e) { console.error('recordSession error:', e); return null; }
 }
 
-export async function getUserEngagement(userEmail) {
+export async function getUserEngagement() {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-    const { data: profile } = await supabase.from('user_profiles').select('*').eq('user_id', user.id).single();
+    const authed = await base44.auth.isAuthenticated();
+    if (!authed) return null;
+    const profiles = await base44.entities.UserProfile.list();
+    const profile = profiles?.[0];
     if (!profile) return { streak: 0, xp: 0, level: 1, totalSessions: 0, longestStreak: 0 };
     return {
       streak:           profile.current_streak || 0,
