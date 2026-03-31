@@ -4,27 +4,27 @@ const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in .env.local');
+  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ─── Auth helpers (mirrors base44.auth API) ───────────────────────────────────
+// ── Auth helpers ──────────────────────────────────────────────────────────────
 export const auth = {
   me: async () => {
     const { data: { user } } = await supabase.auth.getUser();
     return user ?? null;
   },
-  signIn:             (email, password) => supabase.auth.signInWithPassword({ email, password }),
-  signInWithMagicLink:(email)           => supabase.auth.signInWithOtp({ email }),
-  signInWithOAuth:    (provider)        => supabase.auth.signInWithOAuth({ provider }),
-  signUp:             (email, password) => supabase.auth.signUp({ email, password }),
+  signIn:              (email, password) => supabase.auth.signInWithPassword({ email, password }),
+  signInWithMagicLink: (email)           => supabase.auth.signInWithOtp({ email }),
+  signInWithOAuth:     (provider)        => supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } }),
+  signUp:              (email, password) => supabase.auth.signUp({ email, password }),
   logout: async () => { await supabase.auth.signOut(); window.location.href = '/'; },
-  redirectToLogin: () => { window.location.href = '/'; },
+  redirectToLogin: () => {},
   onAuthStateChange: (cb) => supabase.auth.onAuthStateChange(cb),
 };
 
-// ─── Generic entity factory ───────────────────────────────────────────────────
+// ── Entity factory ────────────────────────────────────────────────────────────
 function makeEntity(table) {
   return {
     list: async (orderBy, limit) => {
@@ -43,7 +43,7 @@ function makeEntity(table) {
     filter: async (conditions = {}, orderBy, limit) => {
       let q = supabase.from(table).select('*');
       Object.entries(conditions).forEach(([k, v]) => {
-        if (k === 'created_by') return; // RLS handles per-user scoping
+        if (k === 'created_by') return; // RLS handles user scoping
         q = q.eq(k, v);
       });
       if (orderBy) {
@@ -88,7 +88,7 @@ function makeEntity(table) {
   };
 }
 
-// ─── Entity map ───────────────────────────────────────────────────────────────
+// ── Entities ──────────────────────────────────────────────────────────────────
 export const entities = {
   FormSession:          makeEntity('form_sessions'),
   UserProfile:          makeEntity('user_profiles'),
@@ -103,26 +103,21 @@ export const entities = {
       let q = supabase.from('user_profiles').select('*');
       if (orderBy) {
         const desc = orderBy.startsWith('-');
-        const col  = orderBy.replace(/^-/, '').replace('created_date', 'created_at');
-        q = q.order(col, { ascending: !desc });
+        q = q.order(orderBy.replace(/^-/, '').replace('created_date','created_at'), { ascending: !desc });
       }
       if (limit) q = q.limit(limit);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []).map(p => ({
-        id:           p.user_id,
-        email:        p.email ?? `user-${p.user_id?.slice(0, 8)}`,
-        role:         p.role ?? 'user',
-        created_date: p.created_at,
-        xp_total:     p.xp_total,
-        level:        p.level,
-        total_sessions: p.total_sessions,
+        id: p.user_id, email: p.email ?? `user-${p.user_id?.slice(0,8)}`,
+        role: p.role ?? 'user', created_date: p.created_at,
+        xp_total: p.xp_total, level: p.level, total_sessions: p.total_sessions,
       }));
     },
   },
 };
 
-// ─── Supabase Edge Function invoker (replaces base44.functions.invoke) ────────
+// ── Functions (Supabase Edge Functions) ───────────────────────────────────────
 export const functions = {
   invoke: async (name, { body } = {}) => {
     const { data, error } = await supabase.functions.invoke(name, { body });
@@ -131,5 +126,5 @@ export const functions = {
   },
 };
 
-// ─── Drop-in named export — all imports of base44 keep working ─────────────────
+// ── Drop-in export matching base44 shape ──────────────────────────────────────
 export const base44 = { auth, entities, functions };
