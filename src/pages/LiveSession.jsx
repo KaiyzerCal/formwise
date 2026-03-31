@@ -18,7 +18,7 @@ import { useSessionLearning } from "../components/bioneer/learning/useSessionLea
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { recordSession } from "@/lib/retentionEngine";
 import SessionRewardScreen from "@/components/SessionRewardScreen";
-import { recordSessionFaults, markResolvedFaults, generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
+import { updateFaultHistory as recordSessionFaults, checkForImprovements as markResolvedFaults, getAdaptiveCue as generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
 import { awardSessionPoints } from "@/lib/gamificationEngine";
 
 export default function LiveSession() {
