@@ -72,61 +72,60 @@ export default function LiveSession() {
     try {
       const rawData = rawDataRef.current || {};
 
-      // CameraView passes videoBlob (pre-built Blob from useSessionRecorder/useVideoRecorder)
-      // Persist video first (upload to cloud + IndexedDB fallback)
-      const persistedVideo = await persistRecordedSessionVideo({
+      // Save session metadata to cloud IMMEDIATELY (no waiting for video upload)
+      const sessionToSave = {
+        ...savedSession,
+        video_storage_key: savedSession.session_id,
+      };
+      const saved = await saveSession(sessionToSave);
+
+      // Show reward screen right away — video uploads in background
+      setShowReward(true);
+      setSaving(false);
+
+      // ── Background tasks (fire-and-forget) ──────────────────────────
+
+      // Upload video in background, then patch session with video_url
+      persistRecordedSessionVideo({
         videoBlob: rawData.videoBlob || null,
         recordedChunks: rawData.recordedChunks || [],
         mimeType: rawData.recordingMimeType || 'video/webm',
-        sessionId: savedSession.session_id,
-      });
+        sessionId: saved?.session_id || savedSession.session_id,
+      }).then(persistedVideo => {
+        if (persistedVideo?.fileUrl) {
+          updateSession(saved?.session_id || savedSession.session_id, {
+            video_url: persistedVideo.fileUrl,
+          }).catch(() => {});
+        }
+      }).catch(() => {});
 
-      // Attach video fields to the canonical session before saving
-      const sessionWithVideo = {
-        ...savedSession,
-        video_storage_key: persistedVideo?.storageKey ?? savedSession.session_id,
-        video_src: persistedVideo?.videoSrc ?? null,
-        video_url: persistedVideo?.fileUrl ?? null,
-      };
-
-      // Save session to cloud + cache FIRST, then enrich with learning async
-      const saved = await saveSession(sessionWithVideo);
-
-      // Show reward screen immediately after save completes
-      setShowReward(true);
-
-      // Fire-and-forget: enrich with learning data
+      // Enrich with learning data
       processSessionLearning({
-        ...sessionWithVideo,
-        reps: rawDataRef.current?.reps ?? [],
-      }).then(async (enriched) => {
+        ...sessionToSave,
+        reps: rawData.reps ?? [],
+      }).then(enriched => {
         if (enriched?.learning && saved?._cloud_id) {
           updateSession(saved.session_id, { learning: enriched.learning }).catch(() => {});
         }
       }).catch(() => {});
 
-      // Fire-and-forget: check achievements + award points
+      // Achievements, points, faults, streak — all fire-and-forget
       checkAndAwardAchievements().catch(() => {});
-      awardSessionPoints(sessionWithVideo).catch(() => {});
-
-      // Record fault history and check for improvements
-      const faults = (sessionWithVideo.top_faults || []).map(f => ({ id: f, name: f }));
-      updateFaultHistory(sessionWithVideo.exercise_id, faults).catch(() => {});
-      checkForImprovements(sessionWithVideo.exercise_id, faults.map(f => f.id)).catch(() => {});
-
-      // Record session for streak/XP tracking
+      awardSessionPoints(sessionToSave).catch(() => {});
+      const faults = (sessionToSave.top_faults || []).map(f => ({ id: f, name: f }));
+      updateFaultHistory(sessionToSave.exercise_id, faults).catch(() => {});
+      checkForImprovements(sessionToSave.exercise_id, faults.map(f => f.id)).catch(() => {});
       recordSession().catch(() => {});
 
-      // Fire-and-forget: fetch AI narrative and patch session async
-      const sessionIdForNarrative = sessionWithVideo.session_id;
-      getSessionNarrative(sessionWithVideo).then(narrative => {
-        if (narrative) updateSession(sessionIdForNarrative, { ai_narrative: narrative });
-      });
+      // AI narrative
+      getSessionNarrative(sessionToSave).then(narrative => {
+        if (narrative) updateSession(saved?.session_id || savedSession.session_id, { ai_narrative: narrative });
+      }).catch(() => {});
+
     } catch (err) {
       console.error('[LiveSession] handleSave error:', err);
-      // Still save metadata even if video persistence fails
       saveSession(savedSession).catch(() => {});
-      setShowReward(true); // Show reward even on error
+      setShowReward(true);
     } finally {
       setSaving(false);
     }
