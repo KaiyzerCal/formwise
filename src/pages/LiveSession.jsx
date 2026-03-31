@@ -87,15 +87,21 @@ export default function LiveSession() {
         video_src: persistedVideo?.videoSrc ?? null,
       };
 
-      // Run learning pipeline (non-blocking), then save to cloud + cache
+      // Save session to cloud + cache FIRST, then enrich with learning async
+      const saved = await saveSession(sessionWithVideo);
+
+      // Show reward screen immediately after save completes
+      setShowReward(true);
+
+      // Fire-and-forget: enrich with learning data
       processSessionLearning({
         ...sessionWithVideo,
         reps: rawDataRef.current?.reps ?? [],
       }).then(async (enriched) => {
-        await saveSession({ ...sessionWithVideo, learning: enriched?.learning ?? null });
-      }).catch(async () => {
-        await saveSession(sessionWithVideo);
-      });
+        if (enriched?.learning && saved?._cloud_id) {
+          updateSession(saved.session_id, { learning: enriched.learning }).catch(() => {});
+        }
+      }).catch(() => {});
 
       // Fire-and-forget: check achievements + award points
       checkAndAwardAchievements().catch(() => {});
@@ -108,9 +114,6 @@ export default function LiveSession() {
 
       // Record session for streak/XP tracking
       recordSession().catch(() => {});
-
-      // Show reward screen
-      setShowReward(true);
 
       // Fire-and-forget: fetch AI narrative and patch session async
       const sessionIdForNarrative = sessionWithVideo.session_id;

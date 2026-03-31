@@ -131,9 +131,11 @@ function migrateV1() {
 
 // ── Initialize store from cloud ───────────────────────────────────────────────
 // Call this once on app start. Populates the localStorage cache from Base44.
+// If called again after auth becomes available, re-syncs from cloud.
 export async function initSessionStore() {
-  if (_initialized) return;
   migrateV1();
+  // Allow re-init if previous attempt was offline (not authed)
+  if (_initialized && _syncStatus === 'synced') return;
   emit('syncing');
   try {
     const authed = await base44.auth.isAuthenticated();
@@ -142,13 +144,16 @@ export async function initSessionStore() {
       _initialized = true;
       return;
     }
-    const cloudRecords = await base44.entities.FormSession.filter(
-      { is_deleted: false },
+    // Fetch all sessions — is_deleted may be unset (null/undefined) on older records,
+    // so we fetch all and filter client-side instead of relying on { is_deleted: false }
+    const cloudRecords = await base44.entities.FormSession.list(
       '-started_at',
       200
     );
     if (cloudRecords && cloudRecords.length > 0) {
-      const sessions = cloudRecords.map(fromCloud);
+      const sessions = cloudRecords
+        .filter(r => !r.is_deleted) // exclude soft-deleted (true), keep false/null/undefined
+        .map(fromCloud);
       writeCache(sessions);
     }
     _initialized = true;
@@ -173,32 +178,39 @@ export async function saveSession(session) {
   const localId = session.session_id || `sess_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const sessionWithId = { ...session, session_id: localId };
 
-  // Try to save to cloud first
-  try {
-    const authed = await base44.auth.isAuthenticated();
-    if (authed) {
-      emit('syncing');
-      const created = await base44.entities.FormSession.create(toCloud(sessionWithId));
-      // Use the cloud ID as the canonical session_id
-      sessionWithId.session_id = created.id;
-      sessionWithId._cloud_id = created.id;
-      emit('synced');
+  // Always cache locally first so session is never lost
+  function cacheLocally() {
+    const cache = readCache();
+    const existingIdx = cache.findIndex(s =>
+      s.session_id === sessionWithId.session_id ||
+      (sessionWithId._cloud_id && s._cloud_id === sessionWithId._cloud_id)
+    );
+    if (existingIdx >= 0) {
+      cache[existingIdx] = sessionWithId;
+    } else {
+      cache.unshift(sessionWithId);
     }
+    writeCache(cache);
+  }
+
+  // Cache immediately so session is visible even if cloud fails
+  cacheLocally();
+
+  // Try to save to cloud
+  try {
+    emit('syncing');
+    const created = await base44.entities.FormSession.create(toCloud(sessionWithId));
+    // Use the cloud ID as the canonical session_id
+    sessionWithId.session_id = created.id;
+    sessionWithId._cloud_id = created.id;
+    // Re-cache with cloud ID
+    cacheLocally();
+    emit('synced');
   } catch (err) {
-    console.warn('[SessionStore] Cloud save failed:', err.message);
+    console.warn('[SessionStore] Cloud save failed, session cached locally:', err.message);
     emit('offline');
   }
 
-  // Cache locally
-  const cache = readCache();
-  // Avoid duplicates
-  const existingIdx = cache.findIndex(s => s.session_id === sessionWithId.session_id || s._cloud_id === sessionWithId._cloud_id);
-  if (existingIdx >= 0) {
-    cache[existingIdx] = sessionWithId;
-  } else {
-    cache.unshift(sessionWithId); // newest first
-  }
-  writeCache(cache);
   return sessionWithId;
 }
 
@@ -230,8 +242,7 @@ export async function updateSession(id, patch) {
   // Sync patch to cloud
   const cloudId = cache[idx]._cloud_id || cache[idx].session_id;
   try {
-    const authed = await base44.auth.isAuthenticated();
-    if (authed && cloudId) {
+    if (cloudId) {
       await base44.entities.FormSession.update(cloudId, patch);
     }
   } catch (err) {
@@ -254,8 +265,7 @@ export async function deleteSession(id) {
 
   // Soft-delete in cloud
   try {
-    const authed = await base44.auth.isAuthenticated();
-    if (authed && cloudId) {
+    if (cloudId) {
       await base44.entities.FormSession.update(cloudId, {
         is_deleted: true,
         deleted_at: new Date().toISOString(),
@@ -337,14 +347,15 @@ export async function syncFromCloud(limit = 200) {
   try {
     const authed = await base44.auth.isAuthenticated();
     if (!authed) { emit('offline'); return 0; }
-    const cloudRecords = await base44.entities.FormSession.filter(
-      { is_deleted: false },
+    const cloudRecords = await base44.entities.FormSession.list(
       '-started_at',
       limit
     );
     if (!cloudRecords?.length) { emit('synced'); return 0; }
 
-    const sessions = cloudRecords.map(fromCloud);
+    const sessions = cloudRecords
+      .filter(r => !r.is_deleted)
+      .map(fromCloud);
     writeCache(sessions);
     emit('synced');
     return sessions.length;
