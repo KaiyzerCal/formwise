@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
 import { getAllSessions, clearAllSessions } from '@/components/bioneer/data/sessionStore';
+import WorkoutScheduleManager from '@/components/bioneer/notifications/WorkoutScheduleManager';
 import { getServerKeyStatus } from '@/components/bioneer/ai/GeminiCoach';
 import { LANGUAGES, LANG_KEY, setLanguage, getCurrentLang } from '@/lib/i18n';
 
@@ -281,6 +282,14 @@ export default function Settings() {
               ))}
             </select>
           </div>
+        </Section>
+
+        {/* Workout Reminders */}
+        <Section title="Workout Reminders">
+          <p className="text-[9px]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+            Set recurring workout times. You'll get a browser push notification 15 minutes before each session with a one-tap link to start.
+          </p>
+          <WorkoutScheduleManager />
         </Section>
 
         {/* Data */}

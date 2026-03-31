@@ -6,6 +6,8 @@ import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
 import StreakWidget from "@/components/bioneer/ui/StreakWidget";
 import { useT } from "@/lib/i18n";
+import WorkoutReminderBanner from "@/components/bioneer/notifications/WorkoutReminderBanner";
+import { useWorkoutNotifier } from "@/components/bioneer/notifications/useWorkoutNotifier";
 
 const NAV_ITEMS = [
   { name: 'LiveSession',        labelKey: 'LIVE SESSION',  icon: Camera,     ariaLabel: 'Live Session — start form analysis' },
@@ -21,9 +23,11 @@ const NAV_ITEMS = [
 export default function Layout({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useT();
+  useWorkoutNotifier();
 
   return (
     <>
+      <WorkoutReminderBanner />
       <link href={FONT_LINK} rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
