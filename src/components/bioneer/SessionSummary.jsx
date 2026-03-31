@@ -175,7 +175,7 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-white tracking-wider" style={{ fontFamily: "'Syne', sans-serif" }}>
-              {exerciseDef?.name || sessionData.exercise_id?.replace(/_/g, " ").toUpperCase()}
+              {exerciseDef?.name || (sessionData.exercise_id ? sessionData.exercise_id.replace(/_/g, " ").toUpperCase() : "SESSION")}
             </h2>
             <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5" style={{ fontFamily: "'DM Mono', monospace" }}>
               {Math.round(sessionData.duration_seconds)}s session
@@ -300,7 +300,7 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
               <AlertTriangle className="w-3.5 h-3.5 text-[#EF4444]" />
               <span className="text-xs text-[#EF4444] font-medium uppercase tracking-wider">Top Warnings</span>
             </div>
-            <p className="text-xs text-white/50">{topAlertJoints.map((j) => j.replace(/_/g, " ")).join(", ")}</p>
+            <p className="text-xs text-white/50">{topAlertJoints.map((j) => (j || "").replace(/_/g, " ")).join(", ")}</p>
           </div>
         )}
 
