@@ -71,6 +71,7 @@ export default function FormCheck() {
 
   const handleSave = async () => {
     setSaving(true);
+    let wentToReplay = false;
     const { exercise_def, joint_data, reps, ...saveable } = sessionData;
     
     // Enrich session data with analytics fields for storage
@@ -127,7 +128,6 @@ export default function FormCheck() {
           console.warn('[FormCheck] IndexedDB save failed:', idbErr.message);
         }
       }
-      setPendingRecording(null);
       // Non-blocking: run adaptive learning pipeline after save
       processSessionLearning({
         movement: enrichedData.movement_id,
@@ -137,12 +137,40 @@ export default function FormCheck() {
         duration: enrichedData.duration_seconds,
         repSummaries: sessionData?.rep_summaries ?? [],
       }).catch(err => console.warn('[FormCheck] Learning pipeline error:', err));
+
+      // If we have a recording, go to replay so user can watch/send to Technique
+      if (pendingRecording?.videoBlob instanceof Blob && pendingRecording.videoBlob.size > 0) {
+        const savedSessionId = pendingRecording.sessionId || `formcheck-${Date.now()}`;
+        setReplaySession({
+          sessionId: savedSessionId,
+          videoBlob: pendingRecording.videoBlob,
+          poseFrames: pendingRecording.poseFrames || [],
+          angleFrames: pendingRecording.angleFrames || [],
+          cameraFacing: pendingRecording.cameraFacing || 'environment',
+          category: enrichedData.category || 'strength',
+          createdAt: enrichedData.started_at || new Date().toISOString(),
+          compositedVideo: true,
+          movement_name: enrichedData.movement_name,
+          average_form_score: enrichedData.average_form_score,
+          top_faults: enrichedData.top_faults,
+        });
+        setPendingRecording(null);
+        setSaving(false);
+        setSessionData(null);
+        setPhase("replay");
+        wentToReplay = true;
+        return;
+      }
+
+      setPendingRecording(null);
     } catch (err) {
       console.warn('[FormCheck] Save error:', err);
     } finally {
-      setSaving(false);
-      setPhase("home");
-      setSessionData(null);
+      if (!wentToReplay) {
+        setSaving(false);
+        setPhase("home");
+        setSessionData(null);
+      }
     }
   };
 
@@ -189,8 +217,9 @@ export default function FormCheck() {
   };
 
   const handleCloseReplay = () => {
-    setPhase("history");
     setReplaySession(null);
+    setSessionData(null);
+    setPhase("home");
   };
 
   if (showDisclaimer) {
@@ -209,6 +238,7 @@ export default function FormCheck() {
     return (
       <SessionSummary
         sessionData={sessionData}
+        pendingRecording={pendingRecording}
         onSave={handleSave}
         onDiscard={handleDiscard}
         saving={saving}

@@ -193,7 +193,7 @@ export default function FreestyleReplay({ session, onClose }) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: COLORS.border }}>
         <h2 className="text-sm font-bold tracking-[0.1em] uppercase" style={{ color: COLORS.gold }}>
-          Freestyle Replay
+          {session.movement_name ? `${session.movement_name} — Replay` : 'Session Replay'}
         </h2>
         <div className="flex items-center gap-2">
           <button

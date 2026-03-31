@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle, Play } from "lucide-react";
 import ScoreTooltip from "./onboarding/ScoreTooltip";
 import { getSetAnalysis } from "./ai/GeminiCoach";
 import SessionShareButton from "./share/SessionShareCard";
 import { generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
 import FaultHistoryPanel from "./ui/FaultHistoryPanel";
+import FreestyleReplay from "./history/FreestyleReplay";
 
 function ScoreBar({ score }) {
   const color = score >= 80 ? "#22C55E" : score >= 65 ? "#EAB308" : "#EF4444";
@@ -80,10 +81,13 @@ function buildCoachingText(exerciseDef, jointData) {
   return lines.length > 0 ? lines.join(" ") : null;
 }
 
-export default function SessionSummary({ sessionData, onSave, onDiscard, saving, saveOutcome }) {
+export default function SessionSummary({ sessionData, pendingRecording, onSave, onDiscard, saving, saveOutcome }) {
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [adaptiveCue, setAdaptiveCue] = useState(null);
+  const [showingReplay, setShowingReplay] = useState(false);
+
+  const hasRecording = pendingRecording?.videoBlob instanceof Blob && pendingRecording.videoBlob.size > 0;
 
   useEffect(() => {
     if (!sessionData) return;
@@ -106,6 +110,21 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
 
   // Defensive guards — ensure all required data exists
   if (!sessionData) return null;
+
+  // Show replay overlay (pre-save preview)
+  if (showingReplay && hasRecording) {
+    const replaySession = {
+      sessionId: pendingRecording.sessionId,
+      videoBlob: pendingRecording.videoBlob,
+      poseFrames: pendingRecording.poseFrames || [],
+      angleFrames: pendingRecording.angleFrames || [],
+      cameraFacing: pendingRecording.cameraFacing || 'environment',
+      category: sessionData.category || 'strength',
+      createdAt: sessionData.started_at || new Date().toISOString(),
+      compositedVideo: true,
+    };
+    return <FreestyleReplay session={replaySession} onClose={() => setShowingReplay(false)} />;
+  }
 
   const score = Math.round(Math.max(0, Math.min(100, sessionData.movement_score ?? sessionData.form_score_overall ?? 0)));
   const exerciseDef = sessionData.exercise_def;
@@ -304,6 +323,18 @@ export default function SessionSummary({ sessionData, onSave, onDiscard, saving,
 
         {/* Share */}
         <SessionShareButton sessionData={sessionData} />
+
+        {/* Replay recording button */}
+        {hasRecording && (
+          <button
+            onClick={() => setShowingReplay(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border text-[10px] font-bold tracking-[0.1em] uppercase transition-all hover:opacity-80"
+            style={{ borderColor: 'rgba(201,168,76,0.4)', color: '#C9A84C', background: 'rgba(201,168,76,0.08)', fontFamily: "'DM Mono', monospace" }}
+          >
+            <Play className="w-3.5 h-3.5" fill="#C9A84C" />
+            Replay Recording
+          </button>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3">
