@@ -8,9 +8,12 @@ import { useTechniqueComparison } from '../components/bioneer/compare/useTechniq
 import { getTechniqueDraft } from '../components/bioneer/technique/techniqueStorage';
 import { REFERENCE_POSES, REFERENCE_EXERCISE_LIST } from '../components/bioneer/compare/referenceLibrary';
 import ReferenceSkeletonPlayer from '../components/bioneer/compare/ReferenceSkeletonPlayer';
+import ReferenceVideoPlayer from '../components/bioneer/compare/ReferenceVideoPlayer';
+import ReferenceLibrarySelector from '../components/bioneer/compare/ReferenceLibrarySelector';
+import ReferenceUploadPanel from '../components/bioneer/compare/ReferenceUploadPanel';
 import { useComparisonReport } from '../components/bioneer/compare/useComparisonReport';
 import CompareReportCard from '../components/bioneer/compare/CompareReportCard';
-import { Upload, BookOpen, Film, Zap } from 'lucide-react';
+import { Upload, BookOpen, Film, Zap, Settings } from 'lucide-react';
 import { saveSession } from '../components/bioneer/data/unifiedSessionStore';
 import CustomVideoAnalyzer from '../components/bioneer/compare/CustomVideoAnalyzer';
 import AnalysisInsightsPanel from '../components/bioneer/compare/AnalysisInsightsPanel';
@@ -60,6 +63,10 @@ export default function TechniqueCompare() {
   const [refMode,        setRefMode]        = useState('library');
   const [selectedRefId,  setSelectedRefId]  = useState('back_squat');
 
+  // ── Video-based reference (from ReferenceVideo entity) ──────────────────
+  const [videoRef,       setVideoRef]       = useState(null); // ReferenceVideo record
+  const [showUploadPanel, setShowUploadPanel] = useState(false);
+
   // ── User clip ────────────────────────────────────────────────────────────
   const [userSrc,        setUserSrc]        = useState(null);
   const [userFilename,   setUserFilename]   = useState('');
@@ -102,7 +109,8 @@ export default function TechniqueCompare() {
 
   const selectedRef   = REFERENCE_POSES[selectedRefId];
   const isLibrary     = refMode === 'library';
-  const hasRef        = isLibrary ? !!selectedRef : !!customRefSrc;
+  const isVideoRef    = isLibrary && !!videoRef?.video_url;
+  const hasRef        = isLibrary ? (!!videoRef?.video_url || !!selectedRef) : !!customRefSrc;
 
   // ── Pose analysis — user video ───────────────────────────────────────────
   const { poseState: userPoseState, landmarks: userLandmarks } = useVideoPose({
@@ -134,34 +142,37 @@ export default function TechniqueCompare() {
   }, [deviations, playing, selectedRef, recordFrame]);
 
   // ── Playback controls ─────────────────────────────────────────────────────
+  // Sync right video when it's a real video (custom OR video reference)
+  const hasRightVideo = !isLibrary || isVideoRef;
+
   const play = useCallback(() => {
     videoLeftRef.current?.play().catch(() => {});
-    if (!isLibrary) videoRightRef.current?.play().catch(() => {});
+    if (hasRightVideo) videoRightRef.current?.play().catch(() => {});
     setPlaying(true);
-  }, [isLibrary]);
+  }, [hasRightVideo]);
 
   const pause = useCallback(() => {
     videoLeftRef.current?.pause();
-    if (!isLibrary) videoRightRef.current?.pause();
+    if (hasRightVideo) videoRightRef.current?.pause();
     setPlaying(false);
-  }, [isLibrary]);
+  }, [hasRightVideo]);
 
   const seek = useCallback((t) => {
     if (videoLeftRef.current)  videoLeftRef.current.currentTime = t;
-    if (!isLibrary && videoRightRef.current) videoRightRef.current.currentTime = t;
+    if (hasRightVideo && videoRightRef.current) videoRightRef.current.currentTime = t;
     setCurrentTime(t);
-  }, [isLibrary]);
+  }, [hasRightVideo]);
 
   const changeSpeed = useCallback((s) => {
     setSpeed(s);
     if (videoLeftRef.current)  videoLeftRef.current.playbackRate = s;
-    if (!isLibrary && videoRightRef.current) videoRightRef.current.playbackRate = s;
-  }, [isLibrary]);
+    if (hasRightVideo && videoRightRef.current) videoRightRef.current.playbackRate = s;
+  }, [hasRightVideo]);
 
   useEffect(() => {
     if (videoLeftRef.current)  videoLeftRef.current.playbackRate  = speed;
-    if (!isLibrary && videoRightRef.current) videoRightRef.current.playbackRate = speed;
-  }, [userSrc, customRefSrc, speed, isLibrary]);
+    if (hasRightVideo && videoRightRef.current) videoRightRef.current.playbackRate = speed;
+  }, [userSrc, customRefSrc, speed, hasRightVideo]);
 
   // Cleanup blob URLs
   useEffect(() => {
@@ -319,17 +330,49 @@ export default function TechniqueCompare() {
               <ModeTab label="Custom Video" icon={Film}     active={refMode === 'custom'}  onClick={() => setRefMode('custom')} />
             </div>
 
-            {/* Library selector */}
+            {/* Library selector — video references + skeleton fallback */}
             {refMode === 'library' && (
-              <select
-                value={selectedRefId}
-                onChange={e => setSelectedRefId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border text-[10px] appearance-none outline-none"
-                style={{ background: COLORS.surface, borderColor: COLORS.borderLight, color: COLORS.textPrimary, fontFamily: FONT.mono }}>
-                {REFERENCE_EXERCISE_LIST.map(e => (
-                  <option key={e.id} value={e.id}>{e.name}</option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <ReferenceLibrarySelector
+                  selectedId={videoRef?.id}
+                  onSelect={(ref) => {
+                    setVideoRef(ref);
+                    if (ref?.exercise_id) setSelectedRefId(ref.exercise_id);
+                  }}
+                />
+                <div className="flex items-center gap-2">
+                  <span className="text-[8px] tracking-[0.1em] uppercase" style={{ color: COLORS.textMuted, fontFamily: FONT.mono }}>
+                    or use skeleton:
+                  </span>
+                  <select
+                    value={selectedRefId}
+                    onChange={e => { setSelectedRefId(e.target.value); setVideoRef(null); }}
+                    className="flex-1 px-2 py-1.5 rounded border text-[9px] appearance-none outline-none"
+                    style={{ background: COLORS.bg, borderColor: COLORS.border, color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+                    {REFERENCE_EXERCISE_LIST.map(e => (
+                      <option key={e.id} value={e.id}>{e.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setShowUploadPanel(p => !p)}
+                    className="p-1.5 rounded border"
+                    style={{
+                      borderColor: showUploadPanel ? COLORS.goldBorder : COLORS.border,
+                      background: showUploadPanel ? COLORS.goldDim : 'transparent',
+                      color: showUploadPanel ? COLORS.gold : COLORS.textTertiary,
+                    }}>
+                    <Settings size={11} />
+                  </button>
+                </div>
+                {showUploadPanel && (
+                  <ReferenceUploadPanel
+                    onUploaded={(record) => {
+                      setVideoRef(record);
+                      setShowUploadPanel(false);
+                    }}
+                  />
+                )}
+              </div>
             )}
 
             {/* Custom video upload */}
@@ -399,9 +442,21 @@ export default function TechniqueCompare() {
                   />
                 </div>
 
-                {/* Right — library skeleton OR custom video */}
+                {/* Right — video reference OR library skeleton OR custom video */}
                 <div className="h-full relative" style={{ width: '50%' }}>
-                  {isLibrary ? (
+                  {isVideoRef ? (
+                    <ReferenceVideoPlayer
+                      videoUrl={videoRef.video_url}
+                      keypoints={videoRef.keypoints_per_frame}
+                      fps={videoRef.fps || 30}
+                      phases={videoRef.key_phases || []}
+                      label={videoRef.exercise_name || 'IDEAL FORM'}
+                      showGuides={showGuides}
+                      isPlaying={playing}
+                      videoRef={videoRightRef}
+                      onLandmarksChange={setRefSkelLandmarks}
+                    />
+                  ) : isLibrary ? (
                     <ReferenceSkeletonPlayer
                       frames={selectedRef?.frames}
                       label={selectedRef?.name}
@@ -435,7 +490,19 @@ export default function TechniqueCompare() {
                 {/* PiP reference */}
                 <div className="absolute bottom-20 right-4 z-20 rounded-xl overflow-hidden border shadow-2xl"
                   style={{ width: 160, height: 120, borderColor: COLORS.goldBorder }}>
-                  {isLibrary ? (
+                  {isVideoRef ? (
+                    <ReferenceVideoPlayer
+                      videoUrl={videoRef.video_url}
+                      keypoints={videoRef.keypoints_per_frame}
+                      fps={videoRef.fps || 30}
+                      phases={videoRef.key_phases || []}
+                      label=""
+                      showGuides={false}
+                      isPlaying={playing}
+                      videoRef={videoRightRef}
+                      onLandmarksChange={setRefSkelLandmarks}
+                    />
+                  ) : isLibrary ? (
                     <ReferenceSkeletonPlayer
                       frames={selectedRef?.frames}
                       label=""

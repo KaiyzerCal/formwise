@@ -1,0 +1,107 @@
+{
+  "name": "ReferenceVideo",
+  "type": "object",
+  "properties": {
+    "exercise_id": {
+      "type": "string",
+      "description": "Exercise identifier (e.g. squat, deadlift)"
+    },
+    "exercise_name": {
+      "type": "string",
+      "description": "Human-readable exercise name"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "URL of the uploaded reference video"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "Video thumbnail URL"
+    },
+    "view": {
+      "type": "string",
+      "enum": [
+        "side",
+        "front",
+        "rear"
+      ],
+      "default": "side",
+      "description": "Camera angle"
+    },
+    "fps": {
+      "type": "number",
+      "default": 30,
+      "description": "Video frame rate"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Video duration in seconds"
+    },
+    "keypoints_per_frame": {
+      "type": "array",
+      "description": "Pre-processed pose keypoints per frame",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "visibility": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "key_phases": {
+      "type": "array",
+      "description": "Key movement phases with frame indices",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phase": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "frame_index": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "uploading",
+        "processing",
+        "ready",
+        "error"
+      ],
+      "default": "uploading",
+      "description": "Processing status"
+    },
+    "processing_error": {
+      "type": "string",
+      "description": "Error message if processing failed"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is the default reference for this exercise"
+    }
+  },
+  "required": [
+    "exercise_id",
+    "exercise_name"
+  ]
+}
