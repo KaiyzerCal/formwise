@@ -393,12 +393,25 @@ export default function CameraView({ exercise, onStop }) {
       if (last3.length === 3) {
         const decline = last3[0] - last3[2]; // drop over last 3 reps
         if (decline > 10) {
-          const fakeMetrics = {
-            allMetrics: repScoresLiveRef.current.map(s => ({
-              formScore: s, repDuration: 2, kneeAngleMin: 90, kneeAngleMax: 160, stabilityVariance: 0,
+          const sessionElapsed = (Date.now() - startTimeRef.current) / 1000;
+          const avgRepDuration = repScoresLiveRef.current.length > 0
+            ? sessionElapsed / repScoresLiveRef.current.length
+            : 2;
+
+          const realMetrics = {
+            allMetrics: repScoresLiveRef.current.map((s, i) => ({
+              formScore: s,
+              repDuration: avgRepDuration,
+              kneeAngleMin: frameRef.current?.angles?.kneeL ?? 90,
+              kneeAngleMax: frameRef.current?.angles?.kneeL
+                ? frameRef.current.angles.kneeL + 70
+                : 160,
+              stabilityVariance: i > 0
+                ? Math.abs(repScoresLiveRef.current[i] - repScoresLiveRef.current[i - 1])
+                : 0,
             })),
           };
-          const result = detectFatigue(fakeMetrics);
+          const result = detectFatigue(realMetrics);
           if (result.severity === 'high' || result.severity === 'medium') {
             setShowFatigueBanner(true);
           }
