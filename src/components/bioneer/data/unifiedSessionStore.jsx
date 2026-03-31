@@ -1,175 +1,132 @@
 /**
  * unifiedSessionStore.jsx
- * Unified session persistence: localStorage (instant) + base44 cloud (background sync).
- * Drop-in replacement for sessionStore.js — same exported API.
+ * localStorage (instant) + Supabase cloud (background sync).
+ * Same exported API as the original.
  */
-
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 
 const STORE_KEY = 'bioneer_sessions_v1';
 const SYNC_KEY  = 'bioneer_last_sync';
 
-// ── Sync status event bus ──────────────────────────────────────────────────────
+// ── Sync status bus ───────────────────────────────────────────────────────────
 const listeners = new Set();
-let _syncStatus = 'idle'; // 'idle' | 'syncing' | 'synced' | 'offline'
-let _lastSyncAt  = localStorage.getItem(SYNC_KEY) ? new Date(localStorage.getItem(SYNC_KEY)) : null;
+let _syncStatus = 'idle';
+let _lastSyncAt = localStorage.getItem(SYNC_KEY) ? new Date(localStorage.getItem(SYNC_KEY)) : null;
 
 export function subscribeSyncStatus(fn) {
   listeners.add(fn);
   fn({ status: _syncStatus, lastSyncAt: _lastSyncAt });
   return () => listeners.delete(fn);
 }
-
 function emit(status) {
   _syncStatus = status;
-  if (status === 'synced') {
-    _lastSyncAt = new Date();
-    localStorage.setItem(SYNC_KEY, _lastSyncAt.toISOString());
-  }
+  if (status === 'synced') { _lastSyncAt = new Date(); localStorage.setItem(SYNC_KEY, _lastSyncAt.toISOString()); }
   listeners.forEach(fn => fn({ status, lastSyncAt: _lastSyncAt }));
 }
 
-// ── localStorage helpers ───────────────────────────────────────────────────────
+// ── localStorage ──────────────────────────────────────────────────────────────
 function readAll() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch { return []; }
+  try { const r = localStorage.getItem(STORE_KEY); return r ? JSON.parse(r) : []; } catch { return []; }
+}
+function writeAll(s) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch {}
 }
 
-function writeAll(sessions) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(sessions));
-  } catch { /* quota exceeded — fail silently */ }
-}
-
-// ── Cloud helpers ──────────────────────────────────────────────────────────────
-function toCloudPayload(session) {
+// ── Cloud payload mappers ─────────────────────────────────────────────────────
+function toCloud(s) {
   return {
-    exercise_id:          session.movement_id ?? session.movement_name ?? session.exercise_id ?? 'unknown',
-    category:             session.category ?? 'strength',
-    duration_seconds:     session.duration_seconds ?? 0,
-    form_score_overall:   session.average_form_score ?? session.form_score_overall ?? 0,
-    movement_score:       session.movement_score ?? 0,
-    form_score_peak:      session.highest_form_score ?? session.form_score_peak ?? 0,
-    form_score_lowest:    session.lowest_form_score ?? session.form_score_lowest ?? 0,
-    reps_detected:        session.rep_count ?? session.reps_detected ?? 0,
-    rep_count:            session.rep_count ?? 0,
-    average_form_score:   session.average_form_score ?? 0,
-    highest_form_score:   session.highest_form_score ?? 0,
-    lowest_form_score:    session.lowest_form_score ?? 0,
-    mastery_avg:          session.mastery_avg ?? 0,
-    alerts:               session.alerts ?? [],
-    phases:               session.phases ?? {},
-    form_timeline:        session.form_timeline ?? [],
-    top_faults:           session.top_faults ?? [],
-    risk_flags:           session.risk_flags ?? [],
-    body_side_bias:       session.body_side_bias ?? 'balanced',
-    tracking_confidence:  session.tracking_confidence ?? 0,
-    session_status:       session.session_status ?? 'complete',
-    started_at:           session.started_at ?? new Date().toISOString(),
-    movement_id:          session.movement_id ?? null,
-    movement_name:        session.movement_name ?? null,
+    exercise_id:        s.movement_id ?? s.movement_name ?? s.exercise_id ?? 'unknown',
+    category:           s.category ?? 'strength',
+    duration_seconds:   s.duration_seconds ?? 0,
+    form_score_overall: s.average_form_score ?? s.form_score_overall ?? 0,
+    movement_score:     s.movement_score ?? 0,
+    form_score_peak:    s.highest_form_score ?? s.form_score_peak ?? 0,
+    form_score_lowest:  s.lowest_form_score ?? s.form_score_lowest ?? 0,
+    reps_detected:      s.rep_count ?? s.reps_detected ?? 0,
+    rep_count:          s.rep_count ?? 0,
+    average_form_score: s.average_form_score ?? 0,
+    highest_form_score: s.highest_form_score ?? 0,
+    lowest_form_score:  s.lowest_form_score ?? 0,
+    mastery_avg:        s.mastery_avg ?? 0,
+    alerts:             s.alerts ?? [],
+    phases:             s.phases ?? {},
+    form_timeline:      s.form_timeline ?? [],
+    top_faults:         s.top_faults ?? [],
+    risk_flags:         s.risk_flags ?? [],
+    body_side_bias:     s.body_side_bias ?? 'balanced',
+    tracking_confidence:s.tracking_confidence ?? 0,
+    session_status:     s.session_status ?? 'complete',
+    started_at:         s.started_at ?? new Date().toISOString(),
+    movement_id:        s.movement_id ?? null,
+    movement_name:      s.movement_name ?? null,
   };
 }
 
-function fromCloudRecord(record) {
-   // Convert base44 record → local canonical session shape
-   return {
-     session_id:          record.id, // NO prefix — use cloud ID directly
-     _cloud_id:           record.id,
-     exercise_id:         record.exercise_id,
-     category:            record.category,
-     duration_seconds:    record.duration_seconds,
-     average_form_score:  record.average_form_score ?? record.form_score_overall ?? 0,
-     highest_form_score:  record.highest_form_score ?? record.form_score_peak ?? 0,
-     lowest_form_score:   record.lowest_form_score ?? record.form_score_lowest ?? 0,
-     movement_score:      record.movement_score ?? 0,
-     rep_count:           record.rep_count ?? record.reps_detected ?? 0,
-     reps_detected:       record.reps_detected ?? 0,
-     mastery_avg:         record.mastery_avg ?? 0,
-     alerts:              record.alerts ?? [],
-     phases:              record.phases ?? {},
-     form_timeline:       record.form_timeline ?? [],
-     top_faults:          record.top_faults ?? [],
-     risk_flags:          record.risk_flags ?? [],
-     body_side_bias:      record.body_side_bias ?? 'balanced',
-     tracking_confidence: record.tracking_confidence ?? 0,
-     session_status:      record.session_status ?? 'complete',
-     started_at:          record.started_at ?? record.created_date,
-     movement_id:         record.movement_id ?? record.exercise_id,
-     movement_name:       record.movement_name ?? record.exercise_id,
-     _source:             'cloud',
-   };
+function fromCloud(r) {
+  return {
+    session_id:         r.id,
+    _cloud_id:          r.id,
+    exercise_id:        r.exercise_id,
+    category:           r.category,
+    duration_seconds:   r.duration_seconds,
+    average_form_score: r.average_form_score ?? r.form_score_overall ?? 0,
+    highest_form_score: r.highest_form_score ?? r.form_score_peak ?? 0,
+    lowest_form_score:  r.lowest_form_score ?? r.form_score_lowest ?? 0,
+    movement_score:     r.movement_score ?? 0,
+    rep_count:          r.rep_count ?? r.reps_detected ?? 0,
+    reps_detected:      r.reps_detected ?? 0,
+    mastery_avg:        r.mastery_avg ?? 0,
+    alerts:             r.alerts ?? [],
+    phases:             r.phases ?? {},
+    form_timeline:      r.form_timeline ?? [],
+    top_faults:         r.top_faults ?? [],
+    risk_flags:         r.risk_flags ?? [],
+    body_side_bias:     r.body_side_bias ?? 'balanced',
+    tracking_confidence:r.tracking_confidence ?? 0,
+    session_status:     r.session_status ?? 'complete',
+    started_at:         r.started_at ?? r.created_at,
+    movement_id:        r.movement_id ?? r.exercise_id,
+    movement_name:      r.movement_name ?? r.exercise_id,
+    _source:            'cloud',
+  };
 }
 
-// Normalize session IDs — remove "cloud_" prefix for consistency
-function normalizeSession(session) {
-  if (!session) return session;
-  const normalized = { ...session };
-  // Remove cloud_ prefix if present
-  if (typeof normalized.session_id === 'string' && normalized.session_id.startsWith('cloud_')) {
-    normalized.session_id = normalized.session_id.substring(6);
-  }
-  // Ensure cloud_id is set
-  if (!normalized._cloud_id && normalized.session_id) {
-    normalized._cloud_id = normalized.session_id;
-  }
-  return normalized;
+function normalize(s) {
+  if (!s) return s;
+  const n = { ...s };
+  if (typeof n.session_id === 'string' && n.session_id.startsWith('cloud_')) n.session_id = n.session_id.slice(6);
+  if (!n._cloud_id && n.session_id) n._cloud_id = n.session_id;
+  return n;
 }
 
 async function pushToCloud(session) {
   emit('syncing');
   try {
-    const payload = toCloudPayload(session);
-    await base44.entities.FormSession.create(payload);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { emit('offline'); return; }
+    const { error } = await supabase.from('form_sessions').insert({ ...toCloud(session), user_id: user.id });
+    if (error) throw error;
     emit('synced');
-  } catch {
-    emit('offline');
-  }
+  } catch { emit('offline'); }
 }
 
-// ── Core CRUD (same API as sessionStore.js) ───────────────────────────────────
-
+// ── Core CRUD ─────────────────────────────────────────────────────────────────
 export function saveSession(session) {
-   if (!session?.session_id) {
-     console.warn('[SESSION_SAVE] Missing session_id');
-     return null;
-   }
-
-   // Normalize session ID
-   const normalized = normalizeSession(session);
-
-   console.log('[SESSION_SAVE_START]', { session_id: normalized.session_id, has_video: !!normalized.video_storage_key });
-
-   const all = readAll();
-   const idx = all.findIndex(s => s.session_id === normalized.session_id);
-   if (idx >= 0) { all[idx] = normalized; } else { all.push(normalized); }
-   writeAll(all);
-
-   // Background cloud push — don't await
-   pushToCloud(normalized).then(() => {
-     console.log('[SESSION_SAVE_SUCCESS]', { session_id: normalized.session_id });
-   }).catch(err => {
-     console.warn('[SESSION_SAVE_FAILED]', { session_id: normalized.session_id, error: err.message });
-   });
-
-   return normalized;
- }
+  if (!session?.session_id) return null;
+  const n = normalize(session);
+  const all = readAll();
+  const idx = all.findIndex(s => s.session_id === n.session_id);
+  if (idx >= 0) all[idx] = n; else all.push(n);
+  writeAll(all);
+  pushToCloud(n).catch(() => {});
+  return n;
+}
 
 export function getAllSessions() {
-  return readAll()
-    .filter(s => !s.is_deleted) // Filter out soft-deleted sessions
-    .sort((a, b) =>
-      new Date(b.started_at || 0) - new Date(a.started_at || 0)
-    );
+  return readAll().filter(s => !s.is_deleted).sort((a, b) => new Date(b.started_at || 0) - new Date(a.started_at || 0));
 }
 
-export function getSessionById(id) {
-  return readAll().find(s => s.session_id === id) ?? null;
-}
+export function getSessionById(id) { return readAll().find(s => s.session_id === id) ?? null; }
 
 export function updateSession(id, patch) {
   const all = readAll();
@@ -180,60 +137,26 @@ export function updateSession(id, patch) {
   return all[idx];
 }
 
-export function deleteSession(id) {
-  writeAll(readAll().filter(s => s.session_id !== id));
-}
+export function deleteSession(id) { writeAll(readAll().filter(s => s.session_id !== id)); }
+export function clearAllSessions() { writeAll([]); }
 
-export function clearAllSessions() {
-  writeAll([]);
-}
-
-// ── Analytics helpers (re-exported from original) ─────────────────────────────
-
+// ── Analytics helpers ─────────────────────────────────────────────────────────
 export function getSessionsByMovement(movementId) {
-  return readAll()
-    .filter(s => s.movement_id === movementId)
-    .sort((a, b) => new Date(b.started_at || 0) - new Date(a.started_at || 0));
+  return readAll().filter(s => s.movement_id === movementId).sort((a, b) => new Date(b.started_at || 0) - new Date(a.started_at || 0));
 }
-
-export function getRecentSessions(limit = 10) {
-  return getAllSessions().slice(0, limit);
-}
-
+export function getRecentSessions(limit = 10) { return getAllSessions().slice(0, limit); }
 export function getBestSessionsByMovement(movementId, limit = 5) {
-  return getSessionsByMovement(movementId)
-    .sort((a, b) => (b.average_form_score ?? 0) - (a.average_form_score ?? 0))
-    .slice(0, limit);
+  return getSessionsByMovement(movementId).sort((a, b) => (b.average_form_score ?? 0) - (a.average_form_score ?? 0)).slice(0, limit);
 }
-
 export function getFaultTrendData() {
-  return getAllSessions().slice(0, 20).reverse().map(s => ({
-    date: s.started_at ? new Date(s.started_at).toLocaleDateString() : '—',
-    faultCount: s.top_faults?.length ?? 0,
-    topFault: s.top_faults?.[0] ?? null,
-  }));
+  return getAllSessions().slice(0, 20).reverse().map(s => ({ date: s.started_at ? new Date(s.started_at).toLocaleDateString() : '—', faultCount: s.top_faults?.length ?? 0, topFault: s.top_faults?.[0] ?? null }));
 }
-
 export function getScoreTrendData() {
-  return getAllSessions().slice(0, 20).reverse().map((s, i) => ({
-    index: i + 1,
-    score: s.average_form_score ?? 0,
-    movement: s.movement_name ?? s.movement_id ?? '—',
-    date: s.started_at ? new Date(s.started_at).toLocaleDateString() : '—',
-  }));
+  return getAllSessions().slice(0, 20).reverse().map((s, i) => ({ index: i + 1, score: s.average_form_score ?? 0, movement: s.movement_name ?? s.movement_id ?? '—', date: s.started_at ? new Date(s.started_at).toLocaleDateString() : '—' }));
 }
-
 export function getMovementSessionHistory(movementId) {
-  return getSessionsByMovement(movementId).map(s => ({
-    session_id: s.session_id,
-    date: s.started_at,
-    score: s.average_form_score,
-    reps: s.rep_count,
-    duration: s.duration_seconds,
-    status: s.session_status,
-  }));
+  return getSessionsByMovement(movementId).map(s => ({ session_id: s.session_id, date: s.started_at, score: s.average_form_score, reps: s.rep_count, duration: s.duration_seconds, status: s.session_status }));
 }
-
 export function getAggregateStats() {
   const all = getAllSessions().filter(s => s.session_status === 'complete' || s.session_status === 'partial');
   if (!all.length) return null;
@@ -243,50 +166,24 @@ export function getAggregateStats() {
   const bestScore = Math.max(...all.map(s => s.highest_form_score ?? 0));
   const faultMap  = {};
   all.forEach(s => (s.top_faults ?? []).forEach(f => { faultMap[f] = (faultMap[f] ?? 0) + 1; }));
-  const topFaults = Object.entries(faultMap)
-    .sort((a, b) => b[1] - a[1]).slice(0, 5)
-    .map(([fault, count]) => ({ fault, count }));
+  const topFaults = Object.entries(faultMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([fault, count]) => ({ fault, count }));
   return { sessionCount: all.length, totalReps, totalTime, avgScore, bestScore, topFaults };
 }
 
 // ── Cloud sync ────────────────────────────────────────────────────────────────
-
-/**
- * Merge cloud sessions into localStorage. Cloud wins on score data.
- * Returns count of net-new sessions added.
- */
 export async function syncFromCloud(limit = 50) {
-   emit('syncing');
-   try {
-     const cloudRecords = await base44.entities.FormSession.list('-started_at', limit);
-     const local = readAll().map(normalizeSession);
-     const localIds = new Set(local.map(s => s._cloud_id || s.session_id).filter(Boolean));
-
-     let added = 0;
-     cloudRecords.forEach(record => {
-       // Skip deleted sessions from cloud
-       if (record.is_deleted === true) {
-         // If deleted locally but exists in memory, mark as deleted
-         const idx = local.findIndex(s => s._cloud_id === record.id || s.session_id === record.id);
-         if (idx >= 0) {
-           local.splice(idx, 1); // Remove from local if cloud says it's deleted
-         }
-         return;
-       }
-
-       if (!localIds.has(record.id)) {
-         const normalized = normalizeSession(fromCloudRecord(record));
-         local.push(normalized);
-         console.log('[SESSION_HYDRATE_MERGE]', { cloud_id: record.id, source: 'new' });
-         added++;
-       }
-     });
-
-     if (added > 0 || cloudRecords.some(r => r.is_deleted)) writeAll(local);
-     emit('synced');
-     return added;
-   } catch {
-     emit('offline');
-     return 0;
-   }
- }
+  emit('syncing');
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { emit('offline'); return 0; }
+    const { data, error } = await supabase.from('form_sessions').select('*').eq('user_id', user.id).eq('is_deleted', false).order('started_at', { ascending: false }).limit(limit);
+    if (error) throw error;
+    const local = readAll().map(normalize);
+    const localIds = new Set(local.map(s => s._cloud_id || s.session_id).filter(Boolean));
+    let added = 0;
+    (data ?? []).forEach(r => { if (!localIds.has(r.id)) { local.push(normalize(fromCloud(r))); added++; } });
+    if (added > 0) writeAll(local);
+    emit('synced');
+    return added;
+  } catch { emit('offline'); return 0; }
+}

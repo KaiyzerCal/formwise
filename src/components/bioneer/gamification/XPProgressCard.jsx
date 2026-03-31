@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { COLORS, FONT } from '../ui/DesignTokens';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { calculateLevel, getLevelProgress, getXPToNextLevel, MAX_LEVEL } from '@/lib/gamificationEngine';
 import { Zap } from 'lucide-react';
 
@@ -10,96 +10,52 @@ export default function XPProgressCard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadProfile() {
+    async function load() {
       try {
-        const user = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-
-        let profile = await base44.entities.UserProfile.filter({ created_by: user.email });
-        profile = profile?.[0];
-        
-        setProfile(profile || { level: 1, xp_total: 0 });
-      } catch (error) {
-        console.error('Failed to load profile:', error);
-        setProfile({ level: 1, xp_total: 0 });
-      } finally {
-        setLoading(false);
-      }
+        const { data } = await supabase.from('user_profiles').select('xp_total, level').eq('user_id', user.id).single();
+        setProfile(data || { level: 1, xp_total: 0 });
+      } catch { setProfile({ level: 1, xp_total: 0 }); }
+      finally { setLoading(false); }
     }
-
-    loadProfile();
+    load();
   }, []);
 
-  if (loading || !profile) {
-    return (
-      <div className="flex items-center justify-center py-4">
-        <div className="w-4 h-4 rounded-full border-2 animate-spin"
-          style={{ borderColor: COLORS.gold, borderTopColor: 'transparent' }} />
-      </div>
-    );
-  }
+  if (loading || !profile) return (
+    <div className="flex items-center justify-center py-4">
+      <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: COLORS.gold, borderTopColor: 'transparent' }} />
+    </div>
+  );
 
-  const currentXP = profile.xp_total || 0;
-  const currentLevel = profile.level || 1;
-  const progress = getLevelProgress(currentXP, currentLevel);
-  const xpToNext = getXPToNextLevel(currentXP, currentLevel);
-  const isMaxLevel = currentLevel >= MAX_LEVEL;
+  const level    = profile.level || 1;
+  const xp       = profile.xp_total || 0;
+  const progress = getLevelProgress(xp, level);
+  const toNext   = getXPToNextLevel(xp, level);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-lg border p-4 space-y-3"
-      style={{
-        background: COLORS.surface,
-        borderColor: COLORS.border,
-      }}
-    >
-      {/* Header */}
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      className="p-4 rounded-lg border space-y-3"
+      style={{ background: COLORS.surface, borderColor: COLORS.goldBorder }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Zap size={14} style={{ color: COLORS.gold }} />
-          <p className="text-[10px] font-bold tracking-[0.1em] uppercase"
-            style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-            XP Progress
-          </p>
+          <span className="text-[10px] font-bold tracking-[0.15em] uppercase" style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
+            LEVEL {level}
+          </span>
         </div>
-        <p className="text-xs font-bold"
-          style={{ color: COLORS.gold, fontFamily: FONT.mono }}>
-          Level {currentLevel}{currentLevel >= MAX_LEVEL && ' (MAX)'}
+        <span className="text-[9px] tracking-[0.1em]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+          {xp.toLocaleString()} XP
+        </span>
+      </div>
+      <div className="w-full h-1.5 rounded-full" style={{ background: COLORS.border }}>
+        <motion.div className="h-full rounded-full" style={{ background: COLORS.gold, width: `${progress}%` }}
+          initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
+      </div>
+      {level < MAX_LEVEL && (
+        <p className="text-[9px] tracking-[0.08em]" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+          {toNext.toLocaleString()} XP to Level {level + 1}
         </p>
-      </div>
-
-      {/* XP Bar */}
-      <div className="space-y-2">
-        <div className="h-3 rounded-full overflow-hidden" style={{ background: COLORS.border }}>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="h-full rounded-full"
-            style={{ background: `linear-gradient(to right, ${COLORS.gold}, ${COLORS.correct})` }}
-          />
-        </div>
-        <div className="flex items-center justify-between text-[8px]"
-          style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
-          <span>{currentXP.toLocaleString()} XP</span>
-          <span>{progress}%</span>
-          {!isMaxLevel && <span>{xpToNext.toLocaleString()} to next</span>}
-        </div>
-      </div>
-
-      {/* Level Milestone */}
-      {!isMaxLevel && (
-        <div className="px-2 py-1.5 rounded text-[9px] text-center font-bold tracking-[0.08em] uppercase"
-          style={{
-            background: COLORS.goldDim,
-            border: `1px solid ${COLORS.goldBorder}`,
-            color: COLORS.gold,
-            fontFamily: FONT.mono,
-          }}>
-          Level {currentLevel + 1} coming soon
-        </div>
       )}
     </motion.div>
   );
