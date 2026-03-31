@@ -1,28 +1,20 @@
-import { base44 } from '@/api/base44Client';
+import { deleteSession } from './unifiedSessionStore';
 import { deleteSessionVideoBlob } from './liveVideoStorage';
 import { deleteFreestyleSession } from '../history/sessionStorage';
 
-async function softDeleteInCloud(sessionId) {
-  try {
-    await base44.entities.FormSession.update(sessionId, {
-      is_deleted: true,
-      deleted_at: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[SessionDeletion] soft-delete failed:', sessionId, error);
-    throw error;
-  }
-}
-
-async function hardDeleteLocal(sessionId) {
-  try { await deleteSessionVideoBlob(sessionId); } catch {}
-  try { await deleteFreestyleSession(sessionId); } catch {}
-}
-
+/**
+ * Delete a session permanently — removes from cloud (soft-delete),
+ * local cache, IndexedDB video, and freestyle storage.
+ */
 export async function deleteSessionPermanently(sessionId) {
   if (!sessionId) throw new Error('sessionId is required');
-  await softDeleteInCloud(sessionId);
-  await hardDeleteLocal(sessionId);
+  
+  // Delete from cloud + cache via unified store
+  await deleteSession(sessionId);
+  
+  // Clean up local video/freestyle data
+  try { await deleteSessionVideoBlob(sessionId); } catch {}
+  try { await deleteFreestyleSession(sessionId); } catch {}
 }
 
 export async function deleteSessionsPermanently(sessionIds) {

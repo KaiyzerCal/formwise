@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
-import { getAllSessions, syncFromCloud, clearAllSessions } from "../components/bioneer/data/unifiedSessionStore";
+import { getAllSessions, syncFromCloud, clearAllSessions, deleteSession } from "../components/bioneer/data/unifiedSessionStore";
 import toast from "react-hot-toast";
 import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl, clearAllFreestyleSessions } from "../components/bioneer/history/sessionStorage";
 import { deleteSessionPermanently, deleteSessionsPermanently } from "../components/bioneer/data/sessionDeletionService";
@@ -67,26 +67,15 @@ export default function SessionHistory() {
       .catch(err => console.error('Failed to load freestyle sessions:', err));
   }, []);
 
-  // Cloud sync on mount
+  // Refresh from cloud on mount (initSessionStore already ran on auth)
   useEffect(() => {
     setCloudSyncing(true);
-    syncFromCloud(50).then(added => {
+    syncFromCloud(200).then(count => {
       setCloudSyncing(false);
-      if (added > 0) {
+      if (count > 0) {
         setLocalSessions(getAllSessions());
-        toast(`${added} session${added === 1 ? '' : 's'} synced from cloud`, {
-          style: {
-            background: '#1a1a1a',
-            color: '#C9A84C',
-            border: '1px solid rgba(201,168,76,0.3)',
-            fontFamily: "'DM Mono', monospace",
-            fontSize: '11px',
-            letterSpacing: '0.05em',
-          },
-          duration: 3000,
-        });
       }
-    });
+    }).catch(() => setCloudSyncing(false));
   }, []);
 
   // Hydrate videoSrc for live sessions from IndexedDB
@@ -185,7 +174,10 @@ export default function SessionHistory() {
   const handleDeleteExerciseSession = async (sessionId) => {
     setDeleting(sessionId);
     try {
-      await deleteSessionPermanently(sessionId);
+      // Find the cloud ID for this session
+      const session = localSessions.find(s => s.session_id === sessionId || s._cloud_id === sessionId);
+      const deleteId = session?._cloud_id || session?.session_id || sessionId;
+      await deleteSessionPermanently(deleteId);
       setLocalSessions(getAllSessions());
       toast('Session deleted permanently', {
         style: {
@@ -219,11 +211,12 @@ export default function SessionHistory() {
   const handleDeleteAllHistory = async () => {
     setDeleting('all');
     try {
-      const allSessions = getAllSessions();
-      const sessionIds = allSessions.map(s => s.id || s.session_id);
+      const allSessionsList = getAllSessions();
+      const sessionIds = allSessionsList.map(s => s._cloud_id || s.session_id);
       
       await deleteSessionsPermanently(sessionIds);
       await clearAllFreestyleSessions();
+      clearAllSessions();
       
       setLocalSessions([]);
       setFreestyleSessions([]);

@@ -4,7 +4,7 @@
   "properties": {
     "exercise_id": {
       "type": "string",
-      "description": "Exercise identifier (e.g. squat, golf_swing)"
+      "description": "Exercise identifier (e.g. squat, golf_swing, freestyle)"
     },
     "category": {
       "type": "string",
@@ -13,7 +13,9 @@
         "sports",
         "athletic",
         "rotational",
-        "locomotion"
+        "locomotion",
+        "freestyle",
+        "general"
       ],
       "default": "strength",
       "description": "Movement category"
@@ -151,7 +153,7 @@
     "is_deleted": {
       "type": "boolean",
       "default": false,
-      "description": "Soft delete flag - true means session is marked for deletion"
+      "description": "Soft delete flag"
     },
     "deleted_at": {
       "type": "string",
@@ -165,16 +167,13 @@
         "type": "object",
         "properties": {
           "timestamp": {
-            "type": "number",
-            "description": "Seconds into the session when this cue plays"
+            "type": "number"
           },
           "duration": {
-            "type": "number",
-            "description": "How long to display the coaching message (seconds)"
+            "type": "number"
           },
           "message": {
-            "type": "string",
-            "description": "Human-friendly coaching message (e.g., 'Drive your hips back')"
+            "type": "string"
           },
           "priority": {
             "type": "string",
@@ -182,15 +181,13 @@
               "high",
               "medium",
               "low"
-            ],
-            "description": "Priority level \u2014 high cues override lower ones"
+            ]
           },
           "body_parts": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "description": "Which body parts to highlight in overlay (e.g., 'knee', 'hip')"
+            }
           },
           "cue_type": {
             "type": "string",
@@ -198,8 +195,7 @@
               "correction",
               "reinforcement",
               "positioning"
-            ],
-            "description": "Type of coaching cue"
+            ]
           }
         }
       }
@@ -211,13 +207,11 @@
         "moderate",
         "detailed"
       ],
-      "default": "moderate",
-      "description": "How much coaching to deliver during playback"
+      "default": "moderate"
     },
     "coaching_enabled": {
       "type": "boolean",
-      "default": true,
-      "description": "Whether voice coaching is enabled for this session"
+      "default": true
     }
   },
   "required": [

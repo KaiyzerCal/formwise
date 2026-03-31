@@ -79,22 +79,17 @@ export default function FreestyleSession() {
         cameraFacing: recordedSession.cameraFacing || 'environment',
       });
 
-      // Step 2: Sync to cloud (required for cross-device persistence)
-      // Build minimal FormSession payload for cloud
-      const cloudPayload = {
+      // Step 2: Save to cloud via unified store (required for cross-device persistence)
+      await saveToCloud({
         session_id: recordedSession.sessionId,
         exercise_id: 'freestyle',
         category: recordedSession.category || 'strength',
         duration_seconds: recordedSession.duration || 0,
-        form_score_overall: 0,
-        movement_score: 0,
-        form_score_peak: 0,
-        form_score_lowest: 0,
-        reps_detected: 0,
-        rep_count: 0,
         average_form_score: 0,
         highest_form_score: 0,
         lowest_form_score: 0,
+        movement_score: 0,
+        rep_count: 0,
         mastery_avg: 0,
         alerts: [],
         phases: {},
@@ -106,16 +101,8 @@ export default function FreestyleSession() {
         session_status: 'complete',
         started_at: recordedSession.started_at || new Date().toISOString(),
         movement_id: 'freestyle',
-        movement_name: 'Freestyle',
-      };
-
-      // Push to cloud (don't block on failure)
-      try {
-        await saveToCloud(cloudPayload);
-      } catch (cloudErr) {
-        console.warn('[FREESTYLE_CLOUD_SYNC_FAILED]', cloudErr.message);
-        // Silently continue — IndexedDB save succeeded
-      }
+        movement_name: 'Freestyle Capture',
+      }).catch(err => console.warn('[FREESTYLE_CLOUD_SYNC_FAILED]', err.message));
 
       // Reset to library after successful save
       setRecordedSession(null);

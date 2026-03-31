@@ -18,7 +18,7 @@ import { useSessionLearning } from "../components/bioneer/learning/useSessionLea
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { recordSession } from "@/lib/retentionEngine";
 import SessionRewardScreen from "@/components/SessionRewardScreen";
-import { updateFaultHistory, checkForImprovements, getAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
+import { updateFaultHistory, checkForImprovements } from "@/lib/adaptiveFeedbackEngine";
 import { awardSessionPoints } from "@/lib/gamificationEngine";
 
 export default function LiveSession() {
@@ -87,14 +87,14 @@ export default function LiveSession() {
         video_src: persistedVideo?.videoSrc ?? null,
       };
 
-      // Run learning pipeline (non-blocking)
+      // Run learning pipeline (non-blocking), then save to cloud + cache
       processSessionLearning({
         ...sessionWithVideo,
         reps: rawDataRef.current?.reps ?? [],
-      }).then(enriched => {
-        saveSession({ ...sessionWithVideo, learning: enriched?.learning ?? null });
-      }).catch(() => {
-        saveSession(sessionWithVideo);
+      }).then(async (enriched) => {
+        await saveSession({ ...sessionWithVideo, learning: enriched?.learning ?? null });
+      }).catch(async () => {
+        await saveSession(sessionWithVideo);
       });
 
       // Fire-and-forget: check achievements + award points
@@ -120,7 +120,7 @@ export default function LiveSession() {
     } catch (err) {
       console.error('[LiveSession] handleSave error:', err);
       // Still save metadata even if video persistence fails
-      saveSession(savedSession);
+      saveSession(savedSession).catch(() => {});
       setShowReward(true); // Show reward even on error
     } finally {
       setSaving(false);

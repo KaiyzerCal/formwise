@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { initSessionStore } from '@/components/bioneer/data/unifiedSessionStore';
 
 const AuthContext = createContext();
 
@@ -19,6 +20,8 @@ export const AuthProvider = ({ children }) => {
           setUser(me);
           setIsAuthenticated(true);
           setAuthError(null);
+          // Initialize session store from cloud DB
+          initSessionStore().catch(err => console.warn('[Auth] Session store init failed:', err.message));
         } catch (err) {
           if (err?.message?.includes('not registered')) {
             setAuthError({ type: 'user_not_registered', message: err.message });
