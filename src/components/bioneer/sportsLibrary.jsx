@@ -902,5 +902,5 @@ export const SPORTS_MOVEMENTS = [
 ];
 
 export function getSportsMovementById(id) {
-  return SPORTS_MOVEMENTS.find((m) => m.id === id);
+  return SPORTS_MOVEMENTS.find((m) => m?.id === id);
 }
