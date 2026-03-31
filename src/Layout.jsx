@@ -37,8 +37,8 @@ export default function Layout({ children, currentPageName }) {
       <link href={FONT_LINK} rel="stylesheet" />
       <style>{`
         * { box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; background: ${COLORS.bg}; }
-        /* Allow body to scroll — pages control their own overflow */
+        html { height: 100%; }
+        body { min-height: 100%; margin: 0; background: ${COLORS.bg}; }
         body { overflow-x: hidden; overflow-y: auto; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -94,7 +94,7 @@ export default function Layout({ children, currentPageName }) {
 
         {/* ── Main content area ────────────────────────────────────────────── */}
         {/* On mobile: leave room for bottom tab bar (56px) */}
-        <main className="flex-1 min-h-screen md:pb-0 pb-[72px]" style={{ background: COLORS.bg }}>
+        <main className="flex-1 min-h-screen md:pb-0 pb-[72px] overflow-y-auto" style={{ background: COLORS.bg }}>
           {children}
         </main>
 
