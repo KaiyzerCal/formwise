@@ -94,14 +94,35 @@ export default function SessionHistory() {
     const raw = getAllSessions();
     raw.forEach(async (s) => {
       const key = s.video_storage_key || s.session_id;
-      if (!key) return;
-      try {
-        const url = await getSessionVideoUrl(key);
-        if (url) {
-          setLiveVideoUrls(prev => ({ ...prev, [s.session_id]: url }));
-        }
-      } catch {
-        // no video stored — silently skip
+      let url = null;
+
+      // Try liveVideoStorage first
+      if (key) {
+        try { url = await getSessionVideoUrl(key); } catch {}
+      }
+
+      // Fallback: check freestyle/formcheck IndexedDB by timestamp proximity
+      if (!url) {
+        try {
+          const all = await getAllFreestyleSessions();
+          const cloudDate = new Date(s.started_at).getTime();
+          const match = all
+            .filter(fs => fs.mode === 'formcheck' && fs.videoBlob instanceof Blob)
+            .sort((a, b) => {
+              const da = Math.abs(new Date(a.createdAt).getTime() - cloudDate);
+              const db = Math.abs(new Date(b.createdAt).getTime() - cloudDate);
+              return da - db;
+            })[0];
+          if (match && Math.abs(new Date(match.createdAt).getTime() - cloudDate) < 120000) {
+            const blobUrl = URL.createObjectURL(match.videoBlob);
+            setLiveVideoUrls(prev => ({ ...prev, [s.session_id]: blobUrl }));
+            return;
+          }
+        } catch {}
+      }
+
+      if (url) {
+        setLiveVideoUrls(prev => ({ ...prev, [s.session_id]: url }));
       }
     });
   }, []);

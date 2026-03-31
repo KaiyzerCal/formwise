@@ -666,6 +666,205 @@ const FAULT_MODULES = {
     },
   ],
 
+  // ─── BENCH PRESS ──────────────────────────────────────────────────────────
+  bench_press: [
+    {
+      id: 'elbow_flare', label: 'Elbows flaring', cue: 'Tuck elbows 45 degrees',
+      severity: 'HIGH', isRisk: true,
+      phases: ['lowering', 'bottom', 'press'],
+      check(j, angles) {
+        if (!j.l_elbow || !j.l_shoulder) return false;
+        return Math.abs(j.l_elbow.x - j.l_shoulder.x) > 0.18;
+      },
+    },
+    {
+      id: 'bar_path', label: 'Uneven bar path', cue: 'Drive evenly — both sides',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['press', 'lowering'],
+      check(j, angles) {
+        if (!j.l_wrist || !j.r_wrist) return false;
+        return Math.abs(j.l_wrist.y - j.r_wrist.y) > 0.07;
+      },
+    },
+    {
+      id: 'shallow_press', label: 'Insufficient depth', cue: 'Touch chest — full range',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['bottom'],
+      check(j, angles) {
+        return angles.elbowL != null && angles.elbowL > 100;
+      },
+    },
+    {
+      id: 'wrist_break', label: 'Wrists breaking back', cue: 'Stack wrists — neutral',
+      severity: 'MODERATE', isRisk: true,
+      phases: ['press', 'lowering', 'bottom'],
+      check(j, angles) {
+        if (!j.l_wrist || !j.l_elbow) return false;
+        return j.l_wrist.y < j.l_elbow.y - 0.06;
+      },
+    },
+  ],
+
+  // ─── PULL-UP ──────────────────────────────────────────────────────────────
+  pull_up: [
+    {
+      id: 'kipping', label: 'Excessive kipping', cue: 'Dead hang — control it',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['pull', 'ascent'],
+      check(j, angles) {
+        if (!j.pelvis || !j.chest) return false;
+        return Math.abs(j.pelvis.x - j.chest.x) > 0.12;
+      },
+    },
+    {
+      id: 'chin_below_bar', label: 'Not reaching top', cue: 'Pull chin over the bar',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['top'],
+      check(j, angles) {
+        if (!j.l_ear || !j.l_wrist) return false;
+        return j.l_ear.y > j.l_wrist.y + 0.04;
+      },
+    },
+    {
+      id: 'elbow_width', label: 'Elbows too wide', cue: 'Drive elbows down — not out',
+      severity: 'LOW', isRisk: false,
+      phases: ['pull', 'top'],
+      check(j, angles) {
+        if (!j.l_elbow || !j.r_elbow || !j.l_shoulder || !j.r_shoulder) return false;
+        const shoulderWidth = Math.abs(j.l_shoulder.x - j.r_shoulder.x);
+        const elbowWidth = Math.abs(j.l_elbow.x - j.r_elbow.x);
+        return elbowWidth > shoulderWidth * 1.6;
+      },
+    },
+  ],
+
+  // ─── REVERSE LUNGE ────────────────────────────────────────────────────────
+  reverse_lunge: [
+    {
+      id: 'knee_cave', label: 'Front knee caving in', cue: 'Push knee out',
+      severity: 'HIGH', isRisk: true,
+      phases: ['descent', 'bottom'],
+      check(j, angles) {
+        if (!j.l_knee || !j.l_hip || !j.l_ankle) return false;
+        const midX = (j.l_hip.x + j.l_ankle.x) / 2;
+        return j.l_knee.x < midX - 0.06;
+      },
+    },
+    {
+      id: 'trunk_lean', label: 'Excessive forward lean', cue: 'Chest up — stay tall',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['descent', 'bottom'],
+      check(j, angles) {
+        if (!j.chest || !j.pelvis) return false;
+        return Math.abs(j.chest.x - j.pelvis.x) > 0.11;
+      },
+    },
+    {
+      id: 'back_knee_height', label: 'Back knee not lowering', cue: 'Lower back knee toward floor',
+      severity: 'LOW', isRisk: false,
+      phases: ['bottom'],
+      check(j, angles) {
+        return angles.kneeR != null && angles.kneeR < 130;
+      },
+    },
+  ],
+
+  // ─── BULGARIAN SPLIT SQUAT ────────────────────────────────────────────────
+  bulgarian_split_squat: [
+    {
+      id: 'knee_cave', label: 'Front knee caving', cue: 'Drive knee out over toes',
+      severity: 'HIGH', isRisk: true,
+      phases: ['descent', 'bottom'],
+      check(j, angles) {
+        if (!j.l_knee || !j.l_hip || !j.l_ankle) return false;
+        const midX = (j.l_hip.x + j.l_ankle.x) / 2;
+        return j.l_knee.x < midX - 0.07;
+      },
+    },
+    {
+      id: 'forward_lean', label: 'Excessive forward lean', cue: 'Torso upright — chin up',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['descent', 'bottom'],
+      check(j, angles) {
+        if (!j.chest || !j.pelvis) return false;
+        return Math.abs(j.chest.x - j.pelvis.x) > 0.13;
+      },
+    },
+    {
+      id: 'depth', label: 'Insufficient depth', cue: 'Lower until thigh is parallel',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['bottom'],
+      check(j, angles) {
+        return angles.kneeL != null && angles.kneeL > 110;
+      },
+    },
+  ],
+
+  // ─── PLANK ────────────────────────────────────────────────────────────────
+  plank: [
+    {
+      id: 'hip_sag', label: 'Hips sagging', cue: 'Squeeze glutes — lift hips',
+      severity: 'HIGH', isRisk: true,
+      phases: ['hold'],
+      check(j, angles) {
+        if (!j.chest || !j.pelvis || !j.l_ankle) return false;
+        const bodyLineY = (j.chest.y + j.l_ankle.y) / 2;
+        return j.pelvis.y > bodyLineY + 0.07;
+      },
+    },
+    {
+      id: 'hip_pike', label: 'Hips too high', cue: 'Lower hips — keep body flat',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['hold'],
+      check(j, angles) {
+        if (!j.chest || !j.pelvis || !j.l_ankle) return false;
+        const bodyLineY = (j.chest.y + j.l_ankle.y) / 2;
+        return j.pelvis.y < bodyLineY - 0.07;
+      },
+    },
+    {
+      id: 'head_drop', label: 'Head dropping', cue: 'Neutral spine — eyes down',
+      severity: 'LOW', isRisk: false,
+      phases: ['hold'],
+      check(j, angles) {
+        if (!j.l_ear || !j.chest) return false;
+        return j.l_ear.y > j.chest.y + 0.08;
+      },
+    },
+  ],
+
+  // ─── WALKING LUNGE ────────────────────────────────────────────────────────
+  walking_lunge: [
+    {
+      id: 'knee_over_toe', label: 'Knee over toe', cue: 'Keep shin vertical',
+      severity: 'MODERATE', isRisk: true,
+      phases: ['bottom'],
+      check(j, angles) {
+        if (!j.l_knee || !j.l_ankle) return false;
+        return j.l_knee.x < j.l_ankle.x - 0.05;
+      },
+    },
+    {
+      id: 'knee_cave', label: 'Knee caving in', cue: 'Push knee out over toes',
+      severity: 'HIGH', isRisk: true,
+      phases: ['descent', 'bottom'],
+      check(j, angles) {
+        if (!j.l_knee || !j.l_hip || !j.l_ankle) return false;
+        const midX = (j.l_hip.x + j.l_ankle.x) / 2;
+        return j.l_knee.x < midX - 0.06;
+      },
+    },
+    {
+      id: 'short_stride', label: 'Stride too short', cue: 'Step further forward',
+      severity: 'LOW', isRisk: false,
+      phases: ['step'],
+      check(j, angles) {
+        if (!j.l_ankle || !j.r_ankle) return false;
+        return Math.abs(j.l_ankle.x - j.r_ankle.x) < 0.15;
+      },
+    },
+  ],
+
   // ─── LATERAL SHUFFLE ──────────────────────────────────────────────────────
   lateral_shuffle: [
     {
@@ -701,6 +900,11 @@ FAULT_MODULES['dumbbell_row'] = FAULT_MODULES['barbell_row'];
 FAULT_MODULES['cable_row'] = FAULT_MODULES['barbell_row'];
 FAULT_MODULES['decline_bench_press'] = FAULT_MODULES['incline_bench_press'];
 FAULT_MODULES['chin_up'] = FAULT_MODULES['pull_up'];
+FAULT_MODULES['pullup'] = FAULT_MODULES['pull_up'];
+FAULT_MODULES['chinup'] = FAULT_MODULES['pull_up'];
+FAULT_MODULES['pushup'] = FAULT_MODULES['push_up'];
+FAULT_MODULES['incline_pushup'] = FAULT_MODULES['push_up'];
+FAULT_MODULES['decline_pushup'] = FAULT_MODULES['push_up'];
 FAULT_MODULES['romanian_deadlift'] = FAULT_MODULES['deadlift'];
 FAULT_MODULES['sumo_deadlift'] = FAULT_MODULES['deadlift'];
 FAULT_MODULES['goblet_squat'] = FAULT_MODULES['back_squat'];

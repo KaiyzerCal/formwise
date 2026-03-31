@@ -79,6 +79,7 @@ export default function FormCheck() {
     const exercise = selectedExercise || exercise_def || {};
     const enrichedData = {
       ...saveable,
+      session_id: pendingRecording?.sessionId || `formcheck-${Date.now()}`,
       // Map exercise ID to normalized movement name
       movement_id: saveable.exercise_id || exercise.id,
       movement_name: exercise.displayName || exercise.name || saveable.exercise_id,
@@ -200,7 +201,27 @@ export default function FormCheck() {
 
   const handleSelectHistorySession = async (session, action) => {
     try {
-      const local = await loadFreestyleSession(session.session_id || session.id);
+      // Try direct lookup by session_id stored on the cloud record
+      const key = session.session_id || session.id;
+      let local = null;
+      try {
+        local = await loadFreestyleSession(key);
+      } catch {}
+
+      // Fallback: scan all IndexedDB sessions for a matching formcheck record
+      if (!local?.videoBlob) {
+        const { getAllFreestyleSessions } = await import('../components/bioneer/history/sessionStorage');
+        const all = await getAllFreestyleSessions();
+        const cloudDate = new Date(session.started_at || session.created_date).getTime();
+        local = all
+          .filter(s => s.mode === 'formcheck')
+          .sort((a, b) => {
+            const da = Math.abs(new Date(a.createdAt).getTime() - cloudDate);
+            const db = Math.abs(new Date(b.createdAt).getTime() - cloudDate);
+            return da - db;
+          })[0] || null;
+      }
+
       if (local?.videoBlob instanceof Blob) {
         setReplaySession({ ...session, ...local });
       } else {

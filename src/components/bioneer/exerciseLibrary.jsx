@@ -88,7 +88,6 @@ export const EXERCISES = [
   },
   {
     id: "bench_press",
-    comingSoon: true,
     name: "Bench Press",
     icon: "🔥",
     muscleGroup: "Chest / Triceps",
@@ -148,7 +147,6 @@ export const EXERCISES = [
   },
   {
     id: "pushup",
-    comingSoon: true,
     name: "Push-up",
     icon: "🫸",
     muscleGroup: "Chest / Core",
@@ -179,7 +177,6 @@ export const EXERCISES = [
   },
   {
     id: "pullup",
-    comingSoon: true,
     name: "Pull-up",
     icon: "🧗",
     muscleGroup: "Back / Biceps",
@@ -357,7 +354,6 @@ export const EXERCISES = [
   // ── INCLINE PUSH-UP ────────────────────────────────────────────────────────
   {
     id: "incline_pushup",
-    comingSoon: true,
     name: "Incline Push-up",
     icon: "📐",
     category: "strength",
@@ -391,7 +387,6 @@ export const EXERCISES = [
   // ── CHIN-UP ────────────────────────────────────────────────────────────────
   {
     id: "chinup",
-    comingSoon: true,
     name: "Chin-up",
     icon: "🧗",
     category: "strength",
@@ -458,7 +453,6 @@ export const EXERCISES = [
   // ── REVERSE LUNGE ──────────────────────────────────────────────────────────
   {
     id: "reverse_lunge",
-    comingSoon: true,
     name: "Reverse Lunge",
     icon: "↩️",
     category: "strength",
@@ -491,7 +485,6 @@ export const EXERCISES = [
   // ── BULGARIAN SPLIT SQUAT ──────────────────────────────────────────────────
   {
     id: "bulgarian_split_squat",
-    comingSoon: true,
     name: "Bulgarian Split Squat",
     icon: "🦵",
     category: "strength",
@@ -600,7 +593,6 @@ export const EXERCISES = [
   // ── PLANK ──────────────────────────────────────────────────────────────────
   {
     id: "plank",
-    comingSoon: true,
     name: "Plank",
     icon: "📏",
     category: "strength",
@@ -743,7 +735,6 @@ export const EXERCISES = [
   // ── DECLINE PUSH-UP ────────────────────────────────────────────────────────
   {
     id: "decline_pushup",
-    comingSoon: true,
     name: "Decline Push-up",
     icon: "📉",
     category: "strength",
@@ -777,7 +768,6 @@ export const EXERCISES = [
   // ── WALKING LUNGE ──────────────────────────────────────────────────────────
   {
     id: "walking_lunge",
-    comingSoon: true,
     name: "Walking Lunge",
     icon: "🚶",
     category: "strength",
