@@ -18,6 +18,15 @@ const NAV_ITEMS = [
   { name: 'Progress',            labelKey: 'PROGRESS',    icon: TrendingUp,ariaLabel: 'Progress' },
 ];
 
+// Mobile bottom tab bar items — exactly 5 tabs
+const MOBILE_TABS = [
+  { name: 'LiveSession',    labelKey: 'LIVE',      icon: Camera,    ariaLabel: 'Live Session' },
+  { name: 'Analytics',      labelKey: 'ANALYTICS', icon: BarChart3, ariaLabel: 'Analytics' },
+  { name: 'SessionHistory', labelKey: 'HISTORY',   icon: Clock,     ariaLabel: 'History' },
+  { name: 'WorkoutPlans',   labelKey: 'PLANS',     icon: Zap,       ariaLabel: 'Workout Plans' },
+  { name: 'Settings',       labelKey: 'SETTINGS',  icon: Settings,  ariaLabel: 'Settings', path: '/Settings' },
+];
+
 // Secondary items — sidebar only on desktop, accessible via Settings on mobile
 const SIDEBAR_EXTRA = [
   { name: 'TechniqueCompare',    labelKey: 'TECHNIQUE',   icon: GitCompare, ariaLabel: 'Technique Compare' },
@@ -104,13 +113,14 @@ export default function Layout({ children, currentPageName }) {
           style={{ background: COLORS.surface, borderColor: COLORS.border, height: 56, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           aria-label="Main navigation">
 
-          {NAV_ITEMS.map(item => {
+          {MOBILE_TABS.map(item => {
             const active = currentPageName === item.name;
             const Icon   = item.icon;
+            const to     = item.path || createPageUrl(item.name);
             return (
-              <Link key={item.name} to={createPageUrl(item.name)}
+              <Link key={item.name} to={to}
                 aria-label={item.ariaLabel} aria-current={active ? 'page' : undefined}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-all"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-all relative"
                 style={{ color: active ? COLORS.gold : COLORS.textTertiary }}>
                 <Icon size={18} strokeWidth={active ? 2 : 1.5} aria-hidden="true" />
                 <span className="text-[8px] font-semibold tracking-[0.08em] uppercase leading-none">
@@ -122,18 +132,6 @@ export default function Layout({ children, currentPageName }) {
               </Link>
             );
           })}
-
-          {/* Settings as 6th tab */}
-          <Link to="/Settings" aria-label="Settings"
-            aria-current={currentPageName === 'Settings' ? 'page' : undefined}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-all"
-            style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textTertiary }}>
-            <Settings size={18} strokeWidth={currentPageName === 'Settings' ? 2 : 1.5} aria-hidden="true" />
-            <span className="text-[8px] font-semibold tracking-[0.08em] uppercase leading-none">SETTINGS</span>
-            {currentPageName === 'Settings' && (
-              <span className="absolute bottom-0 w-6 h-0.5 rounded-full" style={{ background: COLORS.gold }} />
-            )}
-          </Link>
         </nav>
       </div>
     </>
