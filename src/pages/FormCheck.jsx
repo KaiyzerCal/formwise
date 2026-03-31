@@ -104,7 +104,7 @@ export default function FormCheck() {
       tracking_confidence: 75,
       // Session metadata
       session_status: 'complete',
-      started_at: new Date().toISOString(),
+      started_at: sessionData.started_at || new Date().toISOString(),
     };
 
     try {

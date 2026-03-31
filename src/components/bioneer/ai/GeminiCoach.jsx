@@ -22,11 +22,8 @@ export function getServerKeyStatus() {
 }
 
 function getUserApiKey() {
-  return (
-    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) ||
-    localStorage.getItem('formwise_gemini_key') ||
-    null
-  );
+  // Only reads a key explicitly entered by the user in Settings — never an app-level key
+  return localStorage.getItem('formwise_gemini_key') || null;
 }
 
 function getCoachSettings() {
@@ -117,9 +114,8 @@ export async function getLiveCue(movementData) {
   const cached = _cache.get(cacheKey);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.value;
 
-  // Try server proxy first; fall back to user key
+  // Try server proxy only — no client-side key fallback for live cues
   let parsed = await fetchViaProxy(movementData, movementData?.exercise);
-  if (!parsed) parsed = await fetchViaClientKey(movementData, movementData?.exercise);
   if (!parsed) return null;
 
   if (!parsed.cue || typeof parsed.confidence !== 'number') return null;

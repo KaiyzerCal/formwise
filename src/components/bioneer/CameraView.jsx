@@ -349,6 +349,7 @@ export default function CameraView({ exercise, onStop }) {
       exercise_id:        exercise.id,
       category:           exercise.category || 'strength',
       duration_seconds:   Math.round(elapsed),
+      started_at:         new Date(startTimeRef.current).toISOString(),
       form_score_overall: avgMasteryScore,
       form_score_peak:    peakMasteryScore,
       form_score_lowest:  lowestMasteryScore,

@@ -104,7 +104,7 @@ export default function FreestyleSession() {
         body_side_bias: 'balanced',
         tracking_confidence: 0,
         session_status: 'complete',
-        started_at: new Date().toISOString(),
+        started_at: recordedSession.started_at || new Date().toISOString(),
         movement_id: 'freestyle',
         movement_name: 'Freestyle',
       };

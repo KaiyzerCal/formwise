@@ -202,6 +202,7 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
           poseFrames: finalized.poseFrames,
           angleFrames: finalized.angleFrames,
           duration: finalized.duration,
+          started_at: new Date(startTimeRef.current).toISOString(),
         });
 
         setWorkflowState('idle');

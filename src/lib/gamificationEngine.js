@@ -3,6 +3,7 @@
  */
 import { base44 } from '@/api/base44Client';
 import toast from 'react-hot-toast';
+import { getAllSessions as _getAllSessions } from '@/components/bioneer/data/unifiedSessionStore';
 
 // Points awarded for various actions
 export const POINT_VALUES = {
@@ -152,13 +153,14 @@ function checkPersonalBest(session) {
 /**
  * Fetch leaderboard data — top users by XP/level
  */
-export async function getLeaderboard(limit = 100) {
+export async function getLeaderboard(limit = 100, currentUserEmail = null) {
   try {
     const profiles = await base44.entities.UserProfile.list('-xp_total', limit);
     if (!profiles) return [];
     return profiles.map((p, idx) => ({
       rank: idx + 1,
-      email: p.created_by,
+      displayName: p.display_name || (p.created_by ? p.created_by.split('@')[0] : `Athlete ${idx + 1}`),
+      isCurrentUser: currentUserEmail ? p.created_by === currentUserEmail : false,
       level: p.level || 1,
       xp: p.xp_total || 0,
       sessions: p.total_sessions || 0,
@@ -174,8 +176,8 @@ export async function getLeaderboard(limit = 100) {
  */
 export async function getUserRank(userEmail) {
   try {
-    const leaderboard = await getLeaderboard(500);
-    const rank = leaderboard.findIndex(u => u.email === userEmail);
+    const leaderboard = await getLeaderboard(500, userEmail);
+    const rank = leaderboard.findIndex(u => u.isCurrentUser);
     return rank >= 0 ? rank + 1 : null;
   } catch {
     return null;
@@ -185,8 +187,7 @@ export async function getUserRank(userEmail) {
 // Helper to get all sessions (imported from store)
 function getAllSessions() {
   try {
-    const { getAllSessions } = require('@/components/bioneer/data/unifiedSessionStore');
-    return getAllSessions();
+    return _getAllSessions() ?? [];
   } catch {
     return [];
   }

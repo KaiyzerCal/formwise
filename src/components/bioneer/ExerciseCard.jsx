@@ -13,6 +13,7 @@ export default function ExerciseCard({ exercise, selected, onClick }) {
   };
 
   const handleClick = () => {
+    if (exercise.comingSoon) return;
     if (exercise.isFreestyle) {
       window.location.href = createPageUrl('FreestyleSession');
     } else {
@@ -23,14 +24,23 @@ export default function ExerciseCard({ exercise, selected, onClick }) {
   return (
     <button
       onClick={handleClick}
+      disabled={exercise.comingSoon}
       className={cn(
         "relative rounded-xl p-5 text-left transition-all duration-300",
         "bg-white/[0.04] backdrop-blur-md border",
-        selected
+        exercise.comingSoon
+          ? "opacity-50 cursor-not-allowed border-white/5"
+          : selected
           ? "border-[#C9A84C] shadow-[0_0_20px_rgba(201,168,76,0.15)]"
           : "border-white/10 hover:border-white/20 hover:bg-white/[0.06]"
       )}
     >
+      {exercise.comingSoon && (
+        <div className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded text-[7px] font-bold tracking-widest uppercase"
+          style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)', fontFamily: "'DM Mono', monospace" }}>
+          Soon
+        </div>
+      )}
       {selected && (
         <div className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse" />
       )}

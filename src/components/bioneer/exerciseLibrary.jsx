@@ -88,6 +88,7 @@ export const EXERCISES = [
   },
   {
     id: "bench_press",
+    comingSoon: true,
     name: "Bench Press",
     icon: "🔥",
     muscleGroup: "Chest / Triceps",
@@ -147,6 +148,7 @@ export const EXERCISES = [
   },
   {
     id: "pushup",
+    comingSoon: true,
     name: "Push-up",
     icon: "🫸",
     muscleGroup: "Chest / Core",
@@ -177,6 +179,7 @@ export const EXERCISES = [
   },
   {
     id: "pullup",
+    comingSoon: true,
     name: "Pull-up",
     icon: "🧗",
     muscleGroup: "Back / Biceps",
@@ -354,6 +357,7 @@ export const EXERCISES = [
   // ── INCLINE PUSH-UP ────────────────────────────────────────────────────────
   {
     id: "incline_pushup",
+    comingSoon: true,
     name: "Incline Push-up",
     icon: "📐",
     category: "strength",
@@ -387,6 +391,7 @@ export const EXERCISES = [
   // ── CHIN-UP ────────────────────────────────────────────────────────────────
   {
     id: "chinup",
+    comingSoon: true,
     name: "Chin-up",
     icon: "🧗",
     category: "strength",
@@ -410,6 +415,7 @@ export const EXERCISES = [
   // ── BENT ROW ───────────────────────────────────────────────────────────────
   {
     id: "bent_row",
+    comingSoon: true,
     name: "Bent Row",
     icon: "🚣",
     category: "strength",
@@ -452,6 +458,7 @@ export const EXERCISES = [
   // ── REVERSE LUNGE ──────────────────────────────────────────────────────────
   {
     id: "reverse_lunge",
+    comingSoon: true,
     name: "Reverse Lunge",
     icon: "↩️",
     category: "strength",
@@ -484,6 +491,7 @@ export const EXERCISES = [
   // ── BULGARIAN SPLIT SQUAT ──────────────────────────────────────────────────
   {
     id: "bulgarian_split_squat",
+    comingSoon: true,
     name: "Bulgarian Split Squat",
     icon: "🦵",
     category: "strength",
@@ -592,6 +600,7 @@ export const EXERCISES = [
   // ── PLANK ──────────────────────────────────────────────────────────────────
   {
     id: "plank",
+    comingSoon: true,
     name: "Plank",
     icon: "📏",
     category: "strength",
@@ -625,6 +634,7 @@ export const EXERCISES = [
   // ── SIDE PLANK ─────────────────────────────────────────────────────────────
   {
     id: "side_plank",
+    comingSoon: true,
     name: "Side Plank",
     icon: "↕️",
     category: "strength",
@@ -658,6 +668,7 @@ export const EXERCISES = [
   // ── MOUNTAIN CLIMBER ───────────────────────────────────────────────────────
   {
     id: "mountain_climber",
+    comingSoon: true,
     name: "Mountain Climber",
     icon: "🧗",
     category: "strength",
@@ -732,6 +743,7 @@ export const EXERCISES = [
   // ── DECLINE PUSH-UP ────────────────────────────────────────────────────────
   {
     id: "decline_pushup",
+    comingSoon: true,
     name: "Decline Push-up",
     icon: "📉",
     category: "strength",
@@ -765,6 +777,7 @@ export const EXERCISES = [
   // ── WALKING LUNGE ──────────────────────────────────────────────────────────
   {
     id: "walking_lunge",
+    comingSoon: true,
     name: "Walking Lunge",
     icon: "🚶",
     category: "strength",
@@ -797,6 +810,7 @@ export const EXERCISES = [
   // ── STEP UP ────────────────────────────────────────────────────────────────
   {
     id: "step_up",
+    comingSoon: true,
     name: "Step Up",
     icon: "🪜",
     category: "strength",
@@ -938,6 +952,7 @@ export const EXERCISES = [
   // ── ARNOLD PRESS ───────────────────────────────────────────────────────────
   {
     id: "arnold_press",
+    comingSoon: true,
     name: "Arnold Press",
     icon: "💪",
     category: "strength",
@@ -970,6 +985,7 @@ export const EXERCISES = [
   // ── LATERAL RAISE ──────────────────────────────────────────────────────────
   {
     id: "lateral_raise",
+    comingSoon: true,
     name: "Lateral Raise",
     icon: "🪽",
     category: "strength",
@@ -1003,6 +1019,7 @@ export const EXERCISES = [
   // ── FRONT RAISE ────────────────────────────────────────────────────────────
   {
     id: "front_raise",
+    comingSoon: true,
     name: "Front Raise",
     icon: "⬆️",
     category: "strength",
@@ -1617,6 +1634,7 @@ export const EXERCISES = [
   // ── SPRINT ACCELERATION ────────────────────────────────────────────────────
   {
     id: "sprint_acceleration",
+    comingSoon: true,
     name: "Sprint Acceleration",
     icon: "🏃",
     category: "athletic",

@@ -23,7 +23,7 @@ export default function LeaderboardPanel() {
         const user = await base44.auth.me();
         setCurrentUser(user);
         
-        const data = await getLeaderboard(10);
+        const data = await getLeaderboard(10, user?.email);
         setLeaderboard(data);
 
         if (user?.email) {
@@ -41,8 +41,8 @@ export default function LeaderboardPanel() {
   }, []);
 
   const userOnLeaderboard = useMemo(() => {
-    return leaderboard.find(u => u.email === currentUser?.email);
-  }, [leaderboard, currentUser]);
+    return leaderboard.find(u => u.isCurrentUser);
+  }, [leaderboard]);
 
   return (
     <motion.div
@@ -90,13 +90,13 @@ export default function LeaderboardPanel() {
         <div className="space-y-2">
           {leaderboard.map((entry, idx) => {
             const medal = MEDAL_COLORS[entry.rank];
-            const isCurrentUser = entry.email === currentUser?.email;
+            const isCurrentUser = entry.isCurrentUser;
             const highlight = isCurrentUser ? `1px solid ${COLORS.goldBorder}` : `1px solid ${COLORS.border}`;
             const bgStyle = isCurrentUser ? COLORS.goldDim : COLORS.surface;
 
             return (
               <motion.div
-                key={entry.email}
+                key={entry.rank}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
@@ -125,7 +125,7 @@ export default function LeaderboardPanel() {
                       color: isCurrentUser ? COLORS.gold : COLORS.textPrimary,
                       fontFamily: FONT.mono,
                     }}>
-                    {entry.email.split('@')[0]}
+                    {entry.displayName}
                     {isCurrentUser && <span style={{ color: COLORS.gold }}> (YOU)</span>}
                   </p>
                   <p className="text-[8px] mt-0.5" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
@@ -174,7 +174,7 @@ export default function LeaderboardPanel() {
                   color: COLORS.gold,
                   fontFamily: FONT.mono,
                 }}>
-                {currentUser.email.split('@')[0]} (YOU)
+                {currentUser?.display_name || currentUser?.email?.split('@')[0]} (YOU)
               </p>
             </div>
           </motion.div>

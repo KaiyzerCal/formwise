@@ -105,7 +105,12 @@ export default function MovementLibrary({ onSelect, selectedId }) {
             tabIndex={focusedIdx === idx ? 0 : -1}
             aria-label={`${movement.name || movement.id} — press Enter to select`}
             aria-selected={selectedId === movement.id}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(movement); } }}
+            onKeyDown={(e) => {
+              if ((e.key === 'Enter' || e.key === ' ') && !movement.comingSoon) {
+                e.preventDefault();
+                onSelect(movement);
+              }
+            }}
             onFocus={() => setFocusedIdx(idx)}
             style={{ outline: 'none' }}
           >
