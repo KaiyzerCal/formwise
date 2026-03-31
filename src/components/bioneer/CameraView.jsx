@@ -165,14 +165,19 @@ export default function CameraView({ exercise, onStop }) {
     if (result._fps)     healthRef.current?.reportFPS(result._fps);
     if (result._frameMs) healthRef.current?.reportFrameMs(result._frameMs);
 
-    // Canvas render
+    // Canvas render — composite video + skeleton for recording
     const canvas = canvasRef.current;
     const video  = videoRef.current;
     if (!canvas || !video) return;
     const ctx = canvas.getContext('2d');
     canvas.width  = video.videoWidth  || canvas.offsetWidth;
     canvas.height = video.videoHeight || canvas.offsetHeight;
-    clearCanvas(ctx, canvas.width, canvas.height);
+    // Draw video frame first so canvas.captureStream() records video+skeleton
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    } else {
+      clearCanvas(ctx, canvas.width, canvas.height);
+    }
     if (!result.poseLandmarks) return;
 
     const smoothed = smoothLandmarks(result.poseLandmarks, prevLandmarksRef.current);
