@@ -4,6 +4,8 @@ import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
 import { getAllSessions, clearAllSessions } from '@/components/bioneer/data/sessionStore';
 import WorkoutScheduleManager from '@/components/bioneer/notifications/WorkoutScheduleManager';
 import { getServerKeyStatus } from '@/components/bioneer/ai/GeminiCoach';
+import { useAuth } from '@/lib/AuthContext';
+import { User, LogOut } from 'lucide-react';
 
 
 function Section({ title, children }) {
@@ -69,6 +71,7 @@ function SelectRow({ label, value, options, onChange }) {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [aiEnabled, setAiEnabled] = useState(() => localStorage.getItem('formwise_ai_enabled') !== 'false');
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('formwise_gemini_key') || '');
   const [aiAudio, setAiAudio] = useState(() => localStorage.getItem('formwise_ai_audio') === 'true');
@@ -131,6 +134,37 @@ export default function Settings() {
             Preferences & configuration
           </p>
         </div>
+
+        {/* Profile */}
+        <Section title="Account">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: COLORS.goldDim, border: `1px solid ${COLORS.goldBorder}` }}>
+              <User size={18} style={{ color: COLORS.gold }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold truncate" style={{ color: COLORS.textPrimary, fontFamily: FONT.mono }}>
+                {user?.full_name || 'User'}
+              </p>
+              <p className="text-[10px] truncate" style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+                {user?.email || '—'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => logout(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded border text-[10px] font-bold tracking-[0.12em] uppercase transition-colors"
+            style={{
+              borderColor: '#ef444440',
+              color: '#ef4444',
+              background: '#ef444410',
+              fontFamily: FONT.mono,
+            }}
+          >
+            <LogOut size={12} />
+            Sign Out
+          </button>
+        </Section>
 
         {/* AI Coach */}
         <Section title="AI Coach">
