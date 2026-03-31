@@ -4,7 +4,6 @@ import { getAllSessions, syncFromCloud, clearAllSessions, deleteSession } from "
 import toast from "react-hot-toast";
 import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl, clearAllFreestyleSessions } from "../components/bioneer/history/sessionStorage";
 import { deleteSessionPermanently, deleteSessionsPermanently } from "../components/bioneer/data/sessionDeletionService";
-import { getSessionVideoUrl } from "../components/bioneer/data/liveVideoStorage";
 import { Clock, Repeat, Download, ChevronDown, ChevronUp, BarChart3, Play, Trash2, Send, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { createPageUrl } from "@/utils";
@@ -32,7 +31,7 @@ function adaptSession(s) {
     topFault:   s.top_faults?.[0]?.replace(/_/g, ' ') ?? '—',
     repScores:  s.rep_summaries?.map(r => r.form_score ?? 0) ?? [],
     movementProfileId: s.movement_profile_id ?? null,
-    hasVideo:   !!(s.video_storage_key || s.video_src || s.session_id),
+    hasVideo:   !!(s.video_url || s.video_storage_key || s.video_src || s.session_id),
     insights:   [
       s.session_status === 'partial'        ? 'Partial session — limited tracking' : null,
       s.session_status === 'low_confidence' ? 'Low tracking confidence this session' : null,
@@ -56,8 +55,6 @@ export default function SessionHistory() {
   const [sendError, setSendError] = useState(null);
   const [cloudSyncing, setCloudSyncing] = useState(false);
   const [localSessions, setLocalSessions] = useState(() => getAllSessions());
-  // hydrated live sessions: session_id → videoSrc
-  const [liveVideoUrls, setLiveVideoUrls] = useState({});
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
   // Load freestyle sessions
@@ -76,44 +73,6 @@ export default function SessionHistory() {
         setLocalSessions(getAllSessions());
       }
     }).catch(() => setCloudSyncing(false));
-  }, []);
-
-  // Hydrate videoSrc for live sessions from IndexedDB
-  useEffect(() => {
-    const raw = getAllSessions();
-    raw.forEach(async (s) => {
-      const key = s.video_storage_key || s.session_id;
-      let url = null;
-
-      // Try liveVideoStorage first
-      if (key) {
-        try { url = await getSessionVideoUrl(key); } catch {}
-      }
-
-      // Fallback: check freestyle/formcheck IndexedDB by timestamp proximity
-      if (!url) {
-        try {
-          const all = await getAllFreestyleSessions();
-          const cloudDate = new Date(s.started_at).getTime();
-          const match = all
-            .filter(fs => fs.mode === 'formcheck' && fs.videoBlob instanceof Blob)
-            .sort((a, b) => {
-              const da = Math.abs(new Date(a.createdAt).getTime() - cloudDate);
-              const db = Math.abs(new Date(b.createdAt).getTime() - cloudDate);
-              return da - db;
-            })[0];
-          if (match && Math.abs(new Date(match.createdAt).getTime() - cloudDate) < 120000) {
-            const blobUrl = URL.createObjectURL(match.videoBlob);
-            setLiveVideoUrls(prev => ({ ...prev, [s.session_id]: blobUrl }));
-            return;
-          }
-        } catch {}
-      }
-
-      if (url) {
-        setLiveVideoUrls(prev => ({ ...prev, [s.session_id]: url }));
-      }
-    });
   }, []);
 
   const sessions = useMemo(() => localSessions.map(adaptSession), [localSessions]);
@@ -270,8 +229,7 @@ export default function SessionHistory() {
     setSending(session.id);
     setSendError(null);
     try {
-      // Attach hydrated videoSrc so techniqueConverter can use it if needed
-      const enriched = { ...session._rawSession, videoSrc: liveVideoUrls[session.id] || null };
+      const enriched = { ...session._rawSession };
       const draft = await createTechniqueDraftFromLiveSession(enriched);
       if (!draft || !draft.techniqueId) throw new Error('Draft creation returned invalid result');
       navigate(`/TechniqueStudio?draft=${draft.techniqueId}`);

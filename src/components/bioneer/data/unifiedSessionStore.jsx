@@ -73,6 +73,7 @@ function fromCloud(r) {
     started_at:         r.started_at ?? r.created_date,
     movement_id:        r.movement_id ?? r.exercise_id,
     movement_name:      r.movement_name ?? r.exercise_id,
+    video_url:          r.video_url ?? null,
     coaching_events:    r.coaching_events ?? [],
     coaching_intensity: r.coaching_intensity ?? 'moderate',
     coaching_enabled:   r.coaching_enabled ?? true,
@@ -107,6 +108,7 @@ function toCloud(s) {
     started_at:         s.started_at ?? new Date().toISOString(),
     movement_id:        s.movement_id ?? null,
     movement_name:      s.movement_name ?? null,
+    video_url:          s.video_url ?? null,
   };
 }
 

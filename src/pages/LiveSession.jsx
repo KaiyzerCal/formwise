@@ -85,6 +85,7 @@ export default function LiveSession() {
         ...savedSession,
         video_storage_key: persistedVideo?.storageKey ?? savedSession.session_id,
         video_src: persistedVideo?.videoSrc ?? null,
+        video_url: persistedVideo?.fileUrl ?? null,
       };
 
       // Save session to cloud + cache FIRST, then enrich with learning async

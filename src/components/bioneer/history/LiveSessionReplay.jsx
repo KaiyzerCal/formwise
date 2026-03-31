@@ -85,19 +85,28 @@ export default function LiveSessionReplay({ session, onClose }) {
     videoRef, isPlaying, enabled: !!videoUrl, id: 'replay',
   });
 
-  // Prefer in-memory videoSrc (object URL already created), fallback to IndexedDB
+  // Priority: in-memory videoSrc → cloud video_url → IndexedDB fallback
   useEffect(() => {
     let revoke = null;
     const load = async () => {
       setLoading(true);
       setError(null);
 
+      // 1. In-memory object URL (current session, not yet navigated away)
       if (session.videoSrc) {
         setVideoUrl(session.videoSrc);
         setLoading(false);
         return;
       }
 
+      // 2. Cloud-persisted video URL (survives IndexedDB clears)
+      if (session.video_url) {
+        setVideoUrl(session.video_url);
+        setLoading(false);
+        return;
+      }
+
+      // 3. IndexedDB fallback (may have been cleared)
       const key = session.video_storage_key || session.session_id;
       if (!key) {
         setError('No video available for this session.');
@@ -123,12 +132,11 @@ export default function LiveSessionReplay({ session, onClose }) {
     load();
 
     return () => {
-      // Only revoke if we created the URL (not if it was passed as prop)
       if (revoke && revoke !== session.videoSrc) {
         URL.revokeObjectURL(revoke);
       }
     };
-  }, [session.session_id, session.video_storage_key, session.videoSrc]);
+  }, [session.session_id, session.video_storage_key, session.videoSrc, session.video_url]);
 
   const handlePlay = useCallback(() => {
     videoRef.current?.play();

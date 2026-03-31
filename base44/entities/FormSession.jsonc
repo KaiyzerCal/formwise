@@ -150,6 +150,10 @@
       "type": "string",
       "description": "Human-readable movement name"
     },
+    "video_url": {
+      "type": "string",
+      "description": "URL of uploaded session video (persisted in cloud storage)"
+    },
     "is_deleted": {
       "type": "boolean",
       "default": false,
