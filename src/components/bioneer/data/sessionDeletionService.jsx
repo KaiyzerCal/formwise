@@ -1,13 +1,17 @@
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 import { deleteSessionVideoBlob } from './liveVideoStorage';
 import { deleteFreestyleSession } from '../history/sessionStorage';
 
 async function softDeleteInCloud(sessionId) {
-  const { error } = await supabase
-    .from('form_sessions')
-    .update({ is_deleted: true, deleted_at: new Date().toISOString() })
-    .eq('id', sessionId);
-  if (error) { console.error('[SessionDeletion] soft-delete failed:', sessionId, error); throw error; }
+  try {
+    await base44.entities.FormSession.update(sessionId, {
+      is_deleted: true,
+      deleted_at: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[SessionDeletion] soft-delete failed:', sessionId, error);
+    throw error;
+  }
 }
 
 async function hardDeleteLocal(sessionId) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { Flame } from 'lucide-react';
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 
 export default function StreakCounter() {
   const [streak, setStreak]   = useState(0);
@@ -11,10 +11,10 @@ export default function StreakCounter() {
   useEffect(() => {
     async function load() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data } = await supabase.from('user_profiles').select('current_streak').eq('user_id', user.id).single();
-        setStreak(data?.current_streak || 0);
+        const authed = await base44.auth.isAuthenticated();
+        if (!authed) return;
+        const profiles = await base44.entities.UserProfile.list();
+        setStreak(profiles?.[0]?.current_streak || 0);
       } catch { /* no profile yet */ }
       finally { setLoading(false); }
     }

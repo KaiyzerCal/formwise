@@ -18,7 +18,7 @@ import { useSessionLearning } from "../components/bioneer/learning/useSessionLea
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { recordSession } from "@/lib/retentionEngine";
 import SessionRewardScreen from "@/components/SessionRewardScreen";
-import { recordSessionFaults, markResolvedFaults, generateAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
+import { updateFaultHistory, checkForImprovements, getAdaptiveCue } from "@/lib/adaptiveFeedbackEngine";
 import { awardSessionPoints } from "@/lib/gamificationEngine";
 
 export default function LiveSession() {
@@ -102,21 +102,12 @@ export default function LiveSession() {
       awardSessionPoints(sessionWithVideo).catch(() => {});
 
       // Record fault history and check for improvements
-      recordSessionFaults(sessionWithVideo).catch(() => {});
-      markResolvedFaults(sessionWithVideo.exercise_id, sessionWithVideo.form_score_overall).catch(() => {});
+      const faults = (sessionWithVideo.top_faults || []).map(f => ({ id: f, name: f }));
+      updateFaultHistory(sessionWithVideo.exercise_id, faults).catch(() => {});
+      checkForImprovements(sessionWithVideo.exercise_id, faults.map(f => f.id)).catch(() => {});
 
       // Record session for streak/XP tracking
-      const user = await (async () => {
-        try {
-          const { base44 } = await import('@/api/base44Client');
-          return await base44.auth.me();
-        } catch {
-          return null;
-        }
-      })();
-      if (user) {
-        recordSession(user.email).catch(() => {});
-      }
+      recordSession().catch(() => {});
 
       // Show reward screen
       setShowReward(true);

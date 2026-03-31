@@ -1,4 +1,4 @@
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/api/base44Client';
 import toast from 'react-hot-toast';
 
 export const POINT_VALUES = {
@@ -31,17 +31,22 @@ export function getLevelProgress(xp, level) {
 }
 
 export async function awardPoints(points, reason = 'Session Complete') {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  const authed = await base44.auth.isAuthenticated();
+  if (!authed) return null;
 
   try {
-    const { data: profile } = await supabase.from('user_profiles').select('xp_total,level').eq('user_id', user.id).single();
+    const profiles = await base44.entities.UserProfile.list();
+    const profile = profiles?.[0];
     const currentXP    = profile?.xp_total ?? 0;
     const currentLevel = profile?.level ?? 1;
     const newXP        = currentXP + points;
     const newLevel     = calculateLevel(newXP);
 
-    await supabase.from('user_profiles').upsert({ user_id: user.id, xp_total: newXP, level: newLevel }, { onConflict: 'user_id' });
+    if (profile) {
+      await base44.entities.UserProfile.update(profile.id, { xp_total: newXP, level: newLevel });
+    } else {
+      await base44.entities.UserProfile.create({ xp_total: newXP, level: newLevel });
+    }
 
     if (newLevel > currentLevel) {
       toast(`🎉 LEVEL ${newLevel} REACHED!`, { duration: 4000, style: { background: '#0c0c0c', border: '1px solid rgba(201,162,39,0.5)', color: '#C9A84C', fontFamily:"'DM Mono',monospace", fontSize: 11, fontWeight: 700, letterSpacing: '0.12em' } });
@@ -57,21 +62,26 @@ export async function awardSessionPoints(session) {
   return awardPoints(total, 'Session Complete');
 }
 
-export async function getLeaderboard(limit = 100) {
+export async function getLeaderboard(limit = 100, currentUserEmail = null) {
   try {
-    const { data, error } = await supabase.from('user_profiles').select('user_id,xp_total,level,total_sessions,current_streak,email').order('xp_total', { ascending: false }).limit(limit);
-    if (error) throw error;
+    const data = await base44.entities.UserProfile.list('-xp_total', limit);
     return (data ?? []).map((p, i) => ({
-      rank: i+1, email: p.email ?? `user-${p.user_id?.slice(0,8)}`,
-      level: p.level||1, xp: p.xp_total||0, sessions: p.total_sessions||0, streak: p.current_streak||0,
+      rank: i + 1,
+      displayName: p.created_by?.split('@')[0] ?? `user-${i}`,
+      email: p.created_by ?? '',
+      level: p.level || 1,
+      xp: p.xp_total || 0,
+      sessions: p.total_sessions || 0,
+      streak: p.current_streak || 0,
+      isCurrentUser: currentUserEmail ? p.created_by === currentUserEmail : false,
     }));
   } catch { return []; }
 }
 
-export async function getUserRank(userId) {
+export async function getUserRank(userEmail) {
   try {
-    const lb = await getLeaderboard(500);
-    const r  = lb.findIndex(u => u.user_id === userId);
-    return r >= 0 ? r+1 : null;
+    const lb = await getLeaderboard(500, userEmail);
+    const r = lb.findIndex(u => u.isCurrentUser);
+    return r >= 0 ? r + 1 : null;
   } catch { return null; }
 }
