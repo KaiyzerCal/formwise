@@ -32,7 +32,7 @@ function adaptSession(s) {
     topFault:   s.top_faults?.[0]?.replace(/_/g, ' ') ?? '—',
     repScores:  s.rep_summaries?.map(r => r.form_score ?? 0) ?? [],
     movementProfileId: s.movement_profile_id ?? null,
-    hasVideo:   !!(s.video_storage_key || s.video_src),
+    hasVideo:   !!(s.video_storage_key || s.video_src || s.session_id),
     insights:   [
       s.session_status === 'partial'        ? 'Partial session — limited tracking' : null,
       s.session_status === 'low_confidence' ? 'Low tracking confidence this session' : null,
@@ -93,8 +93,8 @@ export default function SessionHistory() {
   useEffect(() => {
     const raw = getAllSessions();
     raw.forEach(async (s) => {
-      if (!s.video_storage_key && !s.session_id) return;
       const key = s.video_storage_key || s.session_id;
+      if (!key) return;
       try {
         const url = await getSessionVideoUrl(key);
         if (url) {
@@ -495,25 +495,21 @@ export default function SessionHistory() {
 
                    {/* Video replay & technique buttons for live sessions */}
                         <div className="flex items-center gap-2 flex-wrap">
-                          {(session.hasVideo || liveVideoUrls[session.id]) && (
-                            <button
-                              onClick={() => setSelectedLiveReplay(session._rawSession)}
-                              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
-                              style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold }}
-                            >
-                              <Play size={10} fill={COLORS.gold} />Replay
-                            </button>
-                          )}
-                          {(session.hasVideo || liveVideoUrls[session.id]) && (
-                            <button
-                              onClick={() => handleSendLiveToTechnique(session)}
-                              disabled={sending === session.id}
-                              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
-                              style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold, opacity: sending === session.id ? 0.6 : 1 }}
-                            >
-                              <Send size={10} />{sending === session.id ? 'Sending...' : 'Technique'}
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setSelectedLiveReplay(session._rawSession)}
+                            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                            style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold }}
+                          >
+                            <Play size={10} fill={COLORS.gold} />Replay
+                          </button>
+                          <button
+                            onClick={() => handleSendLiveToTechnique(session)}
+                            disabled={sending === session.id}
+                            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-colors text-[9px] tracking-[0.1em] uppercase font-bold"
+                            style={{ background: 'rgba(201,168,76,0.1)', color: COLORS.gold, opacity: sending === session.id ? 0.6 : 1 }}
+                          >
+                            <Send size={10} />{sending === session.id ? 'Sending...' : 'Technique'}
+                          </button>
                           <button
                             onClick={() => handleDeleteExerciseSession(session.id)}
                             disabled={deleting === session.id}
@@ -613,7 +609,7 @@ export default function SessionHistory() {
       {/* Live session replay modal */}
       {selectedLiveReplay && (
         <LiveSessionReplay
-          session={{ ...selectedLiveReplay, videoSrc: liveVideoUrls[selectedLiveReplay.session_id] || selectedLiveReplay.video_src || null }}
+          session={selectedLiveReplay}
           onClose={() => setSelectedLiveReplay(null)}
         />
       )}
