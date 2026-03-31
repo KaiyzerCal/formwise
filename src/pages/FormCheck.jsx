@@ -12,6 +12,8 @@ import { useSessionLearning } from "../components/bioneer/learning/useSessionLea
 import FirstLaunchWizard, { hasCompletedOnboarding } from "../components/bioneer/onboarding/FirstLaunchWizard";
 import FormCheckHistoryView from "../components/bioneer/history/FormCheckHistoryView";
 import FormCheckReplay from "../components/bioneer/history/FormCheckReplay";
+import { saveFreestyleSession, loadFreestyleSession } from '../components/bioneer/history/sessionStorage';
+import FreestyleReplay from '../components/bioneer/history/FreestyleReplay';
 
 const DISCLAIMER_KEY = "bioneer_disclaimer_accepted";
 
@@ -20,6 +22,7 @@ export default function FormCheck() {
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [sessionData, setSessionData] = useState(null);
   const [replaySession, setReplaySession] = useState(null);
+  const [pendingRecording, setPendingRecording] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -60,7 +63,9 @@ export default function FormCheck() {
   };
 
   const handleStopSession = (data) => {
-    setSessionData(data);
+    const { sessionId, videoBlob, poseFrames, angleFrames, cameraFacing, ...stats } = data;
+    setPendingRecording({ sessionId, videoBlob, poseFrames, angleFrames, cameraFacing });
+    setSessionData(stats);
     setPhase("summary");
   };
 
@@ -104,6 +109,25 @@ export default function FormCheck() {
 
     try {
       await base44.entities.FormSession.create(enrichedData);
+      // Save video + pose data to IndexedDB for full replay
+      if (pendingRecording?.videoBlob instanceof Blob) {
+        const { sessionId, videoBlob, poseFrames, angleFrames, cameraFacing } = pendingRecording;
+        try {
+          await saveFreestyleSession({
+            sessionId:   sessionId || enrichedData.session_id || `formcheck-${Date.now()}`,
+            mode:        'formcheck',
+            category:    enrichedData.category || 'strength',
+            duration:    enrichedData.duration_seconds || 0,
+            videoBlob,
+            poseFrames:  poseFrames  || [],
+            angleFrames: angleFrames || [],
+            cameraFacing: cameraFacing || 'environment',
+          });
+        } catch (idbErr) {
+          console.warn('[FormCheck] IndexedDB save failed:', idbErr.message);
+        }
+      }
+      setPendingRecording(null);
       // Non-blocking: run adaptive learning pipeline after save
       processSessionLearning({
         movement: enrichedData.movement_id,
@@ -133,14 +157,18 @@ export default function FormCheck() {
     setPhase("history");
   };
 
-  const handleSelectHistorySession = (session, action) => {
-    if (action === "replay") {
+  const handleSelectHistorySession = async (session, action) => {
+    try {
+      const local = await loadFreestyleSession(session.session_id || session.id);
+      if (local?.videoBlob instanceof Blob) {
+        setReplaySession({ ...session, ...local });
+      } else {
+        setReplaySession(session);
+      }
+    } catch {
       setReplaySession(session);
-      setPhase("replay");
-    } else {
-      setReplaySession(session);
-      setPhase("replay");
     }
+    setPhase("replay");
   };
 
   const handleDeleteReplaySession = async (sessionId) => {
@@ -199,11 +227,9 @@ export default function FormCheck() {
 
   if (phase === "replay" && replaySession) {
     return (
-      <FormCheckReplay
+      <FreestyleReplay
         session={replaySession}
         onClose={handleCloseReplay}
-        onDelete={handleDeleteReplaySession}
-        onExport={handleExportReplaySession}
       />
     );
   }

@@ -8,7 +8,7 @@ import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import { useCameraStream }       from './live/useCameraStream';
 import { usePoseRuntime }        from './live/usePoseRuntime';
 import { usePoseInferenceLoop }  from './live/usePoseInferenceLoop';
-import { useVideoRecorder }      from './live/useVideoRecorder';
+import { useSessionRecorder }    from './session/useSessionRecorder';
 import { useGeminiCoach }        from './ai/useGeminiCoach';
 import SessionReadinessGate      from './live/SessionReadinessGate';
 import LiveSessionHUD            from './live/LiveSessionHUD';
@@ -34,6 +34,7 @@ export default function CameraView({ exercise, onStop }) {
   const canvasRef         = useRef(null);
   const prevLandmarksRef  = useRef(null);
   const startTimeRef      = useRef(Date.now());
+  const sessionIdRef      = useRef(`formcheck-${Date.now()}`);
 
   const [muted, setMuted]   = useState(false);
   const [poseResults, setPoseResults] = useState(null);
@@ -67,8 +68,13 @@ export default function CameraView({ exercise, onStop }) {
   // ── Gemini coach ──────────────────────────────────────────────────────────
   const { getLiveCue, getCheckInCue, trackRep } = useGeminiCoach();
 
-  // ── Video recorder ────────────────────────────────────────────────────────
-  const { startRecording, finalizeRecording } = useVideoRecorder();
+  // ── Session recorder ──────────────────────────────────────────────────────
+  const {
+    isRecording,
+    startRecording,
+    stopRecording,
+    capturePoseFrame,
+  } = useSessionRecorder(videoRef, canvasRef);
 
   // Temporal filter engine — persists for the lifetime of this exercise session
   const temporalFilterRef = useRef(null);
@@ -107,10 +113,10 @@ export default function CameraView({ exercise, onStop }) {
   }, [cameraFacing, isSecure, switchCamera]);
   useEffect(() => { healthRef.current?.reportCamera(camState); }, [camState]);
 
-  // Start recording as soon as camera stream is active
+  // Start recording as soon as camera canvas is active
   useEffect(() => {
-    if (camState === 'active' && streamRef?.current) {
-      startRecording(streamRef.current);
+    if (camState === 'active' && canvasRef?.current) {
+      startRecording();
     }
   }, [camState]);
 
@@ -137,6 +143,23 @@ export default function CameraView({ exercise, onStop }) {
     setPoseResults(result);
     // FIX: Use performance.now() to match MediaPipe's timestamp domain
     processFrame(result, performance.now());
+    // Capture pose frame for IndexedDB replay
+    if (isRecording && result.poseLandmarks) {
+      const angles = computeJointAngles(
+        result.poseLandmarks,
+        exercise,
+        frameRef.current?.phase ?? null
+      );
+      const angleMap = {};
+      for (const j of angles) {
+        if (j.name && j.angle != null) angleMap[j.name] = j.angle;
+      }
+      capturePoseFrame(
+        result.poseLandmarks,
+        angleMap,
+        result.poseLandmarks[0]?.visibility ?? 0
+      );
+    }
     // Feed health monitor
     healthRef.current?.reportPoseFrame();
     if (result._fps)     healthRef.current?.reportFPS(result._fps);
@@ -307,7 +330,10 @@ export default function CameraView({ exercise, onStop }) {
       : Math.round(formScore);
 
     // Finalize recording — wait for onstop to fire so all chunks are flushed
-    const { chunks: recordedChunks, mimeType: recordingMimeType } = await finalizeRecording();
+    const recorded    = await stopRecording();
+    const videoBlob   = recorded?.videoBlob   ?? null;
+    const poseFrames  = recorded?.poseFrames  ?? [];
+    const angleFrames = recorded?.angleFrames ?? [];
 
     // ── PR check
     if (avgMasteryScore > 0) {
@@ -337,11 +363,13 @@ export default function CameraView({ exercise, onStop }) {
       joint_data:         {},
       // Camera metadata for history tracking
       cameraFacing:       cameraFacing,
-      // Recording data — passed to LiveSession for persistence
-      recordedChunks,
-      recordingMimeType,
+      // Recording data — passed to FormCheck for IndexedDB persistence
+      sessionId:          sessionIdRef.current,
+      videoBlob,
+      poseFrames,
+      angleFrames,
     });
-  }, [stopSession, repCount, formScore, onStop, exercise, finalizeRecording]);
+  }, [stopSession, repCount, formScore, onStop, exercise, stopRecording, isRecording, capturePoseFrame]);
 
   // ── Gemini live cue: fire after each rep ─────────────────────────────────
   useEffect(() => {
