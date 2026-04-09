@@ -290,7 +290,6 @@ export default function FreestyleCameraView({ category = SESSION_CATEGORIES.STRE
             </p>
             <div className="space-y-2">
               <button onClick={() => {
-                setCamError(null);
                 window.location.reload();
               }}
                 className="w-full py-2 rounded-lg text-xs font-bold"
