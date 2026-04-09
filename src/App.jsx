@@ -21,11 +21,6 @@ import WorkoutPlans from './pages/WorkoutPlans';
 import CoachingHub from './pages/CoachingHub';
 import ImmersiveSession from './pages/ImmersiveSession';
 import TechniqueInsights from './pages/TechniqueInsights';
-import Dashboard from './pages/Dashboard';
-import Analyze from './pages/Analyze';
-import Train from './pages/Train';
-import ProgressHub from './pages/ProgressHub';
-import Profile from './pages/Profile';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -63,31 +58,8 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={
-        <LayoutWrapper currentPageName="Dashboard">
-          <Dashboard />
-        </LayoutWrapper>
-      } />
-      {/* Core 5 sections */}
-      <Route path="/analyze" element={<Analyze />} />
-      <Route path="/train" element={
-        <LayoutWrapper currentPageName="Train">
-          <Train />
-        </LayoutWrapper>
-      } />
-      <Route path="/progress" element={
-        <LayoutWrapper currentPageName="Progress">
-          <ProgressHub />
-        </LayoutWrapper>
-      } />
-      <Route path="/profile" element={
-        <LayoutWrapper currentPageName="Profile">
-          <Profile />
-        </LayoutWrapper>
-      } />
-      {/* Legacy CoachingHub redirect */}
-      <Route path="/CoachingHub" element={
-        <LayoutWrapper currentPageName="Dashboard">
-          <Dashboard />
+        <LayoutWrapper currentPageName="CoachingHub">
+          <CoachingHub />
         </LayoutWrapper>
       } />
       {/* Freestyle session route (no layout) */}

@@ -18,7 +18,7 @@ export default function PlanCard({ plan, onSelect, onToggleStatus, onDelete }) {
   const handleToggle = (e) => {
     e.stopPropagation();
     const newStatus = isActive ? 'paused' : 'active';
-    onToggleStatus?.({ id: plan.id, status: newStatus });
+    onToggleStatus({ id: plan.id, status: newStatus });
   };
 
   const handleDelete = (e) => {

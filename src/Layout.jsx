@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, Camera, BarChart3, BookOpen, Clock, Settings, Medal, TrendingUp, Zap, User } from "lucide-react";
+import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Medal, TrendingUp, Zap } from "lucide-react";
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
 import StreakWidget from "@/components/bioneer/ui/StreakWidget";
@@ -11,27 +11,31 @@ import { useWorkoutNotifier } from "@/components/bioneer/notifications/useWorkou
 import MobileBottomNav from "@/components/bioneer/nav/MobileBottomNav";
 
 // ── Sidebar groups ─────────────────────────────────────────────────
-// PRIMARY NAV — 5 core sections
-const PRIMARY_ITEMS = [
-  { path: '/',          labelKey: 'DASHBOARD', icon: LayoutDashboard, ariaLabel: 'Dashboard' },
-  { path: '/analyze',   labelKey: 'ANALYZE',   icon: Camera,          ariaLabel: 'Analyze' },
-  { path: '/train',     labelKey: 'TRAIN',     icon: Zap,             ariaLabel: 'Train' },
-  { path: '/progress',  labelKey: 'PROGRESS',  icon: TrendingUp,      ariaLabel: 'Progress' },
-  { path: '/profile',   labelKey: 'PROFILE',   icon: User,            ariaLabel: 'Profile' },
+// TRAIN
+const TRAIN_ITEMS = [
+  { name: 'LiveSession',  labelKey: 'TRAIN',  icon: Camera,    ariaLabel: 'Live Session' },
 ];
-// SECONDARY
-const SECONDARY_ITEMS = [
-  { path: '/SessionHistory',     labelKey: 'HISTORY',  icon: Clock,     ariaLabel: 'History' },
-  { path: '/MovementLibraryPage',labelKey: 'LIBRARY',  icon: BookOpen,  ariaLabel: 'Movement Library' },
-  { path: '/WorkoutPlans',       labelKey: 'PLANS',    icon: Zap,       ariaLabel: 'Workout Plans' },
-  { path: '/CoachPortal',        labelKey: 'COACH',    icon: BarChart3, ariaLabel: 'Coach Portal' },
+// REVIEW
+const REVIEW_ITEMS = [
+  { name: 'SessionHistory',   labelKey: 'HISTORY',   icon: Clock,      ariaLabel: 'History' },
+  { name: 'TechniqueCompare', labelKey: 'TECHNIQUE',  icon: GitCompare, ariaLabel: 'Technique Compare' },
+];
+// GROW
+const GROW_ITEMS = [
+  { name: 'Progress',     labelKey: 'PROGRESS',     icon: TrendingUp, ariaLabel: 'Progress' },
+  { name: 'Achievements', labelKey: 'ACHIEVEMENTS',  icon: Medal,      ariaLabel: 'Achievements' },
+];
+// MORE (secondary)
+const MORE_ITEMS = [
+  { name: 'MovementLibraryPage', labelKey: 'LIBRARY', icon: BookOpen, ariaLabel: 'Movement Library' },
+  { name: 'WorkoutPlans',        labelKey: 'PLANS',   icon: Zap,      ariaLabel: 'Workout Plans' },
+  { name: 'CoachPortal',         labelKey: 'COACH',   icon: BarChart3,ariaLabel: 'Coach Portal' },
 ];
 
-const ALL_SIDEBAR = [...PRIMARY_ITEMS, ...SECONDARY_ITEMS];
+const ALL_SIDEBAR = [...TRAIN_ITEMS, ...REVIEW_ITEMS, ...GROW_ITEMS, ...MORE_ITEMS];
 
 export default function Layout({ children, currentPageName }) {
   const t = useT();
-  const location = useLocation();
   useWorkoutNotifier();
 
   return (
@@ -64,10 +68,10 @@ export default function Layout({ children, currentPageName }) {
           {/* Scrollable nav list */}
           <nav className="flex-1 py-3 px-2 space-y-1 overflow-y-auto" aria-label="Main navigation">
             {ALL_SIDEBAR.map(item => {
-              const active = location.pathname === item.path;
+              const active = currentPageName === item.name;
               const Icon   = item.icon;
               return (
-                <Link key={item.path} to={item.path}
+                <Link key={item.name} to={createPageUrl(item.name)}
                   aria-label={item.ariaLabel} aria-current={active ? 'page' : undefined}
                   className="flex items-center gap-2.5 px-3 py-2 text-[8.5px] tracking-[0.12em] uppercase rounded-md transition-all duration-120"
                   style={{ color: active ? COLORS.gold : COLORS.textSecondary, background: active ? COLORS.goldDim : 'transparent', ...(active && { borderLeft: `2px solid ${COLORS.gold}` }) }}>
@@ -86,9 +90,9 @@ export default function Layout({ children, currentPageName }) {
           </div>
           <div className="px-3 py-3 border-t flex-shrink-0" style={{ borderColor: COLORS.border }}>
             <Link to="/Settings" aria-label="Settings"
-              aria-current={location.pathname === '/Settings' ? 'page' : undefined}
+              aria-current={currentPageName === 'Settings' ? 'page' : undefined}
               className="flex items-center gap-2.5 px-3 py-2 text-[8.5px] tracking-[0.12em] uppercase rounded-md"
-              style={{ color: location.pathname === '/Settings' ? COLORS.gold : COLORS.textSecondary, background: location.pathname === '/Settings' ? COLORS.goldDim : 'transparent' }}>
+              style={{ color: currentPageName === 'Settings' ? COLORS.gold : COLORS.textSecondary, background: currentPageName === 'Settings' ? COLORS.goldDim : 'transparent' }}>
               <Settings size={12} strokeWidth={1.5} aria-hidden="true" />
               <span>{t('SETTINGS')}</span>
             </Link>
