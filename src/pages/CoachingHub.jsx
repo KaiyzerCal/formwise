@@ -92,8 +92,8 @@ export default function CoachingHub() {
     return `You're finding consistency — trust the process`;
   }, [sessions, scoreChange, todaysFocus]);
 
-  const handleStartSession = () => navigate('/LiveSession');
-  const handleViewSessions = () => navigate('/SessionHistory');
+  const handleStartSession = () => navigate('/FormCheck');
+  const handleViewSessions = () => navigate('/FormCheck?phase=history');
   const handleLogout = async () => {
     await base44.auth.logout();
   };
@@ -192,17 +192,12 @@ export default function CoachingHub() {
               )}
             </>
           ) : (
-            <div className="text-center space-y-4 py-4">
-              {/* First-time empty state */}
-              <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
-                style={{ background: COLORS.goldDim, border: `1px solid ${COLORS.goldBorder}` }}>
-                <Play size={32} style={{ color: COLORS.gold }} />
+            <div className="text-center space-y-2">
+              <div className="text-xl font-bold" style={{ color: COLORS.textSecondary }}>
+                --
               </div>
-              <p className="text-[11px] font-bold" style={{ color: COLORS.textPrimary }}>
-                Choose an exercise. Real-time form feedback starts immediately.
-              </p>
-              <p className="text-[9px]" style={{ color: COLORS.textTertiary }}>
-                Your first session unlocks coaching insights, trends, and progress tracking.
+              <p className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                No sessions yet
               </p>
             </div>
           )}

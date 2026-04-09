@@ -12,13 +12,6 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError]             = useState(null);
   const [appPublicSettings]                   = useState({ id: 'formwise' });
 
-  // P1: Initialize voice coaching default for new users
-  useEffect(() => {
-    if (localStorage.getItem('formwise_ai_audio') === null) {
-      localStorage.setItem('formwise_ai_audio', 'true');
-    }
-  }, []);
-
   useEffect(() => {
     base44.auth.isAuthenticated().then(async (authed) => {
       if (authed) {

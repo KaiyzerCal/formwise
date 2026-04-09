@@ -20,9 +20,11 @@ export default function TechniqueStudioCoachingPanel({
   currentTime,
   onBodyPartHighlight,
 }) {
+  if (!coaching) return null;
+
   const overlay = useCoachingOverlay(
-    coaching?.currentEvent ?? null,
-    coaching?.isPlayingVoice ?? false
+    coaching.currentEvent,
+    coaching.isPlayingVoice
   );
 
   // Notify parent of highlighted parts (for visual feedback)
@@ -31,8 +33,6 @@ export default function TechniqueStudioCoachingPanel({
       onBodyPartHighlight(overlay.highlightedParts);
     }
   }, [overlay.highlightedParts, onBodyPartHighlight]);
-
-  if (!coaching) return null;
 
   return (
     <div className="flex flex-col gap-3">

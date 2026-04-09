@@ -20,8 +20,6 @@ import { recordSession } from "@/lib/retentionEngine";
 import SessionRewardScreen from "@/components/SessionRewardScreen";
 import { updateFaultHistory, checkForImprovements } from "@/lib/adaptiveFeedbackEngine";
 import { awardSessionPoints } from "@/lib/gamificationEngine";
-import VoiceCoachingBanner from "@/components/bioneer/live/VoiceCoachingBanner";
-import { logFault } from "@/lib/faultAccumulator";
 
 export default function LiveSession() {
    const navigate = useNavigate();
@@ -124,13 +122,6 @@ export default function LiveSession() {
         if (narrative) updateSession(saved?.session_id || savedSession.session_id, { ai_narrative: narrative });
       }).catch(() => {});
 
-      // P3: Log faults to local IndexedDB for predictive coaching
-      const sessionFaults = sessionToSave.top_faults || [];
-      const sid = saved?.session_id || savedSession.session_id;
-      sessionFaults.forEach(faultType => {
-        logFault(sessionToSave.exercise_id, faultType, sid).catch(() => {});
-      });
-
     } catch (err) {
       console.error('[LiveSession] handleSave error:', err);
       saveSession(savedSession).catch(() => {});
@@ -160,12 +151,7 @@ export default function LiveSession() {
   }
 
   if (phase === "camera" && selectedExercise) {
-    return (
-      <div className="relative h-screen">
-        <VoiceCoachingBanner />
-        <CameraView exercise={selectedExercise} onStop={handleStop} />
-      </div>
-    );
+    return <CameraView exercise={selectedExercise} onStop={handleStop} />;
   }
 
   if (phase === "summary" && sessionData) {

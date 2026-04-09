@@ -26,12 +26,14 @@ export default function FreestyleReplay({ session, onClose }) {
   const [exporting, setExporting] = useState(false);
   const [sending, setSending] = useState(false);
 
-  const poseFrames = session?.poseFrames || [];
-  const shouldDrawOverlay = !session?.compositedVideo;
+  if (!session) return null;
+
+  const poseFrames = session.poseFrames || [];
+  const shouldDrawOverlay = !session.compositedVideo;
 
   // Create blob URL once on mount
   useEffect(() => {
-    if (session?.videoBlob instanceof Blob) {
+    if (session.videoBlob instanceof Blob) {
       const url = URL.createObjectURL(session.videoBlob);
       setVideoUrl(url);
       return () => URL.revokeObjectURL(url);
@@ -148,8 +150,6 @@ export default function FreestyleReplay({ session, onClose }) {
       }
     };
   }, [isPlaying, poseFrames]);
-
-  if (!session) return null;
 
   const handleExportMp4 = async () => {
     if (!videoRef.current) return;
