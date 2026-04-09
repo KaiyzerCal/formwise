@@ -8,7 +8,13 @@ import TechniquePanel from "../components/bioneer/demo/TechniquePanel";
 import { DEMO_ASSETS } from "../components/bioneer/demoAssets";
 import { createPageUrl } from "@/utils";
 
-export default function ProperFormDemo() {
+// Tiny helper: auto-starts playback when embedded demo mounts
+function AutoPlayTrigger({ onPlay }) {
+  useEffect(() => { onPlay(); }, [onPlay]);
+  return null;
+}
+
+export default function ProperFormDemo({ embedded = false }) {
   const params     = new URLSearchParams(window.location.search);
   const exerciseId = params.get("exercise") || "squat";
 
@@ -85,6 +91,36 @@ export default function ProperFormDemo() {
     console.log("DEMO_TRAIN_NOW_PRESSED blueprint=", exerciseId, "cue=", focusCue);
     window.location.href = createPageUrl(`FormCheck?exercise=${exerciseId}`);
   };
+
+  // Embedded mode: render just the motion model, no header/footer
+  if (embedded) {
+    return (
+      <div className="bg-[#0A0A0A] text-white">
+        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        <div className="relative w-full overflow-hidden bg-[#111]" style={{ aspectRatio: '4/3' }}>
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(201,168,76,0.06) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+          <MotionModelCanvas
+            currentFrame={currentFrame}
+            highlightJoints={activeFault ? [] : highlightJoints}
+            faultJoints={faultJoints}
+            pathOverlays={motionData.pathOverlays ?? []}
+            pulseT={pulseT}
+          />
+          {currentPhaseId && (
+            <div className="absolute top-2 left-0 right-0 flex justify-center pointer-events-none" style={{ zIndex: 3 }}>
+              <div className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-[#C9A84C]/30">
+                <span className="text-[8px] font-bold text-[#C9A84C] uppercase tracking-[0.2em]" style={{ fontFamily: "'DM Mono', monospace" }}>
+                  {currentPhaseId.replace(/_/g, ' ')}
+                </span>
+              </div>
+            </div>
+          )}
+          {/* Auto-play in embedded mode */}
+          {!isPlaying && <AutoPlayTrigger onPlay={() => setIsPlaying(true)} />}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">

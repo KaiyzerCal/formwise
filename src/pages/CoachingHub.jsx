@@ -21,6 +21,7 @@ import { getAllSessions } from '@/components/bioneer/data/unifiedSessionStore';
 import { COLORS, FONT, scoreColor } from '@/components/bioneer/ui/DesignTokens';
 import { Play, TrendingUp, LogOut } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import ProperFormDemo from '@/pages/ProperFormDemo';
 
 export default function CoachingHub() {
   const navigate = useNavigate();
@@ -192,12 +193,13 @@ export default function CoachingHub() {
               )}
             </>
           ) : (
-            <div className="text-center space-y-2">
-              <div className="text-xl font-bold" style={{ color: COLORS.textSecondary }}>
-                --
+            /* P5: Empty state — show animated demo + instructional copy */
+            <div className="text-center space-y-4">
+              <div className="w-full max-w-xs mx-auto rounded-lg overflow-hidden border" style={{ borderColor: COLORS.border }}>
+                <ProperFormDemo embedded />
               </div>
-              <p className="text-[10px]" style={{ color: COLORS.textTertiary }}>
-                No sessions yet
+              <p className="text-[10px] leading-relaxed px-4" style={{ color: COLORS.textSecondary, fontFamily: FONT.mono }}>
+                Bioneer is ready. Select an exercise to begin real-time biomechanical analysis.
               </p>
             </div>
           )}

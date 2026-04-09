@@ -8,33 +8,31 @@ import StreakWidget from "@/components/bioneer/ui/StreakWidget";
 import { useT } from "@/lib/i18n";
 import WorkoutReminderBanner from "@/components/bioneer/notifications/WorkoutReminderBanner";
 import { useWorkoutNotifier } from "@/components/bioneer/notifications/useWorkoutNotifier";
+import MobileBottomNav from "@/components/bioneer/nav/MobileBottomNav";
 
-// Primary nav items — shown in sidebar (desktop) and bottom tab bar (mobile)
-const NAV_ITEMS = [
-  { name: 'LiveSession',         labelKey: 'LIVE',        icon: Camera,    ariaLabel: 'Live Session' },
-  { name: 'Analytics',           labelKey: 'ANALYTICS',   icon: BarChart3, ariaLabel: 'Analytics' },
-  { name: 'SessionHistory',      labelKey: 'HISTORY',     icon: Clock,     ariaLabel: 'History' },
-  { name: 'WorkoutPlans',        labelKey: 'PLANS',       icon: Zap,       ariaLabel: 'Workout Plans' },
-  { name: 'Progress',            labelKey: 'PROGRESS',    icon: TrendingUp,ariaLabel: 'Progress' },
+// ── Sidebar groups ─────────────────────────────────────────────────
+// TRAIN
+const TRAIN_ITEMS = [
+  { name: 'LiveSession',  labelKey: 'TRAIN',  icon: Camera,    ariaLabel: 'Live Session' },
+];
+// REVIEW
+const REVIEW_ITEMS = [
+  { name: 'SessionHistory',   labelKey: 'HISTORY',   icon: Clock,      ariaLabel: 'History' },
+  { name: 'TechniqueCompare', labelKey: 'TECHNIQUE',  icon: GitCompare, ariaLabel: 'Technique Compare' },
+];
+// GROW
+const GROW_ITEMS = [
+  { name: 'Progress',     labelKey: 'PROGRESS',     icon: TrendingUp, ariaLabel: 'Progress' },
+  { name: 'Achievements', labelKey: 'ACHIEVEMENTS',  icon: Medal,      ariaLabel: 'Achievements' },
+];
+// MORE (secondary)
+const MORE_ITEMS = [
+  { name: 'MovementLibraryPage', labelKey: 'LIBRARY', icon: BookOpen, ariaLabel: 'Movement Library' },
+  { name: 'WorkoutPlans',        labelKey: 'PLANS',   icon: Zap,      ariaLabel: 'Workout Plans' },
+  { name: 'CoachPortal',         labelKey: 'COACH',   icon: BarChart3,ariaLabel: 'Coach Portal' },
 ];
 
-// Mobile bottom tab bar items — exactly 5 tabs
-const MOBILE_TABS = [
-  { name: 'LiveSession',    labelKey: 'LIVE',      icon: Camera,    ariaLabel: 'Live Session' },
-  { name: 'Analytics',      labelKey: 'ANALYTICS', icon: BarChart3, ariaLabel: 'Analytics' },
-  { name: 'SessionHistory', labelKey: 'HISTORY',   icon: Clock,     ariaLabel: 'History' },
-  { name: 'WorkoutPlans',   labelKey: 'PLANS',     icon: Zap,       ariaLabel: 'Workout Plans' },
-  { name: 'Settings',       labelKey: 'SETTINGS',  icon: Settings,  ariaLabel: 'Settings', path: '/Settings' },
-];
-
-// Secondary items — sidebar only on desktop, accessible via Settings on mobile
-const SIDEBAR_EXTRA = [
-  { name: 'TechniqueCompare',    labelKey: 'TECHNIQUE',   icon: GitCompare, ariaLabel: 'Technique Compare' },
-  { name: 'MovementLibraryPage', labelKey: 'LIBRARY',     icon: BookOpen,   ariaLabel: 'Movement Library' },
-  { name: 'Achievements',        labelKey: 'ACHIEVEMENTS',icon: Medal,      ariaLabel: 'Achievements' },
-];
-
-const ALL_SIDEBAR = [...NAV_ITEMS, ...SIDEBAR_EXTRA];
+const ALL_SIDEBAR = [...TRAIN_ITEMS, ...REVIEW_ITEMS, ...GROW_ITEMS, ...MORE_ITEMS];
 
 export default function Layout({ children, currentPageName }) {
   const t = useT();
@@ -108,31 +106,7 @@ export default function Layout({ children, currentPageName }) {
         </main>
 
         {/* ── Mobile Bottom Tab Bar ────────────────────────────────────────── */}
-        {/* Visible on mobile only — replaces the hamburger menu */}
-        <nav className="bottom-tab-bar md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch border-t"
-          style={{ background: COLORS.surface, borderColor: COLORS.border, height: 56, paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-          aria-label="Main navigation">
-
-          {MOBILE_TABS.map(item => {
-            const active = currentPageName === item.name;
-            const Icon   = item.icon;
-            const to     = item.path || createPageUrl(item.name);
-            return (
-              <Link key={item.name} to={to}
-                aria-label={item.ariaLabel} aria-current={active ? 'page' : undefined}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-all relative"
-                style={{ color: active ? COLORS.gold : COLORS.textTertiary }}>
-                <Icon size={18} strokeWidth={active ? 2 : 1.5} aria-hidden="true" />
-                <span className="text-[8px] font-semibold tracking-[0.08em] uppercase leading-none">
-                  {item.labelKey}
-                </span>
-                {active && (
-                  <span className="absolute bottom-0 w-6 h-0.5 rounded-full" style={{ background: COLORS.gold }} />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+        <MobileBottomNav />
       </div>
     </>
   );

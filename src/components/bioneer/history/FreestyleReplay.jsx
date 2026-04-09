@@ -26,22 +26,21 @@ export default function FreestyleReplay({ session, onClose }) {
   const [exporting, setExporting] = useState(false);
   const [sending, setSending] = useState(false);
 
-  if (!session) return null;
-
-  const poseFrames = session.poseFrames || [];
-  const shouldDrawOverlay = !session.compositedVideo;
+  const poseFrames = session?.poseFrames || [];
+  const shouldDrawOverlay = !session?.compositedVideo;
 
   // Create blob URL once on mount
   useEffect(() => {
+    if (!session) return;
     if (session.videoBlob instanceof Blob) {
       const url = URL.createObjectURL(session.videoBlob);
       setVideoUrl(url);
       return () => URL.revokeObjectURL(url);
     }
-  }, [session.videoBlob]);
+  }, [session]);
 
   // Find pose frame closest to video time
-  const getFrameAtTime = (time) => {
+  const getFrameAtTime = useCallback((time) => {
     const ms = time * 1000;
     let closest = null;
     let minDiff = Infinity;
@@ -55,7 +54,7 @@ export default function FreestyleReplay({ session, onClose }) {
     }
 
     return closest;
-  };
+  }, [poseFrames]);
 
   // Render skeleton overlay for current video time (works whether playing or paused)
   const renderOverlayAtTime = useCallback((time) => {
@@ -149,7 +148,9 @@ export default function FreestyleReplay({ session, onClose }) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying, poseFrames]);
+  }, [isPlaying, renderOverlay]);
+
+  if (!session) return null;
 
   const handleExportMp4 = async () => {
     if (!videoRef.current) return;

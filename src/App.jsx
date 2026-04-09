@@ -124,6 +124,16 @@ const AuthenticatedApp = () => {
 };
 
 
+// P1: Voice coaching + onboarding localStorage defaults
+if (typeof window !== 'undefined') {
+  if (localStorage.getItem('formwise_ai_audio') === null) {
+    localStorage.setItem('formwise_ai_audio', 'true');
+  }
+  if (localStorage.getItem('bioneer_onboarded') === null) {
+    localStorage.setItem('bioneer_onboarded', 'false');
+  }
+}
+
 // Preload speech synthesis voices (async in Chrome — trigger early)
 if (typeof window !== 'undefined' && window.speechSynthesis) {
   window.speechSynthesis.getVoices();

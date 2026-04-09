@@ -20,6 +20,8 @@ import { recordSession } from "@/lib/retentionEngine";
 import SessionRewardScreen from "@/components/SessionRewardScreen";
 import { updateFaultHistory, checkForImprovements } from "@/lib/adaptiveFeedbackEngine";
 import { awardSessionPoints } from "@/lib/gamificationEngine";
+import VoiceCoachingBanner from "@/components/bioneer/ui/VoiceCoachingBanner";
+import { logFault } from "@/lib/faultAccumulator";
 
 export default function LiveSession() {
    const navigate = useNavigate();
@@ -30,6 +32,7 @@ export default function LiveSession() {
    const [savedSession, setSavedSession] = useState(null);
    const [saving, setSaving] = useState(false);
    const [showReward, setShowReward] = useState(false);
+   const [showVoiceBanner, setShowVoiceBanner] = useState(() => localStorage.getItem('bioneer_onboarded') === 'false');
    const sessionStartRef = useRef(null);
    const rawDataRef = useRef(null); // holds rawData including recordedChunks
    const { processSessionLearning } = useSessionLearning();
@@ -115,6 +118,17 @@ export default function LiveSession() {
       const faults = (sessionToSave.top_faults || []).map(f => ({ id: f, name: f }));
       updateFaultHistory(sessionToSave.exercise_id, faults).catch(() => {});
       checkForImprovements(sessionToSave.exercise_id, faults.map(f => f.id)).catch(() => {});
+
+      // P3: Log RED-severity faults to local IndexedDB accumulator
+      const redFaults = (sessionToSave.alerts || []).filter(a => a.severity === 'high');
+      const sessionId = saved?.session_id || savedSession.session_id;
+      for (const rf of redFaults) {
+        logFault(sessionToSave.exercise_id, rf.issue || rf.joint, sessionId).catch(() => {});
+      }
+      // Also log top_faults
+      for (const f of (sessionToSave.top_faults || [])) {
+        logFault(sessionToSave.exercise_id, f, sessionId).catch(() => {});
+      }
       recordSession().catch(() => {});
 
       // AI narrative
@@ -167,9 +181,25 @@ export default function LiveSession() {
     );
   }
 
+  const handleBannerGotIt = () => {
+    localStorage.setItem('bioneer_onboarded', 'true');
+    setShowVoiceBanner(false);
+  };
+
+  const handleBannerDisable = () => {
+    localStorage.setItem('formwise_ai_audio', 'false');
+    localStorage.setItem('bioneer_onboarded', 'true');
+    setShowVoiceBanner(false);
+  };
+
   // Select phase — movement library + movement profile selector
   return (
     <div className="flex flex-col h-screen" style={{ background: COLORS.bg }}>
+      {/* P1: Voice coaching onboarding banner */}
+      {showVoiceBanner && (
+        <VoiceCoachingBanner onGotIt={handleBannerGotIt} onDisable={handleBannerDisable} />
+      )}
+
       {/* Back button */}
       <div className="px-5 py-3 border-b" style={{ borderColor: COLORS.border }}>
         <button
