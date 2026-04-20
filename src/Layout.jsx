@@ -60,9 +60,14 @@ export default function Layout({ children, currentPageName }) {
         <aside className="hidden md:flex flex-col w-[180px] flex-shrink-0 border-r sticky top-0 h-screen"
           style={{ background: COLORS.surface, borderColor: COLORS.border }}>
           <div className="px-4 py-4 border-b flex-shrink-0" style={{ borderColor: COLORS.border }}>
-            <span className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: COLORS.gold, fontFamily: FONT.heading }}>
-              BIONEER
-            </span>
+            <div>
+              <span className="text-[10px] font-bold tracking-[0.2em] uppercase block" style={{ color: COLORS.gold, fontFamily: FONT.heading }}>
+                BIONEER
+              </span>
+              <span className="text-[7px] tracking-[0.15em] uppercase block mt-0.5" style={{ color: COLORS.textTertiary }}>
+                MOVEMENT INTELLIGENCE
+              </span>
+            </div>
           </div>
 
           {/* Scrollable nav list */}

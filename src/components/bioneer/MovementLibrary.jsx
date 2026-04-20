@@ -114,11 +114,22 @@ export default function MovementLibrary({ onSelect, selectedId }) {
             onFocus={() => setFocusedIdx(idx)}
             style={{ outline: 'none' }}
           >
-          <ExerciseCard
-            exercise={movement}
-            selected={selectedId === movement.id}
-            onClick={() => onSelect(movement)}
-          />
+          <div>
+            <ExerciseCard
+              exercise={movement}
+              selected={selectedId === movement.id}
+              onClick={() => onSelect(movement)}
+            />
+            {/* Front camera banner for specific movements */}
+            {movement.camera === 'front' && (
+              <div className="mt-1 px-2 py-1.5 rounded text-center"
+                style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)' }}>
+                <p className="text-[7px] tracking-[0.1em] uppercase font-bold" style={{ color: '#C9A84C', fontFamily: "'DM Mono', monospace" }}>
+                  FRONT CAMERA REQUIRED — Position phone facing you for accurate tracking.
+                </p>
+              </div>
+            )}
+          </div>
           </div>
         ))}
         </div>

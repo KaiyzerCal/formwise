@@ -35,8 +35,14 @@ export default function Landing() {
             style={{ color: COLORS.gold, fontFamily: FONT.heading }}>BIONEER</span>
           <div className="w-px h-8" style={{ background: COLORS.gold }} />
         </div>
-        <p className="text-[9px] tracking-[0.35em] uppercase mb-10"
-          style={{ color: 'rgba(201,168,76,0.45)' }}>FORMWISE</p>
+        <p className="text-[9px] tracking-[0.35em] uppercase mb-3"
+          style={{ color: 'rgba(201,168,76,0.45)' }}>MOVEMENT INTELLIGENCE</p>
+
+        {/* Brand statement */}
+        <p className="text-[9px] tracking-widest leading-relaxed text-center max-w-xs mb-10"
+          style={{ color: COLORS.textTertiary, fontFamily: FONT.mono }}>
+          Your body is generating data every rep. We're the first system that listens.
+        </p>
 
         {/* Auth card */}
         <div className="w-full max-w-sm space-y-4" style={{ border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 24, background: COLORS.surface }}>

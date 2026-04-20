@@ -47,7 +47,7 @@ export default function CoachingControlPanel({
         <div className="flex items-center gap-2">
           <MessageCircle size={14} style={{ color: COLORS.gold }} />
           <span style={{ fontSize: '11px', fontWeight: 600, color: COLORS.textPrimary }}>
-            COACHING
+            AXIS
           </span>
           {isPlayingVoice && (
             <span
@@ -154,7 +154,7 @@ export default function CoachingControlPanel({
               fontWeight: 600,
             }}
           >
-            NOW COACHING:
+            AXIS:
           </div>
           <div style={{ fontStyle: 'italic' }}>"{currentEvent.message}"</div>
         </div>

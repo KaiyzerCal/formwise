@@ -96,7 +96,7 @@ export default function LiveCoachingOverlay({ coaching }) {
           ) : (
             <AlertCircle size={12} />
           )}
-          Coach Says
+          AXIS
         </div>
 
         {/* Main Message */}
