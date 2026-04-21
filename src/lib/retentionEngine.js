@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { getAllSessions } from '@/components/bioneer/data/unifiedSessionStore';
 
 const XP_PER_SESSION = 50;
 const XP_PER_LEVEL   = 500;
@@ -66,4 +67,29 @@ export async function getUserEngagement() {
 export function isStreakAtRisk(lastSessionDate) {
   if (!lastSessionDate) return false;
   return (Date.now() - new Date(lastSessionDate).getTime()) / 3600000 > 23;
+}
+
+/**
+ * getMovementReviewHistory — returns score history for a given exercise
+ * Used by AXIS Replay for continuity line
+ */
+export function getMovementReviewHistory(exerciseId) {
+  const sessions = getAllSessions()
+    .filter(s => (s.movement_id || s.exercise_id) === exerciseId)
+    .sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0));
+
+  if (!sessions.length) {
+    return { reviewCount: 0, firstScore: 0, latestScore: 0, improvement: 0, firstDate: null };
+  }
+
+  const firstScore = sessions[0].average_form_score ?? sessions[0].form_score_overall ?? 0;
+  const latestScore = sessions[sessions.length - 1].average_form_score ?? sessions[sessions.length - 1].form_score_overall ?? 0;
+
+  return {
+    reviewCount: sessions.length,
+    firstScore: Math.round(firstScore),
+    latestScore: Math.round(latestScore),
+    improvement: Math.round(latestScore - firstScore),
+    firstDate: sessions[0].started_at || null,
+  };
 }
