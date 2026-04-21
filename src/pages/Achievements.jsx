@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Key } from 'lucide-react';
 import { COLORS, FONT, FONT_LINK } from '@/components/bioneer/ui/DesignTokens';
 import { base44 } from '@/api/base44Client';
 import { ACHIEVEMENTS } from '@/lib/achievements';
@@ -88,11 +89,25 @@ export default function Achievements() {
                           {a.desc}
                         </p>
                         {/* Unlock description */}
-                        {ACHIEVEMENT_UNLOCKS[a.id] && (
-                          <p className="text-[7px] mt-1" style={{ color: isEarned ? COLORS.gold : COLORS.textMuted }}>
-                            {isEarned ? '✦ ' : '🔒 '}{getUnlockDescription(a.id)}
-                          </p>
-                        )}
+                        {(() => {
+                          const unlockDesc = getUnlockDescription(a.id);
+                          if (!unlockDesc) return null;
+                          if (isEarned) {
+                            return (
+                              <p className="flex items-center gap-1 mt-1.5" style={{ fontFamily: FONT.mono }}>
+                                <Key size={10} style={{ color: COLORS.gold, flexShrink: 0 }} />
+                                <span style={{ fontSize: 9, color: COLORS.gold }}>Unlocked: {unlockDesc}</span>
+                              </p>
+                            );
+                          } else {
+                            return (
+                              <p className="flex items-center gap-1 mt-1.5" style={{ fontFamily: FONT.mono }}>
+                                <Key size={10} style={{ color: COLORS.gold, opacity: 0.6, flexShrink: 0 }} />
+                                <span style={{ fontSize: 8, color: COLORS.gold, opacity: 0.6 }}>{unlockDesc}</span>
+                              </p>
+                            );
+                          }
+                        })()}
                         {isEarned && earnedRecord?.earned_at && (
                           <p className="text-[7px] mt-1.5" style={{ color: COLORS.textMuted }}>
                             {new Date(earnedRecord.earned_at).toLocaleDateString()}
