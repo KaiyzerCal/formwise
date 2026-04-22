@@ -8,7 +8,6 @@ import { Download, X, AlertCircle, Film } from 'lucide-react';
 import { COLORS, FONT } from '../../ui/DesignTokens';
 import { TechniqueExportRenderer } from './techniqueExportRenderer';
 import { exportTechniqueVideo } from './useTechniqueExporter';
-import { base44 } from '@/api/base44Client';
 
 const EXPORT_FORMATS = [
   {
@@ -188,88 +187,7 @@ export default function TechniqueExportPanel({ session, videoRef, overlayCanvasR
             {exporting ? 'EXPORTING…' : 'EXPORT'}
           </button>
         </div>
-
-        {/* AXIS Note Generator */}
-        <AxisNoteSection session={session} />
       </div>
-    </div>
-  );
-}
-
-function AxisNoteSection({ session }) {
-  const [note, setNote] = useState(null);
-  const [generating, setGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const generateAxisNote = async () => {
-    setGenerating(true);
-    const exerciseName = session?.exercise_id?.replace(/_/g, ' ') || 'exercise';
-    const score = Math.round(session?.form_score_overall || 0);
-    const annotations = session?.annotations || [];
-    const annotationText = annotations.length > 0
-      ? annotations.map(a => `[${a.frameIndex ?? '?'}] ${a.type || 'note'}: ${a.text || a.label || ''}`).join('; ')
-      : 'No annotations';
-
-    const prompt = `A coach has annotated a ${exerciseName} technique video. The annotations include the following notes and markers: ${annotationText}. The session form score was ${score}. Write a coaching note — one paragraph under 120 words — summarizing what was marked, what it means for the athlete's development, and one priority focus for their next session. Write it as a coach would write it — specific, direct, useful. Not a data summary. A coaching note.`;
-
-    try {
-      const result = await base44.integrations.Core.InvokeLLM({ prompt });
-      const text = typeof result === 'string' ? result : result?.text || result?.toString() || '';
-      setNote(text.replace(/^["']|["']$/g, '').trim());
-    } catch {
-      setNote('Unable to generate note. Please try again.');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const handleCopy = () => {
-    if (!note) return;
-    navigator.clipboard.writeText(note);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  return (
-    <div className="px-5 py-3 border-t space-y-2" style={{ borderColor: COLORS.border }}>
-      <button
-        onClick={generateAxisNote}
-        disabled={generating}
-        className="w-full flex items-center justify-center gap-2 py-2 rounded font-bold text-[9px]"
-        style={{
-          background: COLORS.goldDim,
-          color: COLORS.gold,
-          border: `1px solid ${COLORS.goldBorder}`,
-          opacity: generating ? 0.6 : 1,
-          fontFamily: FONT.mono,
-        }}
-      >
-        {generating ? 'AXIS IS WRITING…' : 'GENERATE AXIS NOTE'}
-      </button>
-      {note && (
-        <>
-          <textarea
-            readOnly
-            value={note}
-            rows={5}
-            className="w-full rounded border p-3 resize-none outline-none"
-            style={{
-              background: COLORS.bg, borderColor: COLORS.border, color: COLORS.textSecondary,
-              fontFamily: FONT.mono, fontSize: 10, lineHeight: 1.6,
-            }}
-          />
-          <button
-            onClick={handleCopy}
-            className="w-full py-1.5 rounded border text-[9px] font-bold"
-            style={{
-              borderColor: COLORS.border, color: copied ? COLORS.correct : COLORS.textSecondary,
-              fontFamily: FONT.mono,
-            }}
-          >
-            {copied ? 'COPIED ✓' : 'COPY NOTE'}
-          </button>
-        </>
-      )}
     </div>
   );
 }
