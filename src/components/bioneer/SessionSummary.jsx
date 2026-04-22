@@ -8,9 +8,6 @@ import SessionShareButton from "./share/SessionShareCard";
 import { generateRegressionCue } from "@/lib/adaptiveFeedbackEngine";
 import FaultHistoryPanel from "./ui/FaultHistoryPanel";
 import FreestyleReplay from "./history/FreestyleReplay";
-import { COLORS, FONT } from "./ui/DesignTokens";
-import { base44 } from "@/api/base44Client";
-import NextActionRow from "./session/NextActionRow";
 
 function ScoreBar({ score }) {
   const color = score >= 80 ? "#22C55E" : score >= 65 ? "#EAB308" : "#EF4444";
@@ -176,18 +173,18 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
       />
       <div className="max-w-sm w-full rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 space-y-5">
 
-        {/* AXIS Opening Statement */}
-        <div className="text-center py-2">
-          {aiLoading ? (
-            <p className="animate-pulse" style={{ fontSize: 9, color: COLORS.textTertiary, fontFamily: FONT.mono }}>
-              AXIS is reviewing your session...
-            </p>
-          ) : aiAnalysis ? (
-            <p style={{ fontSize: 13, color: COLORS.gold, fontFamily: FONT.mono, lineHeight: 1.6, textAlign: 'center' }}>
-              {aiAnalysis}
-            </p>
-          ) : null}
-        </div>
+        {/* AXIS Summary — first element */}
+        {(aiLoading || aiAnalysis) && (
+          <div className="text-center py-2">
+            {aiLoading ? (
+              <div className="h-4 w-3/4 mx-auto rounded animate-pulse" style={{ background: 'rgba(201,168,76,0.2)' }} />
+            ) : (
+              <p className="text-xs leading-relaxed font-medium" style={{ color: '#C9A84C', fontFamily: "'DM Mono', monospace" }}>
+                "{aiAnalysis}"
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -215,27 +212,16 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
         {/* AXIS FOCUS — single fault card */}
         {(() => {
           const topFault = (sessionData.top_faults || [])[0];
-          let faultLabel, correctionText;
-          if (topFault) {
-            faultLabel = topFault.replace(/_/g, ' ');
-            // Try to get coaching text from exercise def for this fault at WARNING level
-            const coachKey = `${topFault}_WARNING`;
-            const coachMsg = exerciseDef?.coaching?.[coachKey];
-            correctionText = coachMsg || coachingText || 'This fault appeared most in this session. Focus on it specifically next time.';
-          } else {
-            faultLabel = 'Clean session.';
-            correctionText = 'Increase load or range of motion next time.';
-          }
+          const faultText = topFault
+            ? `${topFault.replace(/_/g, ' ')}. ${coachingText || 'Focus on this pattern in your next session.'}`
+            : 'Clean session. Increase load or range next time.';
           return (
-            <div style={{ borderLeft: `2px solid ${COLORS.gold}`, background: COLORS.surface, borderRight: `1px solid ${COLORS.borderLight}`, borderTop: `1px solid ${COLORS.borderLight}`, borderBottom: `1px solid ${COLORS.borderLight}`, padding: 16, borderRadius: 8 }}>
-              <p style={{ fontSize: 8, letterSpacing: '0.15em', textTransform: 'uppercase', color: COLORS.textTertiary, fontFamily: FONT.mono, marginBottom: 8 }}>
-                AXIS FOCUS
+            <div className="rounded-xl border-l-2 p-3" style={{ background: 'rgba(201,168,76,0.06)', borderColor: '#C9A84C' }}>
+              <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ fontFamily: "'DM Mono', monospace", color: 'rgba(201,168,76,0.7)' }}>
+                ✦ AXIS FOCUS
               </p>
-              <p style={{ fontSize: 12, color: COLORS.textPrimary, fontFamily: FONT.mono, textTransform: 'capitalize', marginBottom: 4 }}>
-                {faultLabel}
-              </p>
-              <p style={{ fontSize: 10, color: COLORS.textSecondary, fontFamily: FONT.mono, lineHeight: 1.6 }}>
-                {correctionText}
+              <p className="text-[10px] leading-relaxed capitalize" style={{ color: 'rgba(255,255,255,0.65)', fontFamily: "'DM Mono', monospace" }}>
+                {faultText}
               </p>
             </div>
           );
@@ -300,9 +286,30 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
           </div>
         )}
 
+        {/* AXIS Coaching */}
+        {coachingText && (
+          <div className="rounded-xl bg-[#C9A84C]/10 border border-[#C9A84C]/20 p-3">
+            <p className="text-[10px] text-[#C9A84C]/70 uppercase tracking-widest mb-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
+              AXIS Coaching
+            </p>
+            <p className="text-xs text-white/60 leading-relaxed">"{coachingText}"</p>
+          </div>
+        )}
+
         {/* Fault History Panel */}
         {sessionData.exercise_id && (
           <FaultHistoryPanel exerciseId={sessionData.exercise_id} />
+        )}
+
+        {/* Fallback alerts */}
+        {!coachingText && topAlertJoints.length > 0 && (
+          <div className="rounded-xl bg-[#EF4444]/10 border border-[#EF4444]/20 p-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-[#EF4444]" />
+              <span className="text-xs text-[#EF4444] font-medium uppercase tracking-wider">Top Warnings</span>
+            </div>
+            <p className="text-xs text-white/50">{topAlertJoints.map((j) => (j || "").replace(/_/g, " ")).join(", ")}</p>
+          </div>
         )}
 
         {/* Gold badge */}
@@ -338,7 +345,33 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
         )}
 
         {/* Next action cards */}
-        <NextActionRow sessionData={sessionData} navigate={navigate} />
+        <div className="grid grid-cols-3 gap-2">
+          <button onClick={() => { if (onSave) onSave(); navigate?.('/FormCheck'); }}
+            className="py-3 rounded-lg border text-center"
+            style={{ background: 'rgba(201,168,76,0.06)', borderColor: 'rgba(201,168,76,0.25)' }}>
+            <Play className="w-4 h-4 mx-auto mb-1" style={{ color: '#C9A84C' }} />
+            <span className="text-[8px] tracking-[0.1em] uppercase font-bold block" style={{ color: '#C9A84C' }}>Train Again</span>
+          </button>
+          <button onClick={() => navigate?.('/TechniqueInsights')}
+            className="py-3 rounded-lg border text-center"
+            style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' }}>
+            <Check className="w-4 h-4 mx-auto mb-1 text-white/50" />
+            <span className="text-[8px] tracking-[0.1em] uppercase font-bold block text-white/50">Review Form</span>
+          </button>
+          <button onClick={() => {
+            // Save movement to profile for quick access
+            const movId = sessionData.exercise_id || sessionData.movement_id;
+            if (movId) {
+              const saved = JSON.parse(localStorage.getItem('bioneer_saved_movements') || '[]');
+              if (!saved.includes(movId)) { saved.push(movId); localStorage.setItem('bioneer_saved_movements', JSON.stringify(saved)); }
+            }
+          }}
+            className="py-3 rounded-lg border text-center"
+            style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' }}>
+            <Trophy className="w-4 h-4 mx-auto mb-1 text-white/50" />
+            <span className="text-[8px] tracking-[0.1em] uppercase font-bold block text-white/50">Save to Program</span>
+          </button>
+        </div>
 
         {/* Actions */}
         <div className="flex gap-3">
