@@ -22,18 +22,19 @@ export function getServerKeyStatus() {
 }
 
 function getUserApiKey() {
-  return localStorage.getItem('formwise_gemini_key') || localStorage.getItem('bioneer_gemini_key') || null;
+  // Only reads a key explicitly entered by the user in Settings — never an app-level key
+  return localStorage.getItem('formwise_gemini_key') || null;
 }
 
 function getCoachSettings() {
   return {
-    tone: localStorage.getItem('formwise_coach_tone') || localStorage.getItem('bioneer_coach_tone') || 'Direct',
-    athleteLevel: localStorage.getItem('formwise_athlete_level') || localStorage.getItem('bioneer_athlete_level') || 'Intermediate',
+    tone: localStorage.getItem('formwise_coach_tone') || 'Direct',
+    athleteLevel: localStorage.getItem('formwise_athlete_level') || 'Intermediate',
   };
 }
 
 function isAiEnabled() {
-  return localStorage.getItem('formwise_ai_enabled') !== 'false' && localStorage.getItem('bioneer_ai_enabled') !== 'false';
+  return localStorage.getItem('formwise_ai_enabled') !== 'false';
 }
 
 function buildFallbackSystemPrompt(tone, athleteLevel) {

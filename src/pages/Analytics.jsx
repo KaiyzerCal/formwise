@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { BarChart3, ChevronDown, ChevronUp } from "lucide-react";
-import AxisIntelligenceSurface from "../components/bioneer/analytics/AxisIntelligenceSurface";
+import { BarChart3 } from "lucide-react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
 import {
   getAnalyticsOverview,
@@ -52,7 +51,6 @@ export default function Analytics() {
 
   const [selectedMovement, setSelectedMovement] = useState(null);
   const [progressNotifications, setProgressNotifications] = useState([]);
-  const [analyticsExpanded, setAnalyticsExpanded] = useState(false);
 
   useEffect(() => {
     if (topMovement && !selectedMovement) setSelectedMovement(topMovement);
@@ -155,9 +153,6 @@ export default function Analytics() {
       <PageHeader isEmpty={overview.isEmpty} />
       <div className="p-4 lg:p-6 space-y-4">
 
-        {/* AXIS Intelligence Surface */}
-        <AxisIntelligenceSurface />
-
         {/* Step 6: Progress notifications */}
         {progressNotifications.map((n, i) => (
           <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg border"
@@ -170,35 +165,27 @@ export default function Analytics() {
           </div>
         ))}
 
-        {/* Collapsible Full Analytics */}
-        <button onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border text-[10px] font-bold tracking-[0.12em] uppercase"
-          style={{ background: COLORS.surface, borderColor: COLORS.border, color: COLORS.textSecondary, fontFamily: FONT.mono }}>
-          Full Analytics
-          {analyticsExpanded ? <ChevronUp size={14} style={{ color: COLORS.textTertiary }} /> : <ChevronDown size={14} style={{ color: COLORS.textTertiary }} />}
-        </button>
+        <WeeklyPerformanceCard />
+        <OverviewCards overview={overview} />
+        
+        {/* Premium Analytics Upgrades */}
+        <AdvancedFormScoreTrend />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <FaultCategoryBreakdown />
+          <MuscleGroupProgress />
+        </div>
 
-        {analyticsExpanded && (
-          <div className="space-y-4">
-            <WeeklyPerformanceCard />
-            <OverviewCards overview={overview} />
-            <AdvancedFormScoreTrend />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <FaultCategoryBreakdown />
-              <MuscleGroupProgress />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <FormTrendChart trendData={trend} />
-              <FaultIntelligencePanel faultData={faults} />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <MovementBreakdownPanel breakdownData={breakdown} />
-              <RiskSignalPanel riskData={risk} />
-            </div>
-            <RecentInsightsPanel insightData={insights} />
-            <MovementMasteryPanel />
-          </div>
-        )}
+        {/* Original analytics components */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <FormTrendChart trendData={trend} />
+          <FaultIntelligencePanel faultData={faults} />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <MovementBreakdownPanel breakdownData={breakdown} />
+          <RiskSignalPanel riskData={risk} />
+        </div>
+        <RecentInsightsPanel insightData={insights} />
+        <MovementMasteryPanel />
 
         {/* Step 3: Progression + Insights sections */}
         {availableMovements.length > 0 && (

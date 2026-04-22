@@ -5,7 +5,6 @@ import confetti from 'canvas-confetti';
 import toast from 'react-hot-toast';
 import { base44 } from '@/api/base44Client';
 import { getAllSessions } from '@/components/bioneer/data/unifiedSessionStore';
-import { getUnlockDescription } from '@/lib/achievementUnlocks';
 
 export const ACHIEVEMENTS = [
   { id: 'FIRST_STEP',    title: 'FIRST STEP',    desc: 'Complete your first session',                emoji: '🚀' },
@@ -98,9 +97,7 @@ export async function checkAndAwardAchievements(extraFlags = {}) {
     if (!def) continue;
     try {
       await base44.entities.UserAchievement.create({ achievement_id: id, title: def.title, earned_at: new Date().toISOString() });
-      const unlock = getUnlockDescription(id);
-      const msg = unlock ? `${def.emoji} ${def.title} — ${unlock}` : `${def.emoji} ACHIEVEMENT UNLOCKED — ${def.title}`;
-      toast(msg, { duration: 5000, style: { background: '#0c0c0c', border: '1px solid rgba(201,162,39,0.5)', color: '#C9A84C', fontFamily:"'DM Mono',monospace", fontSize: 11, fontWeight: 700, letterSpacing: '0.12em' } });
+      toast(`${def.emoji} ACHIEVEMENT UNLOCKED — ${def.title}`, { duration: 4000, style: { background: '#0c0c0c', border: '1px solid rgba(201,162,39,0.5)', color: '#C9A84C', fontFamily:"'DM Mono',monospace", fontSize: 11, fontWeight: 700, letterSpacing: '0.12em' } });
       confetti({ particleCount: 60, spread: 55, origin: { y: 0.7 }, colors: ['#C9A84C','#fff','#ffd700'] });
     } catch { /* duplicate — ignore */ }
   }

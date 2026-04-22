@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { COLORS, FONT, FONT_LINK } from '@/components/bioneer/ui/DesignTokens';
 import { base44 } from '@/api/base44Client';
 import { ACHIEVEMENTS } from '@/lib/achievements';
-import { ACHIEVEMENT_UNLOCKS, getUnlockDescription } from '@/lib/achievementUnlocks';
 import XPProgressCard from '@/components/bioneer/gamification/XPProgressCard';
 import LeaderboardPanel from '@/components/bioneer/gamification/LeaderboardPanel';
 
@@ -87,12 +86,6 @@ export default function Achievements() {
                         <p className="text-[8px] mt-1 leading-relaxed" style={{ color: COLORS.textTertiary }}>
                           {a.desc}
                         </p>
-                        {/* Unlock description */}
-                        {ACHIEVEMENT_UNLOCKS[a.id] && (
-                          <p className="text-[7px] mt-1" style={{ color: isEarned ? COLORS.gold : COLORS.textMuted }}>
-                            {isEarned ? '✦ ' : '🔒 '}{getUnlockDescription(a.id)}
-                          </p>
-                        )}
                         {isEarned && earnedRecord?.earned_at && (
                           <p className="text-[7px] mt-1.5" style={{ color: COLORS.textMuted }}>
                             {new Date(earnedRecord.earned_at).toLocaleDateString()}

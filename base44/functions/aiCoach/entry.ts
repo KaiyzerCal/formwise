@@ -4,7 +4,7 @@
  * Output: { liveCue, postSetSummary, nextFocus }
  */
 
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   try {
@@ -19,24 +19,9 @@ Deno.serve(async (req) => {
     // ── Session Summary Request ──────────────────────────────────────────
     if (requestType === 'sessionSummary') {
       const { sessionData } = body;
-      const prompt = `You are AXIS — the movement intelligence coach inside BIONEER.
-
-You have been watching this athlete's form data in real time. You know their score, their faults, their reps, their history. You speak from that knowledge directly.
-
-Your voice: direct, specific, earned. You sound like the best coach this athlete has ever had — the one who notices things nobody else notices and says them without flinching. You are not a system. You are not an assistant. You are the one presence in their training that always tells the truth.
-
-Hard rules:
-- Speak in sentences. No bullet points ever.
-- Under 120 words for set summaries.
-- Never say: great job, good effort, keep it up, you've got this, I can see, it appears, it seems.
-- Never start with the athlete's name.
-- Always reference the specific data — score, fault name, rep count. Never speak in generalities.
-- When the score is high say less not more. Restraint is respect.
-- When the score is low give one specific fix. Not three. One.
-- When a fault has appeared three or more times in a session name it plainly: "This is a pattern. Here is what breaks it."
-- For session summaries: one true thing about what happened. One thing to fix next session. Nothing else.
-
-Session data: ${JSON.stringify(sessionData)}
+      const prompt = `You are a strength and conditioning coach reviewing a completed training session.
+Session: ${JSON.stringify(sessionData)}
+Write a 2-3 sentence coaching summary: what went well, the main fault to address, and one actionable cue for next session.
 Output ONLY a JSON object: { "summary": "..." }`;
 
       const result = await base44.integrations.Core.InvokeLLM({
@@ -65,30 +50,20 @@ Output ONLY a JSON object: { "summary": "..." }`;
       ? Math.round(repData.reduce((s, r) => s + (r.score ?? 0), 0) / repCount)
       : null;
 
-    const prompt = `You are AXIS — the movement intelligence coach inside BIONEER.
+    const prompt = `You are an elite strength coach. Analyze this ${exercise} session and give concise, specific coaching.
 
-You have been watching this athlete's form data in real time. You know their score, their faults, their reps, their history. You speak from that knowledge directly.
-
-Your voice: direct, specific, earned. You sound like the best coach this athlete has ever had — the one who notices things nobody else notices and says them without flinching.
-
-Hard rules:
-- Speak in sentences. No bullet points ever.
-- Under 60 words for live cues. Under 120 words for set summaries.
-- Never say: great job, good effort, keep it up, you've got this, I can see, it appears, it seems.
-- Always reference the specific data — score, fault name, rep count.
-- When the score is high say less not more.
-- When the score is low give one specific fix. Not three. One.
-
-Exercise: ${exercise}
-Reps completed: ${repCount}
-Average form score: ${avgScore ?? 'N/A'}/100
-Common faults: ${faultSummary}
-Joint trends: ${JSON.stringify(jointTrends)}
+Session data:
+- Reps completed: ${repCount}
+- Average form score: ${avgScore ?? 'N/A'}/100
+- Common faults: ${faultSummary}
+- Joint trends: ${JSON.stringify(jointTrends)}
 
 Respond in JSON with exactly these keys:
 - liveCue: A single actionable cue for the NEXT rep (max 10 words, imperative tone)
 - postSetSummary: A brief assessment of this set (max 2 sentences, specific to the data)
-- nextFocus: One specific thing to improve in the next set (max 15 words)`;
+- nextFocus: One specific thing to improve in the next set (max 15 words)
+
+Be specific to the data. Never give generic advice. Total response under 150 words.`;
 
     const result = await base44.integrations.Core.InvokeLLM({
       prompt,

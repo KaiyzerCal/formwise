@@ -111,7 +111,7 @@ export default function Settings() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bioneer_sessions_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `formwise_sessions_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -166,11 +166,11 @@ export default function Settings() {
           </button>
         </Section>
 
-        {/* AXIS Coach */}
-        <Section title="AXIS Coach">
+        {/* AI Coach */}
+        <Section title="AI Coach">
           <ToggleRow
-            label="AXIS Coaching Enabled"
-            sublabel="Enables real-time rep feedback and session analysis"
+            label="AI Coaching Enabled"
+            sublabel="Enables Gemini-powered rep feedback and session analysis"
             checked={aiEnabled}
             onChange={setAiEnabled}
           />
@@ -188,12 +188,12 @@ export default function Settings() {
               fontFamily: FONT.mono,
             }}>
               {serverKeyStatus === true
-                ? 'AXIS COACHING ACTIVE'
+                ? 'AI COACHING ACTIVE'
                 : serverKeyStatus === false && geminiKey
                 ? 'USING PERSONAL API KEY'
                 : serverKeyStatus === null
-                ? 'AXIS STATUS UNKNOWN — START A SESSION'
-                : 'AXIS COACHING DISABLED'}
+                ? 'AI STATUS UNKNOWN — START A SESSION'
+                : 'AI COACHING DISABLED'}
             </span>
           </div>
 
@@ -241,8 +241,8 @@ export default function Settings() {
           </div>
 
           <ToggleRow
-            label="AXIS Audio Cues"
-            sublabel="Speaks AXIS coaching cues aloud via browser speech synthesis"
+            label="AI Audio Cues"
+            sublabel="Speaks Gemini coaching cues aloud via browser speech synthesis"
             checked={aiAudio}
             onChange={setAiAudio}
           />

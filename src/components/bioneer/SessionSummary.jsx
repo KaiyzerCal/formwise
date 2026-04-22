@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle, Trophy, CheckCircle2, XCircle, MinusCircle, Play } from "lucide-react";
 import ScoreTooltip from "./onboarding/ScoreTooltip";
@@ -83,7 +82,6 @@ function buildCoachingText(exerciseDef, jointData) {
 }
 
 export default function SessionSummary({ sessionData, pendingRecording, onSave, onDiscard, saving, saveOutcome }) {
-  const navigate = useNavigate();
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [adaptiveCue, setAdaptiveCue] = useState(null);
@@ -173,19 +171,6 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
       />
       <div className="max-w-sm w-full rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 space-y-5">
 
-        {/* AXIS Summary — first element */}
-        {(aiLoading || aiAnalysis) && (
-          <div className="text-center py-2">
-            {aiLoading ? (
-              <div className="h-4 w-3/4 mx-auto rounded animate-pulse" style={{ background: 'rgba(201,168,76,0.2)' }} />
-            ) : (
-              <p className="text-xs leading-relaxed font-medium" style={{ color: '#C9A84C', fontFamily: "'DM Mono', monospace" }}>
-                "{aiAnalysis}"
-              </p>
-            )}
-          </div>
-        )}
-
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -209,28 +194,35 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
 
         <ScoreBar score={score} />
 
-        {/* AXIS FOCUS — single fault card */}
-        {(() => {
-          const topFault = (sessionData.top_faults || [])[0];
-          const faultText = topFault
-            ? `${topFault.replace(/_/g, ' ')}. ${coachingText || 'Focus on this pattern in your next session.'}`
-            : 'Clean session. Increase load or range next time.';
-          return (
-            <div className="rounded-xl border-l-2 p-3" style={{ background: 'rgba(201,168,76,0.06)', borderColor: '#C9A84C' }}>
-              <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ fontFamily: "'DM Mono', monospace", color: 'rgba(201,168,76,0.7)' }}>
-                ✦ AXIS FOCUS
+        {/* AI Coaching Note */}
+        {(aiLoading || aiAnalysis) && (
+          <div className="rounded-xl border p-3 space-y-2" style={{ background: 'rgba(201,168,76,0.06)', borderColor: 'rgba(201,168,76,0.25)' }}>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-widest" style={{ fontFamily: "'DM Mono', monospace", color: 'rgba(201,168,76,0.7)' }}>
+                AI Coaching Note
               </p>
-              <p className="text-[10px] leading-relaxed capitalize" style={{ color: 'rgba(255,255,255,0.65)', fontFamily: "'DM Mono', monospace" }}>
-                {faultText}
-              </p>
+              <span className="text-[8px] tracking-[0.15em] uppercase px-1.5 py-0.5 rounded"
+                style={{ background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontFamily: "'DM Mono', monospace" }}>
+                ✦ GEMINI
+              </span>
             </div>
-          );
-        })()}
+            {aiLoading ? (
+              <div className="space-y-1.5 animate-pulse">
+                <div className="h-2.5 rounded-full w-full" style={{ background: 'rgba(201,168,76,0.15)' }} />
+                <div className="h-2.5 rounded-full w-4/5" style={{ background: 'rgba(201,168,76,0.10)' }} />
+              </div>
+            ) : (
+              <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)', fontFamily: "'DM Mono', monospace" }}>
+                {aiAnalysis}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: sessionData.session_units ? "ANALYZED" : "REPS", value: sessionData.session_units || sessionData.reps_detected || 0 },
+            { label: "REPS", value: sessionData.reps_detected || 0 },
             { label: "PEAK", value: `${sessionData.form_score_peak || 0}%` },
             { label: "LOW", value: `${sessionData.form_score_lowest || 0}%` },
           ].map((stat) => (
@@ -276,21 +268,21 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
           </div>
         )}
 
-        {/* AXIS Next Session */}
+        {/* Adaptive Coaching Cue */}
         {adaptiveCue && (
           <div className="rounded-xl bg-[#7C3AED]/10 border border-[#7C3AED]/30 p-3">
             <p className="text-[10px] text-[#A78BFA]/70 uppercase tracking-widest mb-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
-              AXIS — Next Session
+              Next Session Focus
             </p>
             <p className="text-xs text-white/70 leading-relaxed">"{adaptiveCue}"</p>
           </div>
         )}
 
-        {/* AXIS Coaching */}
+        {/* Traditional Coaching */}
         {coachingText && (
           <div className="rounded-xl bg-[#C9A84C]/10 border border-[#C9A84C]/20 p-3">
             <p className="text-[10px] text-[#C9A84C]/70 uppercase tracking-widest mb-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
-              AXIS Coaching
+              Coaching
             </p>
             <p className="text-xs text-white/60 leading-relaxed">"{coachingText}"</p>
           </div>
@@ -343,35 +335,6 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
             Replay Recording
           </button>
         )}
-
-        {/* Next action cards */}
-        <div className="grid grid-cols-3 gap-2">
-          <button onClick={() => { if (onSave) onSave(); navigate?.('/FormCheck'); }}
-            className="py-3 rounded-lg border text-center"
-            style={{ background: 'rgba(201,168,76,0.06)', borderColor: 'rgba(201,168,76,0.25)' }}>
-            <Play className="w-4 h-4 mx-auto mb-1" style={{ color: '#C9A84C' }} />
-            <span className="text-[8px] tracking-[0.1em] uppercase font-bold block" style={{ color: '#C9A84C' }}>Train Again</span>
-          </button>
-          <button onClick={() => navigate?.('/TechniqueInsights')}
-            className="py-3 rounded-lg border text-center"
-            style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' }}>
-            <Check className="w-4 h-4 mx-auto mb-1 text-white/50" />
-            <span className="text-[8px] tracking-[0.1em] uppercase font-bold block text-white/50">Review Form</span>
-          </button>
-          <button onClick={() => {
-            // Save movement to profile for quick access
-            const movId = sessionData.exercise_id || sessionData.movement_id;
-            if (movId) {
-              const saved = JSON.parse(localStorage.getItem('bioneer_saved_movements') || '[]');
-              if (!saved.includes(movId)) { saved.push(movId); localStorage.setItem('bioneer_saved_movements', JSON.stringify(saved)); }
-            }
-          }}
-            className="py-3 rounded-lg border text-center"
-            style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' }}>
-            <Trophy className="w-4 h-4 mx-auto mb-1 text-white/50" />
-            <span className="text-[8px] tracking-[0.1em] uppercase font-bold block text-white/50">Save to Program</span>
-          </button>
-        </div>
 
         {/* Actions */}
         <div className="flex gap-3">

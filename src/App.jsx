@@ -124,10 +124,13 @@ const AuthenticatedApp = () => {
 };
 
 
-// Voice coaching + onboarding localStorage defaults
+// P1: Voice coaching + onboarding localStorage defaults
 if (typeof window !== 'undefined') {
   if (localStorage.getItem('formwise_ai_audio') === null) {
     localStorage.setItem('formwise_ai_audio', 'true');
+  }
+  if (localStorage.getItem('bioneer_onboarded') === null) {
+    localStorage.setItem('bioneer_onboarded', 'false');
   }
 }
 

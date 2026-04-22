@@ -74,7 +74,7 @@ export default function TechniqueStudioCoachingPanel({
                 textTransform: 'uppercase',
               }}
             >
-              AXIS:
+              Coach Says:
             </span>
           </div>
           <p
