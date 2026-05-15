@@ -6,6 +6,7 @@
 
 const LOW      = 'low';
 const MODERATE = 'moderate';
+const HIGH     = 'high';
 const CRITICAL = 'critical';
 
 function r(detected, severity, metric, message, cue) {
@@ -228,7 +229,7 @@ export const FaultRuleLibrary = {
 
   incompleteHipLockout(j, angles) {
     const hip = angles?.hipHingeL ?? null;
-    return r(hip != null && hip < 165, MODERATE, hip, 'Squeeze glutes — fully extend at top');
+    return r(hip != null && hip < 168, HIGH, hip, 'Squeeze glutes — fully extend at top');
   },
 
   // ── BALANCE / STABILITY ─────────────────────────────────────────────────────

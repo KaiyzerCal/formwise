@@ -9,30 +9,30 @@
  *  - COM vertical motion as secondary signal
  *  - Frame-buffer stability (3 consecutive frames)
  *  - ROM validation (> 40° required to count rep)
+ *  - Bottom angle hit: primary angle must reach profile.bottomAngle threshold
+ *  - ROM completeness: achieved ROM vs theoretical max for the exercise
  *  - Visibility gating
  */
 
 const STATES = ['START', 'ECCENTRIC', 'BOTTOM', 'CONCENTRIC', 'LOCKOUT'];
-const CONFIRM_FRAMES = 3;       // consecutive frames required for transition
+const CONFIRM_FRAMES = 3;
 const VISIBILITY_THRESHOLD = 0.7;
-const ANGLE_VEL_EMA = 0.3;     // for angle velocity smoothing
-const VEL_DESCEND  = -2;       // °/frame threshold
-const VEL_ASCEND   =  2;       // °/frame threshold
-const VEL_PAUSE    =  0.5;     // °/frame — "still"
-const MIN_ROM      = 40;       // degrees
+const ANGLE_VEL_EMA = 0.3;
+const VEL_DESCEND  = -2;
+const VEL_ASCEND   =  2;
+const VEL_PAUSE    =  0.5;
+const MIN_ROM      = 40;
 const STATE_TIMEOUT_MS = 8000;
 
 export class RepDetector {
   constructor(profile) {
     this.profile = profile;
 
-    // State machine
     this.state        = 'START';
     this.stateAt      = null;
     this.confirmCount = 0;
     this.pendingState = null;
 
-    // Rep tracking
     this.repCount      = 0;
     this.repStartMs    = null;
     this.eccentricMs   = null;
@@ -41,31 +41,24 @@ export class RepDetector {
     this.phaseTimeline = [];
     this.bottomDetected  = false;
     this.lockoutDetected = false;
+    // Track whether the exercise-specific depth and extension thresholds were met
+    this.bottomAngleHit  = false;  // primary angle ≤ profile's bottomAngle target
+    this.lockoutAngleHit = false;  // primary angle ≥ profile's lockoutAngle (enforced by state transition)
 
-    // Angle tracking for ROM + velocity
-    this.prevAngle     = null;
+    this.prevAngle      = null;
     this.angleVelSmooth = 0;
-    this.minAngle      = Infinity;
-    this.maxAngle      = -Infinity;
+    this.minAngle       = Infinity;
+    this.maxAngle       = -Infinity;
   }
 
-  /**
-   * @param {Object} smoothedJoints      — 2D joints from StabilizationEngine
-   * @param {Object} smoothedVelocities  — 2D velocities (existing pipeline)
-   * @param {Object} angles              — from KinematicsEngine
-   * @param {number} tMs                 — timestamp ms
-   * @param {Object} [visibility]        — joint visibility scores
-   */
   evaluate(smoothedJoints, smoothedVelocities, angles, tMs, visibility = {}) {
     const cfg = this.profile;
 
-    // ── Visibility gate ────────────────────────────────────────────────────
     if (cfg.visibilityJoints) {
       const lowConf = cfg.visibilityJoints.some(j => (visibility[j] ?? 1) < VISIBILITY_THRESHOLD);
       if (lowConf) return null;
     }
 
-    // ── Primary angle + velocity ───────────────────────────────────────────
     const primaryAngle = angles[cfg.primaryAngleKey] ?? null;
     if (primaryAngle == null) return null;
 
@@ -74,60 +67,53 @@ export class RepDetector {
     const av = this.angleVelSmooth;
     this.prevAngle = primaryAngle;
 
-    // Track range
     if (primaryAngle < this.minAngle) this.minAngle = primaryAngle;
     if (primaryAngle > this.maxAngle) this.maxAngle = primaryAngle;
 
-    // ── Secondary joint confirmation ───────────────────────────────────────
+    // Check whether the target bottom angle was actually reached this rep
+    // bottomAngle lives at cfg.thresholds.bottomAngle or cfg.bottomAngle
+    const targetBottom = cfg.thresholds?.bottomAngle ?? cfg.bottomAngle ?? null;
+    if (targetBottom != null && primaryAngle <= targetBottom) {
+      this.bottomAngleHit = true;
+    }
+
     const secAngle = cfg.secondaryAngleKey ? (angles[cfg.secondaryAngleKey] ?? null) : null;
     const secVel   = cfg.secondaryAngleKey ? this._getSecVel(secAngle) : null;
+    const comDir   = this._comDirection(smoothedJoints);
+    const age      = this.stateAt != null ? tMs - this.stateAt : Infinity;
 
-    // ── COM signal ─────────────────────────────────────────────────────────
-    const comDir = this._comDirection(smoothedJoints);
-
-    // ── State age / timeout ────────────────────────────────────────────────
-    const age = this.stateAt != null ? tMs - this.stateAt : Infinity;
-
-    // ── Determine candidate next state ────────────────────────────────────
     let candidate = null;
 
     switch (this.state) {
       case 'START':
-        // Eccentric: primary descending
         if (this._descending(av) && (comDir === 'down' || comDir === null))
           candidate = 'ECCENTRIC';
         break;
 
       case 'ECCENTRIC':
-        // Bottom: paused AND angle at minimum (hip near minimum)
         if (this._paused(av) && secAngle == null || this._paused(av))
           candidate = 'BOTTOM';
-        // Timeout
         if (age > STATE_TIMEOUT_MS) { this._reset(); return null; }
         break;
 
       case 'BOTTOM':
-        // Concentric: primary ascending + secondary confirmation
         if (this._ascending(av) && (secVel == null || secVel > 0) && (comDir === 'up' || comDir === null))
           candidate = 'CONCENTRIC';
         if (age > STATE_TIMEOUT_MS) { this._reset(); return null; }
         break;
 
       case 'CONCENTRIC':
-        // Lockout: angle above threshold AND paused
         if (primaryAngle >= cfg.lockoutAngle && this._paused(av))
           candidate = 'LOCKOUT';
         if (age > STATE_TIMEOUT_MS) { this._reset(); return null; }
         break;
 
       case 'LOCKOUT':
-        // Next rep begins when descending again
         if (this._descending(av) && (comDir === 'down' || comDir === null))
           candidate = 'ECCENTRIC';
         break;
     }
 
-    // ── Frame-buffer confirmation ──────────────────────────────────────────
     if (candidate && candidate === this.pendingState) {
       this.confirmCount++;
     } else {
@@ -137,7 +123,6 @@ export class RepDetector {
 
     if (this.confirmCount < CONFIRM_FRAMES) return null;
 
-    // Transition confirmed
     this.confirmCount = 0;
     this.pendingState = null;
 
@@ -155,12 +140,14 @@ export class RepDetector {
     switch (newState) {
       case 'ECCENTRIC':
         if (prev === 'START' || prev === 'LOCKOUT') {
-          this.repStartMs   = tMs;
-          this.eccentricMs  = tMs;
-          this.minAngle     = this.prevAngle ?? Infinity;
-          this.maxAngle     = this.prevAngle ?? -Infinity;
+          this.repStartMs      = tMs;
+          this.eccentricMs     = tMs;
+          this.minAngle        = this.prevAngle ?? Infinity;
+          this.maxAngle        = this.prevAngle ?? -Infinity;
           this.bottomDetected  = false;
           this.lockoutDetected = false;
+          this.bottomAngleHit  = false;
+          this.lockoutAngleHit = false;
           event = { type: 'PHASE_ECCENTRIC', tMs };
         }
         break;
@@ -176,47 +163,80 @@ export class RepDetector {
         event = { type: 'PHASE_CONCENTRIC', tMs };
         break;
 
-      case 'LOCKOUT':
+      case 'LOCKOUT': {
         this.lockoutDetected = true;
-        // Validate and count rep/event
+        this.lockoutAngleHit = true; // state machine enforces angle >= lockoutAngle to reach here
+
         const rom = this.maxAngle - this.minAngle;
         const dur = tMs - (this.repStartMs ?? tMs);
-        const valid = this.bottomDetected && rom >= MIN_ROM && dur >= (this.profile.minRepMs ?? 800);
+
+        // Rep is valid only if: bottom phase was entered AND bottom angle threshold was met
+        const targetBottom = this.profile.thresholds?.bottomAngle ?? this.profile.bottomAngle ?? null;
+        const depthAchieved = targetBottom == null ? true : this.bottomAngleHit;
+        const valid = this.bottomDetected && depthAchieved && rom >= MIN_ROM
+                   && dur >= (this.profile.minRepMs ?? 800);
+
+        // ROM completeness: how much of the theoretical full ROM was achieved (0–1)
+        const lockoutAngle = this.profile.lockoutAngle ?? 170;
+        const bottomAngle  = targetBottom ?? (lockoutAngle - 100);
+        const theoreticalROM = lockoutAngle - bottomAngle;
+        const romCompleteness = theoreticalROM > 0
+          ? Math.min(1, Math.max(0, rom / theoreticalROM))
+          : null;
+
+        const eccentricTimeMs = this.bottomMs && this.eccentricMs
+          ? this.bottomMs - this.eccentricMs
+          : null;
 
         if (valid) {
           this.repCount++;
-          // Use EVENT_COMPLETE for event-type movements, REP_COMPLETE for rep-type
-          const isEvent = this.profile.movementType === 'event' ||
-            this.profile.repValidationMode === 'event_cycle' ||
-            this.profile.repValidationMode === 'peak_detect';
+          const isEvent = this.profile.movementType === 'event'
+            || this.profile.repValidationMode === 'event_cycle'
+            || this.profile.repValidationMode === 'peak_detect';
+
           event = {
-            type:           isEvent ? 'EVENT_COMPLETE' : 'REP_COMPLETE',
-            repNumber:      this.repCount,
+            type:              isEvent ? 'EVENT_COMPLETE' : 'REP_COMPLETE',
+            repNumber:         this.repCount,
             tMs,
-            rangeOfMotion:  Math.round(rom),
-            eccentricTime:  this.bottomMs && this.eccentricMs ? this.bottomMs - this.eccentricMs : null,
-            concentricTime: tMs && this.concentricMs ? tMs - this.concentricMs : null,
-            pauseTime:      this.concentricMs && this.bottomMs ? this.concentricMs - this.bottomMs : null,
-            durationMs:     dur,
-            phaseTimeline:  [...this.phaseTimeline],
-            repScore:       this._scoreRep(rom, dur),
+            rangeOfMotion:     Math.round(rom),
+            romCompleteness,          // 0–1: fraction of theoretical full ROM achieved
+            bottomAngleHit:    this.bottomAngleHit,
+            lockoutAngleHit:   this.lockoutAngleHit,
+            eccentricTime:     eccentricTimeMs,
+            concentricTime:    tMs && this.concentricMs ? tMs - this.concentricMs : null,
+            pauseTime:         this.concentricMs && this.bottomMs
+                                 ? this.concentricMs - this.bottomMs : null,
+            durationMs:        dur,
+            phaseTimeline:     [...this.phaseTimeline],
+            repScore:          this._scoreRep(rom, dur, eccentricTimeMs, romCompleteness),
           };
         }
         this.phaseTimeline = [];
         break;
+      }
     }
 
     return event;
   }
 
-  _scoreRep(rom, durationMs) {
-    // Simple heuristic: good ROM + controlled tempo = higher score
-    const romScore   = Math.min(1, (rom - MIN_ROM) / 60) * 60;        // 0–60
-    const tempoScore = durationMs > 1500 && durationMs < 6000 ? 25 : 10; // 25 for controlled
+  _scoreRep(rom, durationMs, eccentricMs, romCompleteness) {
+    // ROM quality (0–60): prefer completeness metric when available
+    const romFraction = romCompleteness != null
+      ? romCompleteness
+      : Math.min(1, (rom - MIN_ROM) / 60);
+    const romScore = romFraction * 60;
+
+    // Eccentric tempo (0–25): reward a controlled descent (1.5–4 s)
+    let tempoScore = 10;
+    if (durationMs > 1500 && durationMs < 6000) tempoScore = 20;
+    if (eccentricMs != null) {
+      if (eccentricMs >= 1500 && eccentricMs <= 4000) tempoScore = Math.min(25, tempoScore + 5);
+      else if (eccentricMs < 600)                     tempoScore = Math.max(5,  tempoScore - 10);
+    }
+
     return Math.round(Math.max(0, Math.min(100, romScore + tempoScore + 15)));
   }
 
-  // Secondary joint velocity tracking
   _prevSecAngle = null;
   _getSecVel(angle) {
     if (angle == null) return null;
@@ -225,14 +245,15 @@ export class RepDetector {
     return v;
   }
 
-  // COM vertical direction from smoothed joints
   _comY = null;
   _comDirection(joints) {
-    const pts = ['l_shoulder', 'r_shoulder', 'l_hip', 'r_hip', 'l_knee', 'r_knee']
+    const pts = ['l_shoulder','r_shoulder','l_hip','r_hip','l_knee','r_knee']
       .map(k => joints[k]?.y).filter(v => v != null);
     if (pts.length < 4) return null;
     const comY = pts.reduce((a, b) => a + b, 0) / pts.length;
-    const dir = this._comY != null ? (comY > this._comY ? 'down' : comY < this._comY ? 'up' : 'still') : null;
+    const dir = this._comY != null
+      ? (comY > this._comY ? 'down' : comY < this._comY ? 'up' : 'still')
+      : null;
     this._comY = comY;
     return dir;
   }
@@ -254,16 +275,20 @@ export class RepDetector {
 
   reset() {
     this._reset();
-    this.repCount      = 0;
-    this.repStartMs    = null;
-    this.eccentricMs   = null;
-    this.concentricMs  = null;
-    this.bottomMs      = null;
-    this.prevAngle     = null;
-    this.angleVelSmooth = 0;
-    this.minAngle      = Infinity;
-    this.maxAngle      = -Infinity;
-    this._prevSecAngle = null;
-    this._comY         = null;
+    this.repCount        = 0;
+    this.repStartMs      = null;
+    this.eccentricMs     = null;
+    this.concentricMs    = null;
+    this.bottomMs        = null;
+    this.prevAngle       = null;
+    this.angleVelSmooth  = 0;
+    this.minAngle        = Infinity;
+    this.maxAngle        = -Infinity;
+    this.bottomDetected  = false;
+    this.lockoutDetected = false;
+    this.bottomAngleHit  = false;
+    this.lockoutAngleHit = false;
+    this._prevSecAngle   = null;
+    this._comY           = null;
   }
 }

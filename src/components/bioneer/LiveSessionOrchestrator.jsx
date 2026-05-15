@@ -200,12 +200,14 @@ export class LiveSessionOrchestrator {
 
     if (repEvent?.type === 'REP_COMPLETE' || repEvent?.type === 'EVENT_COMPLETE') {
       const masteryScore = this.mastery.score({
-        jointResults:   this.lastJointResults,
-        frameBuffer:    this.frameBuffer.slice(-60),
-        faults:         confirmedFaults,
-        confidence:     poseConf,
-        repDurationMs:  repEvent.durationMs ?? 0,
+        jointResults:    this.lastJointResults,
+        frameBuffer:     this.frameBuffer.slice(-60),
+        faults:          confirmedFaults,
+        confidence:      poseConf,
+        repDurationMs:   repEvent.durationMs ?? 0,
         movementContext: movCtx,
+        romCompleteness: repEvent.romCompleteness ?? null,
+        eccentricTimeMs: repEvent.eccentricTime   ?? null,
       });
       this.logger.logRep(repEvent, masteryScore, this.currentFaults);
       this.onRep?.({ repNumber: repEvent.repNumber, score: masteryScore, masteryScore, tMs });

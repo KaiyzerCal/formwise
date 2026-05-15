@@ -31,7 +31,7 @@ function checkEarned(sessions, extraFlags = {}) {
 
   if (sessions.length >= 1)  earned.add('FIRST_STEP');
   if (sessions.length >= 50) earned.add('IRON_WILL');
-  if (sessions.some(s => (s.movement_score ?? s.form_score_overall ?? 0) >= 95)) earned.add('PERFECTIONIST');
+  if (sessions.some(s => (s.average_form_score ?? s.movement_score ?? 0) >= 95)) earned.add('PERFECTIONIST');
   if (sessions.some(s => (s.reps_detected ?? 0) >= 10 && !s.top_faults?.length && !s.alerts?.length)) earned.add('NO_FAULTS');
   if (sessions.some(s => s.started_at && new Date(s.started_at).getHours() < 7)) earned.add('EARLY_RISER');
 
@@ -56,8 +56,21 @@ function checkEarned(sessions, extraFlags = {}) {
     const id = s.movement_id || s.exercise_id;
     if (!id) return;
     if (!exMap[id]) exMap[id] = [];
-    exMap[id].push(s.movement_score ?? s.form_score_overall ?? 0);
+    exMap[id].push(s.average_form_score ?? s.movement_score ?? 0);
   });
+
+  // DEPTH_MASTER: squat session with 10+ reps and no shallow_depth fault recorded
+  const squatIds = new Set(['squat','back_squat','goblet_squat','front_squat','overhead_squat']);
+  const hasDepthMaster = sessions.some(s => {
+    const id = s.movement_id || s.exercise_id;
+    if (!squatIds.has(id)) return false;
+    const reps = s.rep_count ?? s.reps_detected ?? 0;
+    if (reps < 10) return false;
+    const faults = s.top_faults ?? [];
+    const freq   = s.fault_frequency ?? {};
+    return !faults.includes('shallow_depth') && !(freq['shallow_depth'] > 0);
+  });
+  if (hasDepthMaster) earned.add('DEPTH_MASTER');
 
   // FORM_FREAK
   if (Object.values(exMap).some(scores => scores.length >= 10 && scores.reduce((a,b)=>a+b,0)/scores.length >= 85)) earned.add('FORM_FREAK');

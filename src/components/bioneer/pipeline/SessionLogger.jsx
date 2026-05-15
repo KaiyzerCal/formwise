@@ -31,12 +31,15 @@ export class SessionLogger {
 
   logRep(repEvent, score, faultIds) {
     this.session.reps.push({
-      repNumber:  repEvent.repNumber,
-      startMs:    repEvent.tMs - (repEvent.durationMs ?? 0),
-      endMs:      repEvent.tMs,
-      durationMs: repEvent.durationMs ?? 0,
+      repNumber:       repEvent.repNumber,
+      startMs:         repEvent.tMs - (repEvent.durationMs ?? 0),
+      endMs:           repEvent.tMs,
+      durationMs:      repEvent.durationMs ?? 0,
       score,
-      faultIds:   faultIds ?? [],
+      faultIds:        faultIds ?? [],
+      romCompleteness: repEvent.romCompleteness ?? null,
+      bottomAngleHit:  repEvent.bottomAngleHit  ?? null,
+      eccentricTimeMs: repEvent.eccentricTime   ?? null,
     });
   }
 

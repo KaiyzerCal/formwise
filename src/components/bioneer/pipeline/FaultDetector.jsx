@@ -55,6 +55,12 @@ const FAULT_MODULES = {
         return angles.asymmetry?.knee != null && angles.asymmetry.knee > 18;
       },
     },
+    {
+      id: 'incomplete_lockout', label: 'Incomplete hip extension', cue: 'Stand tall — lock hips out',
+      severity: 'HIGH', isRisk: false,
+      phases: ['lockout','ascent'],
+      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
+    },
   ],
 
   // ─── DEADLIFT ─────────────────────────────────────────────────────────────
@@ -84,6 +90,12 @@ const FAULT_MODULES = {
         if (!velocities?.l_hip || !velocities?.chest) return false;
         return velocities.l_hip.y < -0.008 && Math.abs(velocities.chest.y) < 0.003;
       },
+    },
+    {
+      id: 'incomplete_lockout', label: 'Incomplete hip extension', cue: 'Drive hips through — full lockout',
+      severity: 'HIGH', isRisk: false,
+      phases: ['lockout'],
+      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
     },
   ],
 
@@ -514,9 +526,9 @@ const FAULT_MODULES = {
     },
     {
       id: 'incomplete_lockout', label: 'Incomplete hip extension', cue: 'Stand fully at top',
-      severity: 'LOW', isRisk: false,
+      severity: 'HIGH', isRisk: false,
       phases: ['lockout'],
-      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 165; },
+      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
     },
   ],
 
@@ -691,7 +703,16 @@ const FAULT_MODULES = {
       severity: 'MODERATE', isRisk: false,
       phases: ['bottom'],
       check(j, angles) {
-        return angles.elbowL != null && angles.elbowL > 100;
+        return angles.elbowL != null && angles.elbowL > 95;
+      },
+    },
+    {
+      id: 'chest_contact_missed', label: 'Bar not reaching chest', cue: 'Lower bar to chest — full ROM',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['bottom'],
+      check(j, angles) {
+        if (!j.l_wrist || !j.chest) return false;
+        return j.l_wrist.y < j.chest.y - 0.05;
       },
     },
     {
@@ -889,6 +910,45 @@ const FAULT_MODULES = {
       check(j, angles, baseline, velocities) {
         if (!velocities?.chest) return false;
         return Math.abs(velocities.chest.y) > 0.015;
+      },
+    },
+  ],
+
+  // ─── GLUTE BRIDGE / HIP THRUST ───────────────────────────────────────────
+  glute_bridge: [
+    {
+      id: 'incomplete_extension', label: 'Incomplete hip extension', cue: 'Drive hips higher — squeeze glutes',
+      severity: 'HIGH', isRisk: false,
+      phases: ['top', 'lockout', 'concentric'],
+      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
+    },
+    {
+      id: 'asymmetric_bridge', label: 'Hips not level', cue: 'Drive both hips equally',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['hold', 'top', 'concentric'],
+      check(j, angles) {
+        if (!j.l_hip || !j.r_hip) return false;
+        return Math.abs(j.l_hip.y - j.r_hip.y) > 0.05;
+      },
+    },
+    {
+      id: 'knee_cave', label: 'Knees caving in', cue: 'Push knees apart',
+      severity: 'MODERATE', isRisk: true,
+      phases: ['ascent', 'top', 'concentric'],
+      check(j, angles) {
+        if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
+        const kneeW  = j.r_knee.x  - j.l_knee.x;
+        const ankleW = j.r_ankle.x - j.l_ankle.x;
+        return ankleW > 0 && (kneeW / ankleW) < 0.72;
+      },
+    },
+    {
+      id: 'lumbar_hyperextension', label: 'Lower back overarching', cue: 'Rib cage down at top',
+      severity: 'MODERATE', isRisk: true,
+      phases: ['top', 'hold'],
+      check(j, angles) {
+        if (!j.chest || !j.pelvis) return false;
+        return j.chest.x - j.pelvis.x < -0.08;
       },
     },
   ],

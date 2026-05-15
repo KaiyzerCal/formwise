@@ -93,7 +93,7 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
     if (!sessionData) return;
     
     // Generate adaptive cue based on form score
-    const score = Math.max(0, Math.min(100, sessionData.movement_score ?? sessionData.form_score_overall ?? 0));
+    const score = Math.max(0, Math.min(100, sessionData.average_form_score ?? sessionData.movement_score ?? sessionData.form_score_overall ?? 0));
     const cue = generateRegressionCue(sessionData.exercise_id, score);
     if (cue) setAdaptiveCue(cue);
 
@@ -126,7 +126,7 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
     return <FreestyleReplay session={replaySession} onClose={() => setShowingReplay(false)} />;
   }
 
-  const score = Math.round(Math.max(0, Math.min(100, sessionData.movement_score ?? sessionData.form_score_overall ?? 0)));
+  const score = Math.round(Math.max(0, Math.min(100, sessionData.average_form_score ?? sessionData.movement_score ?? sessionData.form_score_overall ?? 0)));
   const exerciseDef = sessionData.exercise_def;
   const jointData = sessionData.joint_data || {};
 
@@ -223,8 +223,8 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: "REPS", value: sessionData.reps_detected || 0 },
-            { label: "PEAK", value: `${sessionData.form_score_peak || 0}%` },
-            { label: "LOW", value: `${sessionData.form_score_lowest || 0}%` },
+            { label: "PEAK", value: `${sessionData.highest_form_score ?? sessionData.form_score_peak ?? 0}%` },
+            { label: "LOW",  value: `${sessionData.lowest_form_score  ?? sessionData.form_score_lowest ?? 0}%` },
           ].map((stat) => (
             <div key={stat.label} className="text-center rounded-xl bg-white/[0.04] py-3 border border-white/5">
               <div className="text-base font-bold text-white" style={{ fontFamily: "'DM Mono', monospace" }}>{stat.value}</div>
@@ -253,6 +253,49 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Per-Rep Timeline */}
+        {reps.length > 0 && (
+          <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
+            <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3" style={{ fontFamily: "'DM Mono', monospace" }}>
+              Rep Timeline
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {reps.map((rep, i) => {
+                const sc    = rep.score ?? 0;
+                const color = sc >= 80 ? '#22C55E' : sc >= 65 ? '#EAB308' : '#EF4444';
+                const rom   = rep.romCompleteness ?? null;
+                const depth = rep.bottomAngleHit  ?? null;
+                return (
+                  <div key={i} className="flex-shrink-0 flex flex-col items-center gap-1 min-w-[44px]">
+                    <span className="text-[9px] text-white/30" style={{ fontFamily: "'DM Mono', monospace" }}>
+                      {rep.repNumber ?? i + 1}
+                    </span>
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center border"
+                      style={{ background: `${color}18`, borderColor: `${color}40` }}>
+                      <span className="text-xs font-bold" style={{ fontFamily: "'DM Mono', monospace", color }}>{sc}</span>
+                    </div>
+                    {rom != null && (
+                      <div className="w-10 h-1 rounded-full bg-white/10 overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${Math.round(rom * 100)}%`, backgroundColor: color }} />
+                      </div>
+                    )}
+                    {depth != null && (
+                      <span className="text-[9px] font-bold" style={{ color: depth ? '#22C55E' : '#EF4444' }}>
+                        {depth ? '✓' : '✗'}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {reps.some(r => r.romCompleteness != null || r.bottomAngleHit != null) && (
+              <p className="text-[8px] text-white/20 mt-2" style={{ fontFamily: "'DM Mono', monospace" }}>
+                bar = ROM completeness · ✓/✗ = depth reached
+              </p>
+            )}
           </div>
         )}
 

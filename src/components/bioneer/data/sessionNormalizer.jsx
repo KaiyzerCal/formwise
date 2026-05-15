@@ -87,9 +87,10 @@ export function normalizeSession(rawData, meta = {}) {
 
   const durationSeconds  = safeRound(rawData.duration_seconds) ?? 0;
   const repCount         = safeRound(rawData.reps_detected)    ?? 0;
-  const avgFormScore     = clamp(rawData.form_score_overall);
-  const lowestFormScore  = clamp(rawData.form_score_lowest);
-  const highestFormScore = clamp(rawData.form_score_peak);
+  // Canonical names are preferred; legacy names kept as fallback for old cached sessions
+  const avgFormScore     = clamp(rawData.average_form_score ?? rawData.form_score_overall);
+  const lowestFormScore  = clamp(rawData.lowest_form_score  ?? rawData.form_score_lowest);
+  const highestFormScore = clamp(rawData.highest_form_score ?? rawData.form_score_peak);
   const movementScore    = clamp(rawData.movement_score);
   const trackingConf     = clamp(rawData.tracking_confidence);
 
