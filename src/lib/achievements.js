@@ -59,6 +59,19 @@ function checkEarned(sessions, extraFlags = {}) {
     exMap[id].push(s.average_form_score ?? s.movement_score ?? 0);
   });
 
+  // DEPTH_MASTER: squat session with 10+ reps and no shallow_depth fault recorded
+  const squatIds = new Set(['squat','back_squat','goblet_squat','front_squat','overhead_squat']);
+  const hasDepthMaster = sessions.some(s => {
+    const id = s.movement_id || s.exercise_id;
+    if (!squatIds.has(id)) return false;
+    const reps = s.rep_count ?? s.reps_detected ?? 0;
+    if (reps < 10) return false;
+    const faults = s.top_faults ?? [];
+    const freq   = s.fault_frequency ?? {};
+    return !faults.includes('shallow_depth') && !(freq['shallow_depth'] > 0);
+  });
+  if (hasDepthMaster) earned.add('DEPTH_MASTER');
+
   // FORM_FREAK
   if (Object.values(exMap).some(scores => scores.length >= 10 && scores.reduce((a,b)=>a+b,0)/scores.length >= 85)) earned.add('FORM_FREAK');
 

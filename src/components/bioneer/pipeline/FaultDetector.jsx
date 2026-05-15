@@ -913,6 +913,45 @@ const FAULT_MODULES = {
       },
     },
   ],
+
+  // ─── GLUTE BRIDGE / HIP THRUST ───────────────────────────────────────────
+  glute_bridge: [
+    {
+      id: 'incomplete_extension', label: 'Incomplete hip extension', cue: 'Drive hips higher — squeeze glutes',
+      severity: 'HIGH', isRisk: false,
+      phases: ['top', 'lockout', 'concentric'],
+      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
+    },
+    {
+      id: 'asymmetric_bridge', label: 'Hips not level', cue: 'Drive both hips equally',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['hold', 'top', 'concentric'],
+      check(j, angles) {
+        if (!j.l_hip || !j.r_hip) return false;
+        return Math.abs(j.l_hip.y - j.r_hip.y) > 0.05;
+      },
+    },
+    {
+      id: 'knee_cave', label: 'Knees caving in', cue: 'Push knees apart',
+      severity: 'MODERATE', isRisk: true,
+      phases: ['ascent', 'top', 'concentric'],
+      check(j, angles) {
+        if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
+        const kneeW  = j.r_knee.x  - j.l_knee.x;
+        const ankleW = j.r_ankle.x - j.l_ankle.x;
+        return ankleW > 0 && (kneeW / ankleW) < 0.72;
+      },
+    },
+    {
+      id: 'lumbar_hyperextension', label: 'Lower back overarching', cue: 'Rib cage down at top',
+      severity: 'MODERATE', isRisk: true,
+      phases: ['top', 'hold'],
+      check(j, angles) {
+        if (!j.chest || !j.pelvis) return false;
+        return j.chest.x - j.pelvis.x < -0.08;
+      },
+    },
+  ],
 };
 
 // Alias common variants

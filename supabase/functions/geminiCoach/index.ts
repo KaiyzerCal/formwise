@@ -87,8 +87,10 @@ Deno.serve(async (req: Request) => {
       exercise:            exerciseId,
       repNumber:           movementData?.repNumber ?? repCount,
       exercisePhase:       movementData?.exercisePhase,
-      activeFaults:        movementData?.active_faults ?? faultHistory ?? [],
-      sessionFaultHistory: movementData?.sessionFaultHistory ?? [],
+      activeFaults: (movementData?.active_faults ?? faultHistory ?? []).map((f: any) =>
+        f && typeof f === 'object' ? { id: f.id, label: f.label, cue: f.cue, severity: f.severity } : f),
+      sessionFaultHistory: (movementData?.sessionFaultHistory ?? []).map((f: any) =>
+        f && typeof f === 'object' ? { id: f.id, label: f.label } : f),
       formScore:           movementData?.form_score,
       formScoreTrend:      movementData?.formScoreTrend ?? [],
       kneeAngle:           movementData?.knee_angle,
