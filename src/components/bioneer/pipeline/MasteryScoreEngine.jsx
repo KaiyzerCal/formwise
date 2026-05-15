@@ -25,21 +25,21 @@ export class MasteryScoreEngine {
    * @param {Object} [params.movementContext] — MovementContextEngine output (optional)
    * @returns {number} 0-100 mastery score
    */
-  score({ jointResults = [], frameBuffer = [], faults = [], confidence = 1, repDurationMs = 0, movementContext = null }) {
+  score({ jointResults = [], frameBuffer = [], faults = [], confidence = 1, repDurationMs = 0, movementContext = null, romCompleteness = null, eccentricTimeMs = null }) {
 
     // ── Alignment quality ─────────────────────────────────────────────────
     const alignScore = this._alignmentScore(jointResults);
 
     // ── Range of motion ───────────────────────────────────────────────────
-    const romScore = this._romScore(jointResults);
+    const romScore = this._romScore(jointResults, romCompleteness);
 
     // ── Movement stability — use context engine if available ──────────────
     const stabilityScore = movementContext
       ? this._contextStabilityScore(movementContext)
       : this._stabilityScore(frameBuffer);
 
-    // ── Tempo consistency (rep duration vs session mean) ──────────────────
-    const tempoScore = this._tempoScore(repDurationMs);
+    // ── Tempo consistency (eccentric duration preferred) ──────────────────
+    const tempoScore = this._tempoScore(repDurationMs, eccentricTimeMs);
 
     // ── Rep consistency (score vs session running avg) ────────────────────
     const consistencyScore = this._consistencyScore();
@@ -100,15 +100,15 @@ export class MasteryScoreEngine {
     return total / scored.length;
   }
 
-  /** How many joints hit their optimal range → ROM score */
-  _romScore(jointResults) {
+  /** How much of the theoretical full ROM was achieved → ROM score */
+  _romScore(jointResults, romCompleteness = null) {
+    if (romCompleteness != null) {
+      return Math.round(Math.pow(romCompleteness, 0.7) * 100);
+    }
     const scored = jointResults.filter(j => j.state !== null);
     if (!scored.length) return 70;
-
     const optimalCount = scored.filter(j => j.state === 'OPTIMAL' || j.state === 'ACCEPTABLE').length;
     const ratio = optimalCount / scored.length;
-
-    // Non-linear: reward getting all joints in range
     return Math.round(Math.pow(ratio, 0.7) * 100);
   }
 
@@ -158,14 +158,17 @@ export class MasteryScoreEngine {
     return Math.round(Math.max(0, Math.min(100, (1 - avgCV * 3) * 100)));
   }
 
-  /** Rep duration consistency vs session running avg */
-  _tempoScore(repDurationMs) {
+  /** Eccentric tempo quality — rewards controlled descent (1.5–4 s) */
+  _tempoScore(repDurationMs, eccentricTimeMs = null) {
+    if (eccentricTimeMs != null) {
+      if (eccentricTimeMs >= 1500 && eccentricTimeMs <= 4000) return 92;
+      if (eccentricTimeMs >= 1000) return 78;
+      if (eccentricTimeMs >= 600)  return 60;
+      return 40; // ballistic drop
+    }
     if (!repDurationMs || repDurationMs <= 0) return 75;
-
     const history = this._repHistory;
-    if (history.length < 2) return 80; // no history yet
-
-    // Use duration history stored separately (we don't store it yet, so return neutral)
+    if (history.length < 2) return 80;
     return 78;
   }
 
