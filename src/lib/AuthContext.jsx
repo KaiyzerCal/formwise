@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { initSessionStore } from '@/components/bioneer/data/unifiedSessionStore';
 
 const AuthContext = createContext();
@@ -12,56 +12,50 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError]             = useState(null);
   const [appPublicSettings]                   = useState({ id: 'formwise' });
 
-  useEffect(() => {
-    base44.auth.isAuthenticated().then(async (authed) => {
-      if (authed) {
-        try {
-          const me = await base44.auth.me();
-          setUser(me);
-          setIsAuthenticated(true);
-          setAuthError(null);
-          // Initialize session store from cloud DB
-          initSessionStore().catch(err => console.warn('[Auth] Session store init failed:', err.message));
-        } catch (err) {
-          if (err?.message?.includes('not registered')) {
-            setAuthError({ type: 'user_not_registered', message: err.message });
-          } else {
-            setAuthError({ type: 'auth_required', message: 'Authentication required' });
-          }
-        }
-      } else {
-        setAuthError({ type: 'auth_required', message: 'Authentication required' });
-      }
-      setIsLoadingAuth(false);
-    }).catch(() => {
+  function applySession(session) {
+    if (session?.user) {
+      setUser({
+        id:    session.user.id,
+        email: session.user.email,
+        name:  session.user.user_metadata?.name ?? session.user.email?.split('@')[0] ?? 'User',
+      });
+      setIsAuthenticated(true);
+      setAuthError(null);
+      initSessionStore().catch(err =>
+        console.warn('[Auth] Session store init failed:', err.message)
+      );
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
+    }
+  }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      applySession(session);
       setIsLoadingAuth(false);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+      setIsLoadingAuth(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const logout = async (shouldRedirect = true) => {
-    await base44.auth.logout(shouldRedirect ? '/' : undefined);
+    await supabase.auth.signOut();
+    if (shouldRedirect) window.location.href = '/';
   };
 
-  const navigateToLogin = () => {
-    base44.auth.redirectToLogin();
-  };
+  const navigateToLogin = () => { window.location.href = '/'; };
 
   const checkAppState = async () => {
     setIsLoadingAuth(true);
-    try {
-      const authed = await base44.auth.isAuthenticated();
-      if (authed) {
-        const me = await base44.auth.me();
-        setUser(me);
-        setIsAuthenticated(true);
-        setAuthError(null);
-      } else {
-        setAuthError({ type: 'auth_required', message: 'Authentication required' });
-      }
-    } catch {
-      setAuthError({ type: 'auth_required', message: 'Authentication required' });
-    }
+    const { data: { session } } = await supabase.auth.getSession();
+    applySession(session);
     setIsLoadingAuth(false);
   };
 
