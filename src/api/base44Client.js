@@ -1,13 +1,18 @@
 /**
- * base44Client.js — Supabase compatibility shim.
- *
- * Provides the same API surface components expect from the old Base44 SDK
- * (base44.auth, base44.entities, base44.functions, base44.integrations)
- * but backed by Supabase. Importing components don't need to change.
+ * base44Client.js
+ * 
+ * Uses the real Base44 SDK for authentication.
+ * Uses Supabase shim for entity data operations (session store, etc.).
+ * Components import { base44 } from here — auth comes from the platform SDK,
+ * entities/integrations fall through to Supabase when available.
  */
-import { supabase, getCurrentUser, isAuthenticated as _isAuthenticated } from './supabaseClient';
+import { createClient as createBase44Client } from '@base44/sdk';
+import { supabase, getCurrentUser, isAuthenticated as _isSupabaseAuthenticated } from './supabaseClient';
 
-// ── Table registry ────────────────────────────────────────────────────────────
+// Real Base44 SDK — handles auth, login redirects, etc.
+const _base44 = createBase44Client();
+
+// ── Table registry for Supabase entity shim ───────────────────────────────────
 const TABLES = {
   FormSession:          'form_sessions',
   UserProfile:          'user_profiles',
@@ -18,25 +23,53 @@ const TABLES = {
   ExerciseTracking:     'exercise_tracking',
 };
 
-async function getUserId() {
-  const user = await getCurrentUser();
-  return user?.id ?? null;
-}
-
 function parseOrder(orderBy) {
   if (!orderBy) return { column: 'created_at', ascending: false };
   const desc = orderBy.startsWith('-');
   return { column: desc ? orderBy.slice(1) : orderBy, ascending: !desc };
 }
 
+async function getUserId() {
+  const user = await getCurrentUser();
+  return user?.id ?? null;
+}
+
 function makeEntity(entityName) {
   const table = TABLES[entityName];
-  if (!table) throw new Error(`[base44 shim] Unknown entity: ${entityName}`);
+  if (!table) {
+    // Fall back to real Base44 SDK for unknown entities
+    return _base44.entities?.[entityName] ?? null;
+  }
+
+  // If supabase client is null (secrets missing), fall through to Base44 SDK
+  if (!supabase) {
+    return _base44.entities?.[entityName] ?? {
+      async list() { return []; },
+      async create() { return {}; },
+      async update() { return {}; },
+      async delete() {},
+    };
+  }
 
   return {
     async list(orderBy, limit) {
       const { column, ascending } = parseOrder(orderBy);
       let q = supabase.from(table).select('*').order(column, { ascending });
+      if (limit) q = q.limit(limit);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+
+    async filter(filters, orderBy, limit) {
+      const { column, ascending } = parseOrder(orderBy);
+      let q = supabase.from(table).select('*');
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          q = q.eq(key, value);
+        });
+      }
+      q = q.order(column, { ascending });
       if (limit) q = q.limit(limit);
       const { data, error } = await q;
       if (error) throw error;
@@ -66,48 +99,23 @@ function makeEntity(entityName) {
   };
 }
 
-// ── Auth shim ─────────────────────────────────────────────────────────────────
-const auth = {
-  async isAuthenticated() {
-    return _isAuthenticated();
-  },
-
-  async me() {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-    return {
-      id:    user.id,
-      email: user.email,
-      name:  user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'User',
-      ...user.user_metadata,
-    };
-  },
-
-  async logout(redirectTo) {
-    await supabase.auth.signOut();
-    if (redirectTo) window.location.href = redirectTo;
-  },
-
-  redirectToLogin() {
-    window.location.href = '/';
-  },
-};
-
-// ── Functions shim (Supabase Edge Functions) ──────────────────────────────────
-const functions = {
-  async invoke(name, body) {
-    const { data, error } = await supabase.functions.invoke(name, { body });
-    if (error) throw error;
-    return { data };
-  },
-};
+// ── Build entities namespace ──────────────────────────────────────────────────
+const entities = new Proxy({}, {
+  get(_, name) {
+    return makeEntity(name);
+  }
+});
 
 // ── Storage / integrations shim ───────────────────────────────────────────────
 const integrations = {
   Core: {
     async UploadFile({ file }) {
+      if (!supabase) {
+        // Fall back to Base44 SDK
+        return _base44.integrations.Core.UploadFile({ file });
+      }
       const userId = await getUserId();
-      const ext  = file.name.split('.').pop() || 'webm';
+      const ext  = file.name?.split('.').pop() || 'webm';
       const path = `${userId ?? 'anon'}/${Date.now()}.${ext}`;
       const { data, error } = await supabase.storage
         .from('session-videos')
@@ -117,12 +125,35 @@ const integrations = {
         .from('session-videos').getPublicUrl(data.path);
       return { file_url: publicUrl };
     },
+    // Proxy other Core methods to real Base44 SDK
+    async InvokeLLM(params) {
+      return _base44.integrations.Core.InvokeLLM(params);
+    },
+    async SendEmail(params) {
+      return _base44.integrations.Core.SendEmail(params);
+    },
   },
 };
 
-// ── Build entities namespace ──────────────────────────────────────────────────
-const entities = Object.fromEntries(
-  Object.keys(TABLES).map(name => [name, makeEntity(name)])
-);
-
-export const base44 = { auth, entities, functions, integrations };
+// ── Compose final export ──────────────────────────────────────────────────────
+export const base44 = {
+  // Auth always from real Base44 SDK
+  auth: _base44.auth,
+  // Entities from Supabase shim (with fallback)
+  entities,
+  // Functions
+  functions: _base44.functions ?? {
+    async invoke(name, body) {
+      if (!supabase) return { data: null };
+      const { data, error } = await supabase.functions.invoke(name, { body });
+      if (error) throw error;
+      return { data };
+    },
+  },
+  // Integrations hybrid
+  integrations,
+  // Analytics from real SDK
+  analytics: _base44.analytics,
+  // Users from real SDK
+  users: _base44.users,
+};
