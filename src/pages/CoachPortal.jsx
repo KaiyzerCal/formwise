@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { COLORS, FONT, scoreColor, FONT_LINK } from '@/components/bioneer/ui/DesignTokens';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';

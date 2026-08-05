@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Play, Pause, SkipBack, SkipForward, FastForward } from 'lucide-react';
-import { COLORS, FONT } from '../../ui/DesignTokens';
+import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { COLORS } from '../../ui/DesignTokens';
 
 const SPEEDS = [0.25, 0.5, 0.75, 1, 1.5, 2];
 

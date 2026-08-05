@@ -2,7 +2,7 @@
  * LiveSessionHUD.jsx
  * Overlay showing pose confidence, tracking quality, joints, timer.
  */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 const GOLD = '#C9A84C';
 

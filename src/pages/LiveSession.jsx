@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { getExerciseById } from "../components/bioneer/exerciseLibrary";
 import { getSportsMovementById } from "../components/bioneer/sportsLibrary";

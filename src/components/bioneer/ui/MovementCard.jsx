@@ -1,6 +1,6 @@
 import React from "react";
 import { COLORS, FONT } from "./DesignTokens";
-import { getAnatomyData, DIFFICULTY_LABEL, RISK_LABEL } from "../library/anatomyData";
+import { getAnatomyData, DIFFICULTY_LABEL } from "../library/anatomyData";
 
 const CAT_COLORS = {
   strength:     { bg: 'rgba(201,162,39,0.1)',  border: 'rgba(201,162,39,0.3)',  text: '#c9a227' },

@@ -7,7 +7,6 @@
 import React, { useState, useEffect } from 'react';
 import { calculateMovementBaseline } from './UserMovementModel';
 import { getMovementMetrics } from './SessionLearningEngine';
-import { getConsistencyRating } from './ConsistencyAnalyzer';
 import { COLORS, FONT } from '../ui/DesignTokens';
 
 export default function MovementInsightsPanel({ movement }) {

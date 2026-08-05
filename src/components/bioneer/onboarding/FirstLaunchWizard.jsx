@@ -3,8 +3,8 @@
  * Full-screen onboarding overlay — shown once on first visit.
  * localStorage key: 'bioneer_onboarded'
  */
-import React, { useState, useEffect } from 'react';
-import { Camera, BarChart3, Brain, ChevronRight, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Camera, BarChart3, Brain, ChevronRight } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';

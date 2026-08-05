@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { EXERCISES, getExerciseById } from "../components/bioneer/exerciseLibrary";
+import { getExerciseById } from "../components/bioneer/exerciseLibrary";
 import { getSportsMovementById } from "../components/bioneer/sportsLibrary";
 import MovementLibrary from "../components/bioneer/MovementLibrary";
 import CameraView from "../components/bioneer/CameraView";
 import SessionSummary from "../components/bioneer/SessionSummary";
 import Disclaimer from "../components/bioneer/Disclaimer";
 import HomeDashboard from "../components/bioneer/dashboard/HomeDashboard";
-import { createPageUrl } from "@/utils";
 import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
 import FirstLaunchWizard, { hasCompletedOnboarding } from "../components/bioneer/onboarding/FirstLaunchWizard";
 import FormCheckHistoryView from "../components/bioneer/history/FormCheckHistoryView";
-import FormCheckReplay from "../components/bioneer/history/FormCheckReplay";
 import { saveFreestyleSession, loadFreestyleSession } from '../components/bioneer/history/sessionStorage';
 import { saveSessionVideoBlob } from '../components/bioneer/data/liveVideoStorage';
 import FreestyleReplay from '../components/bioneer/history/FreestyleReplay';

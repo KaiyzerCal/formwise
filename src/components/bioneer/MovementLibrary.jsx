@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef } from "react";
 import { EXERCISES, FREESTYLE_MODE } from "./exerciseLibrary";
 import { SPORTS_MOVEMENTS } from "./sportsLibrary";
 import ExerciseCard from "./ExerciseCard";

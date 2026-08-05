@@ -18,7 +18,7 @@ import { getTechniqueDraft } from '@/components/bioneer/technique/techniqueStora
 import { normalizeToTechniqueSession } from '@/components/bioneer/technique/studio/techniqueSessionNormalizer';
 import { useFrameSync } from '@/components/bioneer/technique/studio/useFrameSync';
 import TechniqueVideoPlayer from '@/components/bioneer/technique/studio/TechniqueVideoPlayer';
-import { ChevronDown, Play, Maximize2, X } from 'lucide-react';
+import { ChevronDown, Play, X } from 'lucide-react';
 
 export default function TechniqueInsights() {
   const [searchParams] = useSearchParams();

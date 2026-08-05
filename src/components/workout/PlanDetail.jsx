@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
+import { COLORS } from '@/components/bioneer/ui/DesignTokens';
 import { X, Edit2, ChevronRight } from 'lucide-react';
 import ExerciseTracking from './ExerciseTracking';
 

@@ -6,7 +6,6 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Play, Pause, X, Download, Send } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { drawSkeleton } from '../canvasRenderer';
-import { computeJointAngles } from '../poseEngine';
 import { exportTechniqueVideo } from '../technique/studio/useTechniqueExporter';
 import { createTechniqueDraftFromFreestyleSession } from '../technique/techniqueConverter';
 import { useNavigate } from 'react-router-dom';

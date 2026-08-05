@@ -1,5 +1,5 @@
 import React from 'react';
-import { COLORS, FONT, scoreColor } from '../ui/DesignTokens';
+import { COLORS, FONT } from '../ui/DesignTokens';
 import { Target, Repeat, Calendar, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import ScoreRing from '../ui/ScoreRing';
 

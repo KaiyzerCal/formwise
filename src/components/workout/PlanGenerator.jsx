@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { getAllSessions } from '@/components/bioneer/data/unifiedSessionStore';
-import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
+import { COLORS } from '@/components/bioneer/ui/DesignTokens';
 import { Zap, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
 export default function PlanGenerator({ onSuccess, onClose }) {

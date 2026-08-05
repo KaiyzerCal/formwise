@@ -2,8 +2,6 @@ import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 import { getAllSessions } from "../data/unifiedSessionStore";
 import { COLORS, FONT } from "../ui/DesignTokens";
-import { getExerciseById } from "../exerciseLibrary";
-import { getSportsMovementById } from "../sportsLibrary";
 import { TrendingUp, ArrowRight } from "lucide-react";
 
 // Map exercises to primary muscle groups

@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { ChevronUp, Save } from 'lucide-react';
-import { COLORS, FONT } from '../../ui/DesignTokens';
+import { COLORS } from '../../ui/DesignTokens';
 
 const COACHING_TAGS = [
   'Balance',

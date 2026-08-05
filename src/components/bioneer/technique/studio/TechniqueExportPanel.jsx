@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Download, X, AlertCircle, Film } from 'lucide-react';
+import { Download, X, Film } from 'lucide-react';
 import { COLORS, FONT } from '../../ui/DesignTokens';
 import { TechniqueExportRenderer } from './techniqueExportRenderer';
 import { exportTechniqueVideo } from './useTechniqueExporter';

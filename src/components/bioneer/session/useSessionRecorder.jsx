@@ -2,7 +2,7 @@
  * useSessionRecorder — captures video stream and pose frame data during freestyle sessions
  * Manages MediaRecorder lifecycle and pose frame buffering
  */
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { createPoseFrame, createAngleFrame } from './sessionTypes';
 
 export function useSessionRecorder(videoRef, canvasRef) {

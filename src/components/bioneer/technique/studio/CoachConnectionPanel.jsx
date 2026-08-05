@@ -8,7 +8,7 @@
  */
 
 import React, { useState } from 'react';
-import { Send, Lightbulb, Target } from 'lucide-react';
+import { Lightbulb, Target } from 'lucide-react';
 import { COLORS, FONT } from '../../ui/DesignTokens';
 
 const FOCUS_AREAS = [

@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Medal, TrendingUp, Zap } from "lucide-react";
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";

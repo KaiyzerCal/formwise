@@ -72,6 +72,6 @@ export function usePoseInferenceLoop({ videoRef, landmarkerRef, poseState, activ
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       govRef.current?.reset();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [poseState, active]);
 }

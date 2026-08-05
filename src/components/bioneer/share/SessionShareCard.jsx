@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { COLORS, FONT, scoreColor } from '../ui/DesignTokens';
-import { Share2, Download, Link, X } from 'lucide-react';
+import { Share2, Download, Link } from 'lucide-react';
 
 // Off-screen share card (1200x630)
 function ShareCardContent({ sessionData, score, exerciseName, date, repScores, topFault }) {

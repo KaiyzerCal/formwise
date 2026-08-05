@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Plus, X } from 'lucide-react';
-import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
+import { COLORS } from '@/components/bioneer/ui/DesignTokens';
 
 export default function ExerciseTracking({ planId, exercises }) {
   const [showForm, setShowForm] = useState(false);

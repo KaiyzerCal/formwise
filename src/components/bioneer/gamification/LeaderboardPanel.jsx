@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { getLeaderboard, getUserRank } from '@/lib/gamificationEngine';
 import { base44 } from '@/api/base44Client';
-import { Trophy, Medal } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 
 const MEDAL_COLORS = {
   1: { bg: 'rgba(255,215,0,0.1)', border: 'rgba(255,215,0,0.3)', color: '#FFD700', emoji: '🥇' },

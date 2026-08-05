@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { Flame, Trophy, Zap, Activity, ArrowRight, Play, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getAllSessions } from '../data/unifiedSessionStore';
 import { COLORS, FONT } from '../ui/DesignTokens';
-import { PremiumCard, StatCard, PrimaryButton, EmptyState } from '../ui/PremiumComponents';
 
 export default function HomeDashboard({ onStartSession, onViewHistory }) {
   const [userProfile, setUserProfile]   = useState(null);

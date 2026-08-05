@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { BarChart3 } from "lucide-react";
-import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
+import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 import {
   getAnalyticsOverview,
   getFormScoreTrend,

@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { Volume2, VolumeX, Settings } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { COLORS, FONT } from '../ui/DesignTokens';
 
 export default function LiveCoachingControls({

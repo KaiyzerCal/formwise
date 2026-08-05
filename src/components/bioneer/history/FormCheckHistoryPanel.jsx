@@ -3,9 +3,9 @@
  */
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Play, Download, Trash2, ChevronRight } from 'lucide-react';
+import { Play, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { COLORS, FONT } from '../ui/DesignTokens';
+import { COLORS } from '../ui/DesignTokens';
 
 export default function FormCheckHistoryPanel({ onSelectSession, loading = false }) {
   const [sessions, setSessions] = useState([]);

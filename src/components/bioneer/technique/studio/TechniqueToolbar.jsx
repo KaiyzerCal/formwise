@@ -19,7 +19,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
-import { COLORS, FONT } from '../../ui/DesignTokens';
+import { COLORS } from '../../ui/DesignTokens';
 import { TOOLS } from './useAnnotationEditor';
 
 const TOOL_ICONS = {

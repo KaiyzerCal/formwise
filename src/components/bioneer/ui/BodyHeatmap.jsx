@@ -1,5 +1,5 @@
 import React from "react";
-import { COLORS, FONT } from "./DesignTokens";
+import { COLORS } from "./DesignTokens";
 
 const REGION_MAP = {
   shoulder_l: { x: 72, y: 68 },

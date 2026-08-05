@@ -1,5 +1,5 @@
 import React from "react";
-import { COLORS, FONT, scoreColor } from "./DesignTokens";
+import { COLORS, FONT } from "./DesignTokens";
 import { AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
 import ScoreRing from "./ScoreRing";
 import PhasePill from "./PhasePill";

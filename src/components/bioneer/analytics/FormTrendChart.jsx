@@ -1,8 +1,8 @@
 import React from 'react';
 import { COLORS, FONT, scoreColor } from '../ui/DesignTokens';
 import {
-  ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine, Legend,
+  ComposedChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 
 const CustomTooltip = ({ active, payload }) => {

@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Pause, RotateCcw, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Pause, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function WorkoutPlanCard({ plan }) {

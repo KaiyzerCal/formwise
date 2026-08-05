@@ -2,10 +2,9 @@
  * FreestyleSession — Entry point for freestyle capture mode
  * Manages session lifecycle: camera → recording → history save
  */
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import MovementLibrary from '../components/bioneer/MovementLibrary';
 import FreestyleCameraView from '../components/bioneer/FreestyleCameraView';
 import FreestyleReplay from '../components/bioneer/history/FreestyleReplay';
 import { saveFreestyleSession } from '../components/bioneer/history/sessionStorage';

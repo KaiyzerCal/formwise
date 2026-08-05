@@ -4,8 +4,8 @@
  */
 
 import React from 'react';
-import { COLORS, FONT, scoreColor } from '@/components/bioneer/ui/DesignTokens';
-import { Play, Pause, Check, ChevronRight, Trash2 } from 'lucide-react';
+import { COLORS, scoreColor } from '@/components/bioneer/ui/DesignTokens';
+import { Play, Pause, Check, Trash2 } from 'lucide-react';
 
 export default function PlanCard({ plan, onSelect, onToggleStatus, onDelete }) {
   const progress = Math.round(

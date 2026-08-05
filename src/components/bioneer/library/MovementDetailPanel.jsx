@@ -5,7 +5,7 @@
  */
 import React, { useState } from 'react';
 import { COLORS, FONT } from '../ui/DesignTokens';
-import { X, ChevronRight, TrendingUp, TrendingDown, Info, Activity, AlertTriangle, Layers } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Info, Activity, AlertTriangle, Layers } from 'lucide-react';
 import { getAnatomyData, DIFFICULTY_LABEL, RISK_LABEL, DANGER_ZONE_LABELS } from './anatomyData';
 import BodyMapViewer from './BodyMapViewer';
 import FaultDetailCard from './FaultDetailCard';

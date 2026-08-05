@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { COLORS, FONT } from '../ui/DesignTokens';
-import { CheckCircle2, AlertTriangle, XCircle, Trophy } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 
 function scoreColor(s) {
   if (s >= 80) return COLORS.correct;

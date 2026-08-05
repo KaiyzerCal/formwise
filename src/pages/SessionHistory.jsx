@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { COLORS, FONT, scoreColor } from "../components/bioneer/ui/DesignTokens";
-import { getAllSessions, syncFromCloud, clearAllSessions, deleteSession } from "../components/bioneer/data/unifiedSessionStore";
+import { getAllSessions, syncFromCloud, clearAllSessions } from "../components/bioneer/data/unifiedSessionStore";
 import toast from "react-hot-toast";
 import { getAllFreestyleSessions, deleteFreestyleSession, getThumbnailUrl, clearAllFreestyleSessions } from "../components/bioneer/history/sessionStorage";
 import { deleteSessionPermanently, deleteSessionsPermanently } from "../components/bioneer/data/sessionDeletionService";

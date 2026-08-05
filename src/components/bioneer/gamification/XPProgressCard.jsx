@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { COLORS, FONT } from '../ui/DesignTokens';
 import { base44 } from '@/api/base44Client';
-import { calculateLevel, getLevelProgress, getXPToNextLevel, MAX_LEVEL } from '@/lib/gamificationEngine';
+import { getLevelProgress, getXPToNextLevel, MAX_LEVEL } from '@/lib/gamificationEngine';
 import { Zap } from 'lucide-react';
 
 export default function XPProgressCard() {
