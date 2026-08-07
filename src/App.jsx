@@ -21,6 +21,7 @@ import WorkoutPlans from './pages/WorkoutPlans';
 import CoachingHub from './pages/CoachingHub';
 import ImmersiveSession from './pages/ImmersiveSession';
 import TechniqueInsights from './pages/TechniqueInsights';
+import SuperagentChat from './pages/SuperagentChat';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -86,6 +87,12 @@ const AuthenticatedApp = () => {
       <Route path="/CoachPortal" element={
         <LayoutWrapper currentPageName="CoachPortal">
           <CoachPortal />
+        </LayoutWrapper>
+      } />
+      {/* Superagent chat — see superagent-skills/README.md for setup */}
+      <Route path="/Coach" element={
+        <LayoutWrapper currentPageName="Coach">
+          <SuperagentChat />
         </LayoutWrapper>
       } />
       {/* Achievements */}

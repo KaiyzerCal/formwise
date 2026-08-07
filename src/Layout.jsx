@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Medal, TrendingUp, Zap } from "lucide-react";
+import { Camera, GitCompare, BarChart3, BookOpen, Clock, Settings, Medal, TrendingUp, Zap, MessageCircle } from "lucide-react";
 import { FONT_LINK, COLORS, FONT } from "@/components/bioneer/ui/DesignTokens";
 import SyncStatusIndicator from "@/components/bioneer/ui/SyncStatusIndicator";
 import StreakWidget from "@/components/bioneer/ui/StreakWidget";
@@ -30,6 +30,7 @@ const MORE_ITEMS = [
   { name: 'MovementLibraryPage', labelKey: 'LIBRARY', icon: BookOpen, ariaLabel: 'Movement Library' },
   { name: 'WorkoutPlans',        labelKey: 'PLANS',   icon: Zap,      ariaLabel: 'Workout Plans' },
   { name: 'CoachPortal',         labelKey: 'COACH',   icon: BarChart3,ariaLabel: 'Coach Portal' },
+  { name: 'Coach',               labelKey: 'ASK_COACH', icon: MessageCircle, ariaLabel: 'Ask Your Coach' },
 ];
 
 const ALL_SIDEBAR = [...TRAIN_ITEMS, ...REVIEW_ITEMS, ...GROW_ITEMS, ...MORE_ITEMS];
