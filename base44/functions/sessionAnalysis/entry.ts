@@ -6,12 +6,31 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+// Simple in-memory rate limiter: userId → [timestamps]. Mirrors geminiCoach's
+// limiter — this calls a paid LLM per request with no other cost control.
+const rateLimitMap = new Map();
+const RATE_LIMIT = 10; // calls per minute per user
+
+function checkRateLimit(userId) {
+  const now = Date.now();
+  const window = 60_000;
+  const calls = (rateLimitMap.get(userId) || []).filter(t => now - t < window);
+  if (calls.length >= RATE_LIMIT) return false;
+  calls.push(now);
+  rateLimitMap.set(userId, calls);
+  return true;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    if (!checkRateLimit(user.id || user.email)) {
+      return Response.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
 
     const session = await req.json();
 
