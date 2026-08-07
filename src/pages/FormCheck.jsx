@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import toast from "react-hot-toast";
 import { getExerciseById } from "../components/bioneer/exerciseLibrary";
 import { getSportsMovementById } from "../components/bioneer/sportsLibrary";
 import MovementLibrary from "../components/bioneer/MovementLibrary";
@@ -238,6 +239,7 @@ export default function FormCheck() {
       setReplaySession(null);
     } catch (err) {
       console.error('[FormCheck] Delete error:', err);
+      toast.error('Could not delete session. Please try again.');
     }
   };
 

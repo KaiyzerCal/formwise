@@ -3,6 +3,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import toast from 'react-hot-toast';
 import { Play, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { COLORS } from '../ui/DesignTokens';
@@ -33,6 +34,7 @@ export default function FormCheckHistoryPanel({ onSelectSession, loading = false
       setSessions(prev => prev.filter(s => s.id !== sessionId));
     } catch (err) {
       console.error('[FormCheckHistoryPanel] Delete error:', err);
+      toast.error('Could not delete session. Please try again.');
     } finally {
       setDeleting(null);
     }

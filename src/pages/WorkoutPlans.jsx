@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Zap, Share2, Trash2, CalendarDays, LayoutGrid } from 'lucide-react';
 import { COLORS, FONT } from '@/components/bioneer/ui/DesignTokens';
@@ -30,6 +31,10 @@ export default function WorkoutPlans() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workoutPlans'] });
     },
+    onError: (err) => {
+      console.error('[WorkoutPlans] Update status failed:', err);
+      toast.error('Could not update plan status. Please try again.');
+    },
   });
 
   // Delete plan mutation
@@ -40,6 +45,10 @@ export default function WorkoutPlans() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workoutPlans'] });
     },
+    onError: (err) => {
+      console.error('[WorkoutPlans] Delete plan failed:', err);
+      toast.error('Could not delete plan. Please try again.');
+    },
   });
 
   // Delete all plans mutation
@@ -49,6 +58,14 @@ export default function WorkoutPlans() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workoutPlans'] });
+    },
+    onError: (err) => {
+      // Promise.all means some deletes may have already succeeded even
+      // though this rejected — refetch so the list reflects reality
+      // instead of silently going stale.
+      console.error('[WorkoutPlans] Delete all plans failed:', err);
+      queryClient.invalidateQueries({ queryKey: ['workoutPlans'] });
+      toast.error('Some plans could not be deleted. Please check the list and try again.');
     },
   });
 
