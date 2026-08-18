@@ -5,13 +5,26 @@ import pluginReactHooks from "eslint-plugin-react-hooks";
 import pluginUnusedImports from "eslint-plugin-unused-imports";
 
 export default [
+  // Global ignores. In flat config an `ignores` key sitting alongside `files`
+  // only narrows that one config object — a standalone object is what
+  // actually excludes paths from the run, which is why ESLint was still
+  // walking the minified bundle in dist/ on every invocation.
+  { ignores: ["dist/**", "build/**"] },
   {
     files: [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",
+      // src/lib holds AuthContext plus the gamification, retention and
+      // adaptive-feedback engines, and src/api holds the backend client —
+      // all of it previously unlinted, including rules-of-hooks on the
+      // context providers.
+      "src/lib/**/*.{js,mjs,cjs,jsx}",
+      "src/api/**/*.{js,mjs,cjs,jsx}",
+      "src/hooks/**/*.{js,mjs,cjs,jsx}",
       "src/Layout.jsx",
     ],
-    ignores: ["src/lib/**/*", "src/components/ui/**/*"],
+    // src/components/ui is generated shadcn scaffolding — not ours to lint.
+    ignores: ["src/components/ui/**/*"],
     ...pluginJs.configs.recommended,
     ...pluginReact.configs.flat.recommended,
     languageOptions: {

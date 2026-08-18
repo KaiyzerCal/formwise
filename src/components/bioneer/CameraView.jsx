@@ -14,7 +14,7 @@ import SessionReadinessGate      from './live/SessionReadinessGate';
 import LiveSessionHUD            from './live/LiveSessionHUD';
 import PoseErrorCard             from './live/PoseErrorCard';
 import CameraToggle              from './CameraToggle';
-import { useLiveAnalysis }       from '../motion/hooks/useLiveAnalysis';
+import { useLiveAnalysis }       from './live/useLiveAnalysis';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles, computeFormScore, setPoseCategory } from './poseEngine';
 import { initAudio, destroyAudio, beep, speak } from './audioEngine';
