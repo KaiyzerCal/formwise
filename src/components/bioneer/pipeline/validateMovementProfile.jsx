@@ -79,6 +79,17 @@ export function validateMovementProfile(profile) {
     if (typeof profile.thresholds.lockoutAngle !== 'number') {
       errors.push('"thresholds.lockoutAngle" must be a number');
     }
+    if (profile.thresholds.minPauseMs != null && typeof profile.thresholds.minPauseMs !== 'number') {
+      errors.push('"thresholds.minPauseMs" must be a number when present');
+    }
+  }
+
+  // ── Competition rules (soft check, optional) ───────────────────────────────
+  if (profile.competitionRules != null && typeof profile.competitionRules !== 'boolean') {
+    errors.push('"competitionRules" must be a boolean when present');
+  }
+  if (profile.depthStandard != null && profile.depthStandard !== 'hip_below_knee') {
+    errors.push(`Invalid depthStandard "${profile.depthStandard}" — must be "hip_below_knee" when present`);
   }
 
   const valid = errors.length === 0;

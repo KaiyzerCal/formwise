@@ -12,7 +12,8 @@
         "strength",
         "aesthetics",
         "confidence",
-        "health"
+        "health",
+        "powerlifting"
       ],
       "description": "Primary fitness goal"
     },
@@ -57,6 +58,14 @@
               "intermediate",
               "advanced"
             ]
+          },
+          "target_weight_percent": {
+            "type": "number",
+            "description": "Target load as a percentage of the lifter's e1RM for this exercise (powerlifting plans)"
+          },
+          "target_rpe": {
+            "type": "number",
+            "description": "Target rate of perceived exertion, 1-10 scale (powerlifting plans)"
           }
         }
       }

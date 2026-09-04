@@ -139,12 +139,23 @@ export class KinematicsEngine {
       asymmetry.knee = avg > 0 ? Math.abs(angles.kneeL - angles.kneeR) / avg * 100 : 0;
     }
 
+    // ── Squat depth: hip crease vs top-of-knee, absolute position (competition
+    // standard), not angle. Prefer 3D world coords (metric, camera-angle robust);
+    // fall back to normalized 2D image coords. Both conventions increase downward,
+    // so a value >= 0 means the hip has dropped to or below knee height.
+    const depthMetrics = {};
+    if (w.l_hip && w.r_hip && w.l_knee && w.r_knee) {
+      depthMetrics.hipKneeDeltaM = (w.l_hip.y + w.r_hip.y) / 2 - (w.l_knee.y + w.r_knee.y) / 2;
+    } else if (j.l_hip && j.r_hip && j.l_knee && j.r_knee) {
+      depthMetrics.hipKneeDeltaNorm = (j.l_hip.y + j.r_hip.y) / 2 - (j.l_knee.y + j.r_knee.y) / 2;
+    }
+
     // Strip nulls
     for (const k of Object.keys(angles)) {
       if (angles[k] == null) delete angles[k];
     }
 
-    return { velocities, angles: { ...angles, ...comJoints, ...locomotion }, asymmetry };
+    return { velocities, angles: { ...angles, ...comJoints, ...locomotion, ...depthMetrics }, asymmetry };
   }
 
   reset() {

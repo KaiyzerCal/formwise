@@ -40,6 +40,8 @@ export class SessionLogger {
       romCompleteness: repEvent.romCompleteness ?? null,
       bottomAngleHit:  repEvent.bottomAngleHit  ?? null,
       eccentricTimeMs: repEvent.eccentricTime   ?? null,
+      meetStandard:    repEvent.meetStandard    ?? null,
+      noLiftReasons:   repEvent.noLiftReasons   ?? null,
     });
   }
 

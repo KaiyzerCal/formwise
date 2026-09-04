@@ -34,10 +34,17 @@
     "notes": {
       "type": "string",
       "description": "Optional notes about the session"
+    },
+    "rpe": {
+      "type": "number",
+      "description": "Rate of perceived exertion for the set, 1-10 scale (0.5 increments)"
+    },
+    "estimated_1rm": {
+      "type": "number",
+      "description": "Estimated 1-rep-max derived from weight/reps/rpe at log time, same unit as weight"
     }
   },
   "required": [
-    "workout_plan_id",
     "exercise_id",
     "exercise_name",
     "weight",

@@ -28,6 +28,45 @@ function ScoreBar({ score }) {
   );
 }
 
+function MeetChip({ pass }) {
+  return (
+    <span
+      className="text-[8px] font-bold tracking-wider px-1.5 py-0.5 rounded"
+      style={{
+        color: pass ? '#22C55E' : '#EF4444',
+        background: pass ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+        fontFamily: "'DM Mono', monospace",
+      }}
+    >
+      {pass ? 'GOOD LIFT' : 'NO LIFT'}
+    </span>
+  );
+}
+
+function RpePicker({ value, onChange }) {
+  const options = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {options.map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v === value ? null : v)}
+          className="px-2 py-1 rounded-md text-[10px] font-bold border transition-colors"
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            borderColor: value === v ? '#C9A84C' : 'rgba(255,255,255,0.1)',
+            background: value === v ? 'rgba(201,168,76,0.15)' : 'transparent',
+            color: value === v ? '#C9A84C' : 'rgba(255,255,255,0.5)',
+          }}
+        >
+          {v}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function JointRow({ name, angle, state }) {
   const colors = { OPTIMAL: "#22C55E", ACCEPTABLE: "#EAB308", WARNING: "#F97316", DANGER: "#EF4444" };
   const icons = {
@@ -81,11 +120,12 @@ function buildCoachingText(exerciseDef, jointData) {
   return lines.length > 0 ? lines.join(" ") : null;
 }
 
-export default function SessionSummary({ sessionData, pendingRecording, onSave, onDiscard, saving, saveOutcome }) {
+export default function SessionSummary({ sessionData, pendingRecording, plannedWeight, onSave, onDiscard, saving, saveOutcome }) {
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [adaptiveCue, setAdaptiveCue] = useState(null);
   const [showingReplay, setShowingReplay] = useState(false);
+  const [rpe, setRpe] = useState(null);
 
   const hasRecording = pendingRecording?.videoBlob instanceof Blob && pendingRecording.videoBlob.size > 0;
 
@@ -162,6 +202,12 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
   const coachingText = buildCoachingText(exerciseDef, jointData);
   const topAlertJoints = [...new Set((sessionData.alerts || []).map((a) => a.joint))].slice(0, 3);
   const isGold = score >= 80;
+
+  // Meet-standard rollup — only meaningful for competition-rules lifts, where
+  // RepDetector attaches a meetStandard boolean to every completed rep.
+  const meetReps = reps.filter(r => r.meetStandard != null);
+  const isCompetitionLift = meetReps.length > 0;
+  const goodLiftCount = meetReps.filter(r => r.meetStandard === true).length;
 
   return (
     <div className="fixed inset-0 z-50 bg-[#0A0A0A] flex items-center justify-center p-4 overflow-y-auto">
@@ -259,9 +305,16 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
         {/* Per-Rep Timeline */}
         {reps.length > 0 && (
           <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-            <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3" style={{ fontFamily: "'DM Mono', monospace" }}>
-              Rep Timeline
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] text-white/30 uppercase tracking-widest" style={{ fontFamily: "'DM Mono', monospace" }}>
+                Rep Timeline
+              </p>
+              {isCompetitionLift && (
+                <span className="text-[9px] font-bold" style={{ fontFamily: "'DM Mono', monospace", color: goodLiftCount === meetReps.length ? '#22C55E' : '#EAB308' }}>
+                  {goodLiftCount}/{meetReps.length} would count at a meet
+                </span>
+              )}
+            </div>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {reps.map((rep, i) => {
                 const sc    = rep.score ?? 0;
@@ -282,20 +335,46 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
                         <div className="h-full rounded-full" style={{ width: `${Math.round(rom * 100)}%`, backgroundColor: color }} />
                       </div>
                     )}
-                    {depth != null && (
+                    {rep.meetStandard != null ? (
+                      <MeetChip pass={rep.meetStandard} />
+                    ) : depth != null ? (
                       <span className="text-[9px] font-bold" style={{ color: depth ? '#22C55E' : '#EF4444' }}>
                         {depth ? '✓' : '✗'}
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
             </div>
-            {reps.some(r => r.romCompleteness != null || r.bottomAngleHit != null) && (
+            {reps.some(r => r.romCompleteness != null || (r.bottomAngleHit != null && r.meetStandard == null)) && (
               <p className="text-[8px] text-white/20 mt-2" style={{ fontFamily: "'DM Mono', monospace" }}>
                 bar = ROM completeness · ✓/✗ = depth reached
               </p>
             )}
+            {isCompetitionLift && (
+              <p className="text-[8px] text-white/20 mt-2" style={{ fontFamily: "'DM Mono', monospace" }}>
+                bar = ROM completeness · GOOD LIFT/NO LIFT = meets competition standard
+                {reps.some(r => r.noLiftReasons?.length) && ` (${[...new Set(reps.flatMap(r => r.noLiftReasons ?? []))].join(', ').replace(/_/g, ' ')})`}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Set log — weight + RPE (only when a weight was actually entered in setup) */}
+        {plannedWeight != null && (
+          <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] text-white/30 uppercase tracking-widest" style={{ fontFamily: "'DM Mono', monospace" }}>
+                Set Log
+              </p>
+              {plannedWeight != null && (
+                <span className="text-xs font-bold text-white/70" style={{ fontFamily: "'DM Mono', monospace" }}>
+                  {plannedWeight.value} {plannedWeight.unit}
+                </span>
+              )}
+            </div>
+            <p className="text-[9px] text-white/30 uppercase tracking-widest">RPE</p>
+            <RpePicker value={rpe} onChange={setRpe} />
           </div>
         )}
 
@@ -389,7 +468,7 @@ export default function SessionSummary({ sessionData, pendingRecording, onSave, 
             <X className="w-4 h-4 mr-1.5" /> Discard
           </Button>
           <Button
-            onClick={onSave}
+            onClick={() => onSave(plannedWeight != null ? { rpe, plannedWeight } : undefined)}
             disabled={saving}
             className="flex-1 bg-[#C9A84C] hover:bg-[#b8943f] text-black font-bold"
           >

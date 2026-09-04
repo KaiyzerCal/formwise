@@ -232,6 +232,16 @@ export const FaultRuleLibrary = {
     return r(hip != null && hip < 168, HIGH, hip, 'Squeeze glutes — fully extend at top');
   },
 
+  incompleteOverheadLockout(j, angles) {
+    const elbow = angles?.elbowL ?? angles?.elbowR ?? null;
+    return r(elbow != null && elbow < 160, MODERATE, elbow, 'Punch arms fully overhead');
+  },
+
+  lowElbowFinish(j, angles) {
+    const elbow = angles?.elbowL ?? angles?.elbowR ?? null;
+    return r(elbow != null && elbow > 140, MODERATE, elbow, 'Drive elbows up and out at the top');
+  },
+
   // ── BALANCE / STABILITY ─────────────────────────────────────────────────────
 
   lossOfBalance(j, angles) {

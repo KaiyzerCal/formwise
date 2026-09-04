@@ -23,6 +23,7 @@ import ProgressionPanel        from "../components/bioneer/analytics/Progression
 import WeeklyPerformanceCard   from "../components/bioneer/analytics/WeeklyPerformanceCard";
 import MovementMasteryPanel    from "../components/bioneer/analytics/MovementMasteryPanel";
 import PersonalRecordsPanel    from "../components/bioneer/analytics/PersonalRecordsPanel";
+import StrengthProgressPanel   from "../components/bioneer/analytics/StrengthProgressPanel";
 import AdvancedFormScoreTrend  from "../components/bioneer/analytics/AdvancedFormScoreTrend";
 import FaultCategoryBreakdown  from "../components/bioneer/analytics/FaultCategoryBreakdown";
 import MuscleGroupProgress     from "../components/bioneer/analytics/MuscleGroupProgress";
@@ -218,6 +219,7 @@ export default function Analytics() {
             )}
           </>
         )}
+        <StrengthProgressPanel />
         <PersonalRecordsPanel />
       </div>
     </div>

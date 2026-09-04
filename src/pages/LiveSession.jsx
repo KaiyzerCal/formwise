@@ -11,6 +11,9 @@ import { saveSession, updateSession } from "../components/bioneer/data/unifiedSe
 import { persistRecordedSessionVideo } from "../components/bioneer/data/persistRecordedSessionVideo";
 import { getSessionNarrative } from "../components/bioneer/ai/GeminiCoach";
 import { getMovementProfile } from "../components/bioneer/movementProfiles/movementProfiles";
+import SetSetup from "../components/workout/SetSetup";
+import { estimateOneRepMax } from "../components/bioneer/strengthMath.jsx";
+import { base44 } from "@/api/base44Client";
 
 import { COLORS, FONT } from "../components/bioneer/ui/DesignTokens";
 import { useSessionLearning } from "../components/bioneer/learning/useSessionLearning";
@@ -22,6 +25,11 @@ import { awardSessionPoints } from "@/lib/gamificationEngine";
 import VoiceCoachingBanner from "@/components/bioneer/ui/VoiceCoachingBanner";
 import { logFault } from "@/lib/faultAccumulator";
 
+// Competition-rules lifts (see pipeline/MovementLibraryData.jsx) get a weight-entry
+// step before the camera starts, and their completed set gets logged to
+// ExerciseTracking for e1RM/%1RM tracking.
+const COMPETITION_LIFT_IDS = new Set(["back_squat", "bench_press", "deadlift", "sumo_deadlift"]);
+
 export default function LiveSession() {
    const navigate = useNavigate();
    const [phase, setPhase] = useState("select");
@@ -30,6 +38,7 @@ export default function LiveSession() {
    const [sessionData, setSessionData] = useState(null);
    const [savedSession, setSavedSession] = useState(null);
    const [saving, setSaving] = useState(false);
+   const [plannedWeight, setPlannedWeight] = useState(null);
    const [showReward, setShowReward] = useState(false);
    const [showVoiceBanner, setShowVoiceBanner] = useState(() => localStorage.getItem('bioneer_onboarded') === 'false');
    const sessionStartRef = useRef(null);
@@ -47,6 +56,16 @@ export default function LiveSession() {
 
   const handleStart = (movement) => {
     setSelectedExercise(movement);
+    if (COMPETITION_LIFT_IDS.has(movement?.id)) {
+      setPhase("setup");
+      return;
+    }
+    sessionStartRef.current = Date.now();
+    setPhase("camera");
+  };
+
+  const handleSetupConfirm = (weight) => {
+    setPlannedWeight(weight);
     sessionStartRef.current = Date.now();
     setPhase("camera");
   };
@@ -68,7 +87,7 @@ export default function LiveSession() {
     setPhase("summary");
   };
 
-  const handleSave = async () => {
+  const handleSave = async (setLog) => {
     if (!savedSession) { handleDiscard(); return; }
     setSaving(true);
     try {
@@ -86,6 +105,25 @@ export default function LiveSession() {
       setSaving(false);
 
       // ── Background tasks (fire-and-forget) ──────────────────────────
+
+      // Log the set (weight/RPE/e1RM) for competition lifts — ad-hoc, not
+      // tied to a WorkoutPlan. Skipped when the user hit "skip" in setup.
+      if (setLog?.plannedWeight) {
+        const weightLb = setLog.plannedWeight.unit === 'kg'
+          ? Math.round(setLog.plannedWeight.value * 2.20462 * 10) / 10
+          : setLog.plannedWeight.value;
+        const reps = sessionToSave.reps_detected || 0;
+        base44.entities.ExerciseTracking.create({
+          exercise_id: sessionToSave.exercise_id,
+          exercise_name: selectedExercise?.name || sessionToSave.exercise_id,
+          weight: weightLb,
+          reps,
+          sets: 1,
+          rpe: setLog.rpe ?? undefined,
+          estimated_1rm: estimateOneRepMax(weightLb, reps, setLog.rpe) ?? undefined,
+          logged_date: new Date().toISOString(),
+        }).catch(() => {});
+      }
 
       // Upload video in background, then patch session with video_url
       persistRecordedSessionVideo({
@@ -149,6 +187,7 @@ export default function LiveSession() {
     setSavedSession(null);
     setSelectedExercise(null);
     setSelectedMovementId(null);
+    setPlannedWeight(null);
     sessionStartRef.current = null;
     setShowReward(false);
     setPhase("select");
@@ -163,6 +202,16 @@ export default function LiveSession() {
     );
   }
 
+  if (phase === "setup" && selectedExercise) {
+    return (
+      <SetSetup
+        exercise={selectedExercise}
+        onConfirm={handleSetupConfirm}
+        onCancel={() => { setSelectedExercise(null); setPhase("select"); }}
+      />
+    );
+  }
+
   if (phase === "camera" && selectedExercise) {
     return <CameraView exercise={selectedExercise} onStop={handleStop} />;
   }
@@ -172,6 +221,7 @@ export default function LiveSession() {
     return (
       <SessionSummary
         sessionData={sessionData}
+        plannedWeight={plannedWeight}
         onSave={handleSave}
         onDiscard={handleDiscard}
         saving={saving}

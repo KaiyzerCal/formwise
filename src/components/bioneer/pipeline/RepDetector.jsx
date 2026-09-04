@@ -42,8 +42,9 @@ export class RepDetector {
     this.bottomDetected  = false;
     this.lockoutDetected = false;
     // Track whether the exercise-specific depth and extension thresholds were met
-    this.bottomAngleHit  = false;  // primary angle ≤ profile's bottomAngle target
-    this.lockoutAngleHit = false;  // primary angle ≥ profile's lockoutAngle (enforced by state transition)
+    this.bottomAngleHit    = false;  // primary angle ≤ profile's bottomAngle target
+    this.lockoutAngleHit   = false;  // primary angle ≥ profile's lockoutAngle (enforced by state transition)
+    this.positionDepthHit  = false;  // hip crease at/below top of knee (competition depth standard)
 
     this.prevAngle      = null;
     this.angleVelSmooth = 0;
@@ -75,6 +76,13 @@ export class RepDetector {
     const targetBottom = cfg.thresholds?.bottomAngle ?? cfg.bottomAngle ?? null;
     if (targetBottom != null && primaryAngle <= targetBottom) {
       this.bottomAngleHit = true;
+    }
+
+    // Competition depth standard (position-based, not angle) — currently only
+    // used by profiles that set depthStandard (e.g. squat's hip-below-knee rule).
+    if (cfg.depthStandard === 'hip_below_knee') {
+      const delta = angles.hipKneeDeltaM ?? angles.hipKneeDeltaNorm ?? null;
+      if (delta != null && delta >= 0) this.positionDepthHit = true;
     }
 
     const secAngle = cfg.secondaryAngleKey ? (angles[cfg.secondaryAngleKey] ?? null) : null;
@@ -148,6 +156,7 @@ export class RepDetector {
           this.lockoutDetected = false;
           this.bottomAngleHit  = false;
           this.lockoutAngleHit = false;
+          this.positionDepthHit = false;
           event = { type: 'PHASE_ECCENTRIC', tMs };
         }
         break;
@@ -170,11 +179,31 @@ export class RepDetector {
         const rom = this.maxAngle - this.minAngle;
         const dur = tMs - (this.repStartMs ?? tMs);
 
-        // Rep is valid only if: bottom phase was entered AND bottom angle threshold was met
+        // Rep is valid only if: bottom phase was entered AND bottom depth threshold was met.
+        // Competition-rules profiles with an explicit depthStandard use the stricter
+        // position-based check; everything else keeps the original angle-threshold check.
         const targetBottom = this.profile.thresholds?.bottomAngle ?? this.profile.bottomAngle ?? null;
-        const depthAchieved = targetBottom == null ? true : this.bottomAngleHit;
+        const angleDepthAchieved = targetBottom == null ? true : this.bottomAngleHit;
+        const depthAchieved = this.profile.depthStandard ? this.positionDepthHit : angleDepthAchieved;
         const valid = this.bottomDetected && depthAchieved && rom >= MIN_ROM
                    && dur >= (this.profile.minRepMs ?? 800);
+
+        // Meet-standard verdict — only computed for profiles flagged competitionRules.
+        // Reuses the same depth/lockout checks above; adds a pause-duration check
+        // (e.g. bench press "press command" pause) from the already-tracked bottom→
+        // concentric timing.
+        let meetStandard = null;
+        let noLiftReasons = null;
+        if (this.profile.competitionRules) {
+          noLiftReasons = [];
+          if (!depthAchieved) noLiftReasons.push('insufficient_depth');
+          const minPauseMs = this.profile.thresholds?.minPauseMs ?? 0;
+          if (minPauseMs > 0) {
+            const pauseMs = this.concentricMs && this.bottomMs ? this.concentricMs - this.bottomMs : null;
+            if (pauseMs == null || pauseMs < minPauseMs) noLiftReasons.push('no_pause');
+          }
+          meetStandard = noLiftReasons.length === 0;
+        }
 
         // ROM completeness: how much of the theoretical full ROM was achieved (0–1)
         const lockoutAngle = this.profile.lockoutAngle ?? 170;
@@ -209,6 +238,8 @@ export class RepDetector {
             durationMs:        dur,
             phaseTimeline:     [...this.phaseTimeline],
             repScore:          this._scoreRep(rom, dur, eccentricTimeMs, romCompleteness),
+            meetStandard,      // true/false for competitionRules profiles, else null
+            noLiftReasons,     // e.g. ['insufficient_depth','no_pause'], else null
           };
         }
         this.phaseTimeline = [];
@@ -284,11 +315,12 @@ export class RepDetector {
     this.angleVelSmooth  = 0;
     this.minAngle        = Infinity;
     this.maxAngle        = -Infinity;
-    this.bottomDetected  = false;
-    this.lockoutDetected = false;
-    this.bottomAngleHit  = false;
-    this.lockoutAngleHit = false;
-    this._prevSecAngle   = null;
-    this._comY           = null;
+    this.bottomDetected   = false;
+    this.lockoutDetected  = false;
+    this.bottomAngleHit   = false;
+    this.lockoutAngleHit  = false;
+    this.positionDepthHit = false;
+    this._prevSecAngle    = null;
+    this._comY            = null;
   }
 }

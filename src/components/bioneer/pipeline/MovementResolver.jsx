@@ -43,8 +43,14 @@ export class MovementResolver {
    */
   static resolve(id) {
     const canonical = ALIASES[id] ?? id;
-    const lib    = getMovement(canonical);
-    const legacy = MOVEMENT_PROFILES[canonical] ?? MOVEMENT_PROFILES[id] ?? MOVEMENT_PROFILES['back_squat'];
+    const lib = getMovement(canonical);
+    let legacy = MOVEMENT_PROFILES[canonical] ?? MOVEMENT_PROFILES[id];
+    if (!legacy) {
+      // Same "no real profile" case as getMovement's fallback above — warn
+      // rather than silently masquerading as back_squat.
+      console.warn(`[MovementResolver] No legacy profile for "${id}" — falling back to "back_squat"`);
+      legacy = MOVEMENT_PROFILES['back_squat'];
+    }
     const merged = { ...legacy, ...lib };
 
     // Derive movementType if not already set

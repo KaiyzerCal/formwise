@@ -13,7 +13,7 @@ const FAULT_MODULES = {
     {
       id: 'knee_valgus', label: 'Knee valgus', cue: 'Drive knees out',
       severity: 'HIGH', isRisk: true,
-      phases: ['descent','bottom','ascent'],  // squat phases
+      phases: ['eccentric','bottom','concentric'],  // squat phases (matches PM_KNEE_SQ)
       check(j, angles) {
         if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
         const kneeW  = j.r_knee.x  - j.l_knee.x;
@@ -24,7 +24,7 @@ const FAULT_MODULES = {
     {
       id: 'spine_collapse', label: 'Torso collapse', cue: 'Stay taller',
       severity: 'HIGH', isRisk: true,
-      phases: ['descent','bottom'],
+      phases: ['eccentric','bottom'],
       check(j, angles) {
         if (!j.chest || !j.pelvis) return false;
         return Math.abs(j.chest.x - j.pelvis.x) > 0.12;
@@ -41,7 +41,7 @@ const FAULT_MODULES = {
     {
       id: 'heel_rise', label: 'Heel rise', cue: 'Press heels down',
       severity: 'MODERATE', isRisk: false,
-      phases: ['descent','bottom'],
+      phases: ['eccentric','bottom'],
       check(j, angles, baseline) {
         if (!j.l_ankle || !baseline?.ankleY) return false;
         return j.l_ankle.y < baseline.ankleY - 0.04;
@@ -50,7 +50,7 @@ const FAULT_MODULES = {
     {
       id: 'asymmetric_load', label: 'Asymmetric loading', cue: 'Even your weight',
       severity: 'MODERATE', isRisk: false,
-      phases: ['descent','bottom','ascent'],
+      phases: ['eccentric','bottom','concentric'],
       check(j, angles) {
         return angles.asymmetry?.knee != null && angles.asymmetry.knee > 18;
       },
@@ -58,8 +58,21 @@ const FAULT_MODULES = {
     {
       id: 'incomplete_lockout', label: 'Incomplete hip extension', cue: 'Stand tall — lock hips out',
       severity: 'HIGH', isRisk: false,
-      phases: ['lockout','ascent'],
+      phases: ['lockout','concentric'],
       check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
+    },
+    {
+      // Position-based competition depth standard (hip crease at/below top of
+      // knee) — distinct from the angle-based 'shallow_depth' check above.
+      // Only fires once world/normalized landmarks put the hip clearly above
+      // knee height, so it doesn't double up with 'shallow_depth' on borderline reps.
+      id: 'insufficient_depth_competition', label: 'Above competition depth', cue: 'Hip crease below knee for a good lift',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['bottom'],
+      check(j, angles) {
+        const delta = angles.hipKneeDeltaM ?? angles.hipKneeDeltaNorm ?? null;
+        return delta != null && delta < -0.02;
+      },
     },
   ],
 
@@ -68,15 +81,19 @@ const FAULT_MODULES = {
     {
       id: 'rounded_spine', label: 'Rounded spine', cue: 'Keep chest proud',
       severity: 'HIGH', isRisk: true,
-      phases: ['pull','lower'],
+      phases: ['hinge_ascent','hinge_descent'],
       check(j, angles) {
-        return angles.trunkFwd != null && angles.trunkFwd < 155;
+        // angles.trunkFwd was never computed by KinematicsEngine (dead check).
+        // torsoLean is the closest real metric — degrees of deviation from
+        // vertical — using the same >30 threshold FaultRuleLibrary.lumbarFlexion
+        // already applies for the same "rounded spine" intent.
+        return angles.torsoLean != null && angles.torsoLean > 30;
       },
     },
     {
       id: 'bar_drift', label: 'Bar drifting forward', cue: 'Keep bar close',
       severity: 'HIGH', isRisk: false,
-      phases: ['pull'],
+      phases: ['hinge_ascent'],
       check(j, angles) {
         if (!j.l_wrist || !j.l_ankle) return false;
         return Math.abs(j.l_wrist.x - j.l_ankle.x) > 0.10;
@@ -85,7 +102,7 @@ const FAULT_MODULES = {
     {
       id: 'hips_rise_first', label: 'Hips rising early', cue: 'Push floor away',
       severity: 'MODERATE', isRisk: false,
-      phases: ['pull'],
+      phases: ['hinge_ascent'],
       check(j, angles, baseline, velocities) {
         if (!velocities?.l_hip || !velocities?.chest) return false;
         return velocities.l_hip.y < -0.008 && Math.abs(velocities.chest.y) < 0.003;
@@ -104,7 +121,7 @@ const FAULT_MODULES = {
     {
       id: 'hip_sag', label: 'Hips sagging', cue: 'Squeeze core',
       severity: 'HIGH', isRisk: true,
-      phases: ['lowering','bottom','press'],
+      phases: ['lower','bottom','press'],
       check(j, angles) {
         if (!j.chest || !j.pelvis || !j.l_ankle) return false;
         const bodyLineY = (j.chest.y + j.l_ankle.y) / 2;
@@ -114,7 +131,7 @@ const FAULT_MODULES = {
     {
       id: 'elbow_flare', label: 'Elbows flaring', cue: 'Tuck elbows in',
       severity: 'MODERATE', isRisk: false,
-      phases: ['lowering','bottom'],
+      phases: ['lower','bottom'],
       check(j, angles) {
         if (!j.l_elbow || !j.l_shoulder) return false;
         return Math.abs(j.l_elbow.x - j.l_shoulder.x) > 0.14;
@@ -166,7 +183,7 @@ const FAULT_MODULES = {
     {
       id: 'early_shoulder', label: 'Early shoulder opening', cue: 'Hips before hands',
       severity: 'HIGH', isRisk: false,
-      phases: ['separation','launch'],
+      phases: ['load','rotation'],
       check(j, angles, baseline, velocities) {
         if (!velocities?.chest || !velocities?.l_hip) return false;
         return Math.abs(velocities.chest.x) > Math.abs(velocities.l_hip.x) * 1.3;
@@ -175,7 +192,7 @@ const FAULT_MODULES = {
     {
       id: 'casting', label: 'Casting (hands away)', cue: 'Hands inside the ball',
       severity: 'HIGH', isRisk: false,
-      phases: ['launch','contact'],
+      phases: ['rotation','finish'],
       check(j, angles) {
         if (!j.r_wrist || !j.r_elbow) return false;
         return j.r_wrist.x < j.r_elbow.x - 0.06;
@@ -184,7 +201,7 @@ const FAULT_MODULES = {
     {
       id: 'collapse_contact', label: 'Collapsing at contact', cue: 'Stay through the ball',
       severity: 'MODERATE', isRisk: false,
-      phases: ['contact'],
+      phases: ['finish'],
       check(j, angles) {
         return angles.kneeL != null && angles.kneeL < 130;
       },
@@ -219,7 +236,7 @@ const FAULT_MODULES = {
     {
       id: 'back_arch', label: 'Excessive back arch', cue: 'Brace your core',
       severity: 'HIGH', isRisk: true,
-      phases: ['press','lockout','concentric'],
+      phases: ['drive','lockout'],
       check(j, angles) {
         if (!j.chest || !j.pelvis) return false;
         return Math.abs(j.chest.x - j.pelvis.x) > 0.10;
@@ -228,7 +245,7 @@ const FAULT_MODULES = {
     {
       id: 'forward_lean', label: 'Bar drifting forward', cue: 'Press over ears',
       severity: 'MODERATE', isRisk: false,
-      phases: ['press','concentric'],
+      phases: ['drive'],
       check(j, angles) {
         if (!j.r_wrist || !j.r_shoulder) return false;
         return j.r_wrist.x > j.r_shoulder.x + 0.06;
@@ -258,13 +275,15 @@ const FAULT_MODULES = {
     },
   ],
 
-  // ─── BARBELL ROW / DUMBBELL ROW ───────────────────────────────────────────
-  barbell_row: [
+  // ─── BENT OVER ROW (barbell_row/dumbbell_row/cable_row are orphaned ids with
+  // no movement profile — keyed here under bent_over_row, the id that actually
+  // resolves via MovementLibraryData.jsx) ────────────────────────────────────
+  bent_over_row: [
     {
       id: 'rounded_spine', label: 'Rounded spine', cue: 'Chest proud — flat back',
       severity: 'HIGH', isRisk: true,
       phases: ['pull','peak','lower'],
-      check(j, angles) { return angles.trunkFwd != null && angles.trunkFwd < 150; },
+      check(j, angles) { return angles.torsoLean != null && angles.torsoLean > 30; },
     },
     {
       id: 'elbow_flare', label: 'Elbows flaring out', cue: 'Drive elbows back',
@@ -288,7 +307,7 @@ const FAULT_MODULES = {
     {
       id: 'excessive_lean', label: 'Excessive back lean', cue: 'Slight lean only',
       severity: 'MODERATE', isRisk: false,
-      phases: ['pull','peak'],
+      phases: ['pull','top'],
       check(j, angles) {
         if (!j.chest || !j.pelvis) return false;
         return Math.abs(j.chest.x - j.pelvis.x) > 0.14;
@@ -297,7 +316,7 @@ const FAULT_MODULES = {
     {
       id: 'elbow_flare', label: 'Elbows flaring', cue: 'Elbows down and back',
       severity: 'MODERATE', isRisk: false,
-      phases: ['pull','peak'],
+      phases: ['pull','top'],
       check(j, angles) {
         if (!j.l_elbow || !j.l_shoulder) return false;
         return Math.abs(j.l_elbow.x - j.l_shoulder.x) > 0.16;
@@ -306,7 +325,7 @@ const FAULT_MODULES = {
     {
       id: 'short_range', label: 'Insufficient range', cue: 'Full arm extension',
       severity: 'LOW', isRisk: false,
-      phases: ['hang','extend'],
+      phases: ['hang','descent'],
       check(j, angles) { return angles.elbowL != null && angles.elbowL < 145; },
     },
   ],
@@ -316,7 +335,7 @@ const FAULT_MODULES = {
     {
       id: 'elbow_flare', label: 'Elbows flaring wide', cue: 'Elbows track back',
       severity: 'MODERATE', isRisk: true,
-      phases: ['descent','bottom'],
+      phases: ['dip'],
       check(j, angles) {
         if (!j.l_elbow || !j.l_shoulder) return false;
         return Math.abs(j.l_elbow.x - j.l_shoulder.x) > 0.15;
@@ -325,13 +344,13 @@ const FAULT_MODULES = {
     {
       id: 'too_deep', label: 'Excessive depth', cue: 'Stop at 90 degrees elbow',
       severity: 'MODERATE', isRisk: true,
-      phases: ['bottom'],
+      phases: ['dip'],
       check(j, angles) { return angles.elbowL != null && angles.elbowL < 75; },
     },
     {
       id: 'forward_lean', label: 'Excessive forward lean', cue: 'Stay upright for triceps',
       severity: 'LOW', isRisk: false,
-      phases: ['descent','bottom','press'],
+      phases: ['dip','drive'],
       check(j, angles) {
         if (!j.chest || !j.pelvis) return false;
         return Math.abs(j.chest.x - j.pelvis.x) > 0.15;
@@ -344,7 +363,7 @@ const FAULT_MODULES = {
     {
       id: 'elbow_flare', label: 'Elbows flaring', cue: '45-degree elbow angle',
       severity: 'MODERATE', isRisk: true,
-      phases: ['lowering','bottom'],
+      phases: ['lower','bottom'],
       check(j, angles) {
         if (!j.l_elbow || !j.l_shoulder) return false;
         return Math.abs(j.l_elbow.x - j.l_shoulder.x) > 0.14;
@@ -516,7 +535,7 @@ const FAULT_MODULES = {
       id: 'rounded_spine', label: 'Rounded spine', cue: 'Neutral spine throughout',
       severity: 'HIGH', isRisk: true,
       phases: ['hinge','bottom'],
-      check(j, angles) { return angles.trunkFwd != null && angles.trunkFwd < 148; },
+      check(j, angles) { return angles.torsoLean != null && angles.torsoLean > 30; },
     },
     {
       id: 'knee_bend', label: 'Excessive knee bend', cue: 'Soft knee — not a squat',
@@ -683,7 +702,7 @@ const FAULT_MODULES = {
     {
       id: 'elbow_flare', label: 'Elbows flaring', cue: 'Tuck elbows 45 degrees',
       severity: 'HIGH', isRisk: true,
-      phases: ['lowering', 'bottom', 'press'],
+      phases: ['lower', 'bottom', 'press'],
       check(j, angles) {
         if (!j.l_elbow || !j.l_shoulder) return false;
         return Math.abs(j.l_elbow.x - j.l_shoulder.x) > 0.18;
@@ -692,7 +711,7 @@ const FAULT_MODULES = {
     {
       id: 'bar_path', label: 'Uneven bar path', cue: 'Drive evenly — both sides',
       severity: 'MODERATE', isRisk: false,
-      phases: ['press', 'lowering'],
+      phases: ['press', 'lower'],
       check(j, angles) {
         if (!j.l_wrist || !j.r_wrist) return false;
         return Math.abs(j.l_wrist.y - j.r_wrist.y) > 0.07;
@@ -718,7 +737,7 @@ const FAULT_MODULES = {
     {
       id: 'wrist_break', label: 'Wrists breaking back', cue: 'Stack wrists — neutral',
       severity: 'MODERATE', isRisk: true,
-      phases: ['press', 'lowering', 'bottom'],
+      phases: ['press', 'lower', 'bottom'],
       check(j, angles) {
         if (!j.l_wrist || !j.l_elbow) return false;
         return j.l_wrist.y < j.l_elbow.y - 0.06;
@@ -731,7 +750,7 @@ const FAULT_MODULES = {
     {
       id: 'kipping', label: 'Excessive kipping', cue: 'Dead hang — control it',
       severity: 'MODERATE', isRisk: false,
-      phases: ['pull', 'ascent'],
+      phases: ['pull', 'descent'],
       check(j, angles) {
         if (!j.pelvis || !j.chest) return false;
         return Math.abs(j.pelvis.x - j.chest.x) > 0.12;
@@ -826,7 +845,7 @@ const FAULT_MODULES = {
     {
       id: 'hip_sag', label: 'Hips sagging', cue: 'Squeeze glutes — lift hips',
       severity: 'HIGH', isRisk: true,
-      phases: ['hold'],
+      phases: ['bottom'],
       check(j, angles) {
         if (!j.chest || !j.pelvis || !j.l_ankle) return false;
         const bodyLineY = (j.chest.y + j.l_ankle.y) / 2;
@@ -836,7 +855,7 @@ const FAULT_MODULES = {
     {
       id: 'hip_pike', label: 'Hips too high', cue: 'Lower hips — keep body flat',
       severity: 'MODERATE', isRisk: false,
-      phases: ['hold'],
+      phases: ['bottom'],
       check(j, angles) {
         if (!j.chest || !j.pelvis || !j.l_ankle) return false;
         const bodyLineY = (j.chest.y + j.l_ankle.y) / 2;
@@ -846,7 +865,7 @@ const FAULT_MODULES = {
     {
       id: 'head_drop', label: 'Head dropping', cue: 'Neutral spine — eyes down',
       severity: 'LOW', isRisk: false,
-      phases: ['hold'],
+      phases: ['bottom'],
       check(j, angles) {
         if (!j.l_ear || !j.chest) return false;
         return j.l_ear.y > j.chest.y + 0.08;
@@ -878,7 +897,7 @@ const FAULT_MODULES = {
     {
       id: 'short_stride', label: 'Stride too short', cue: 'Step further forward',
       severity: 'LOW', isRisk: false,
-      phases: ['step'],
+      phases: ['bottom'],
       check(j, angles) {
         if (!j.l_ankle || !j.r_ankle) return false;
         return Math.abs(j.l_ankle.x - j.r_ankle.x) < 0.15;
@@ -891,13 +910,13 @@ const FAULT_MODULES = {
     {
       id: 'stance_too_high', label: 'Standing too tall', cue: 'Stay low in athletic stance',
       severity: 'MODERATE', isRisk: false,
-      phases: ['shuffle','setup'],
+      phases: ['stance','drive'],
       check(j, angles) { return angles.kneeL != null && angles.kneeL > 155; },
     },
     {
       id: 'feet_crossing', label: 'Feet too close together', cue: 'Keep shoulder-width base',
       severity: 'MODERATE', isRisk: true,
-      phases: ['shuffle'],
+      phases: ['contact'],
       check(j, angles) {
         if (!j.l_ankle || !j.r_ankle) return false;
         return Math.abs(j.l_ankle.x - j.r_ankle.x) < 0.08;
@@ -906,7 +925,7 @@ const FAULT_MODULES = {
     {
       id: 'trunk_bounce', label: 'Trunk bouncing', cue: 'Smooth head height — stay level',
       severity: 'LOW', isRisk: false,
-      phases: ['shuffle'],
+      phases: ['drive','contact'],
       check(j, angles, baseline, velocities) {
         if (!velocities?.chest) return false;
         return Math.abs(velocities.chest.y) > 0.015;
@@ -919,13 +938,13 @@ const FAULT_MODULES = {
     {
       id: 'incomplete_extension', label: 'Incomplete hip extension', cue: 'Drive hips higher — squeeze glutes',
       severity: 'HIGH', isRisk: false,
-      phases: ['top', 'lockout', 'concentric'],
+      phases: ['lockout', 'hinge_ascent'],
       check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
     },
     {
       id: 'asymmetric_bridge', label: 'Hips not level', cue: 'Drive both hips equally',
       severity: 'MODERATE', isRisk: false,
-      phases: ['hold', 'top', 'concentric'],
+      phases: ['lockout', 'hinge_ascent'],
       check(j, angles) {
         if (!j.l_hip || !j.r_hip) return false;
         return Math.abs(j.l_hip.y - j.r_hip.y) > 0.05;
@@ -934,7 +953,7 @@ const FAULT_MODULES = {
     {
       id: 'knee_cave', label: 'Knees caving in', cue: 'Push knees apart',
       severity: 'MODERATE', isRisk: true,
-      phases: ['ascent', 'top', 'concentric'],
+      phases: ['hinge_ascent', 'lockout'],
       check(j, angles) {
         if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
         const kneeW  = j.r_knee.x  - j.l_knee.x;
@@ -945,19 +964,408 @@ const FAULT_MODULES = {
     {
       id: 'lumbar_hyperextension', label: 'Lower back overarching', cue: 'Rib cage down at top',
       severity: 'MODERATE', isRisk: true,
-      phases: ['top', 'hold'],
+      phases: ['lockout'],
       check(j, angles) {
         if (!j.chest || !j.pelvis) return false;
         return j.chest.x - j.pelvis.x < -0.08;
       },
     },
   ],
+
+  // ─── CROSSFIT / HYROX ───────────────────────────────────────────────────────
+  // Phase strings below match each movement's real phaseMap in
+  // MovementLibraryData.jsx (PM_KNEE_SQ / PM_LOCO / PM_HIP_HINGE / PM_V_PULL) —
+  // see the phase-gating fix earlier this session for why that matters.
+  wall_ball: [
+    {
+      id: 'knee_valgus', label: 'Knee valgus', cue: 'Drive knees out',
+      severity: 'HIGH', isRisk: true,
+      phases: ['eccentric', 'bottom'],
+      check(j, angles) {
+        if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
+        const kneeW  = j.r_knee.x  - j.l_knee.x;
+        const ankleW = j.r_ankle.x - j.l_ankle.x;
+        return ankleW > 0 && (kneeW / ankleW) < 0.72;
+      },
+    },
+    {
+      id: 'shallow_catch', label: 'Shallow catch depth', cue: 'Sit deeper into the catch',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['bottom'],
+      check(j, angles) { return angles.kneeL != null && angles.kneeL > 115; },
+    },
+    {
+      id: 'incomplete_extension', label: 'Released below full extension', cue: 'Fully extend before release',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['concentric', 'lockout'],
+      check(j, angles) { return angles.elbowL != null && angles.elbowL < 160; },
+    },
+  ],
+
+  thruster: [
+    {
+      id: 'knee_valgus', label: 'Knee valgus', cue: 'Drive knees out',
+      severity: 'HIGH', isRisk: true,
+      phases: ['eccentric', 'bottom'],
+      check(j, angles) {
+        if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
+        const kneeW  = j.r_knee.x  - j.l_knee.x;
+        const ankleW = j.r_ankle.x - j.l_ankle.x;
+        return ankleW > 0 && (kneeW / ankleW) < 0.72;
+      },
+    },
+    {
+      id: 'spine_collapse', label: 'Torso collapse', cue: 'Stay taller out of the squat',
+      severity: 'HIGH', isRisk: true,
+      phases: ['eccentric', 'bottom'],
+      check(j, angles) {
+        if (!j.chest || !j.pelvis) return false;
+        return Math.abs(j.chest.x - j.pelvis.x) > 0.12;
+      },
+    },
+    {
+      id: 'incomplete_lockout', label: 'Incomplete overhead lockout', cue: 'Punch the bar fully overhead',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['concentric', 'lockout'],
+      check(j, angles) { return angles.elbowR != null && angles.elbowR < 160; },
+    },
+  ],
+
+  sled_push: [
+    {
+      id: 'asymmetric_drive', label: 'Uneven drive', cue: 'Push evenly through both legs',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['drive', 'contact'],
+      check(j, angles) { return angles.asymmetry?.knee != null && angles.asymmetry.knee > 18; },
+    },
+    {
+      id: 'knee_valgus', label: 'Knee valgus', cue: 'Knees track over toes',
+      severity: 'MODERATE', isRisk: true,
+      phases: ['drive'],
+      check(j, angles) {
+        if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
+        const kneeW  = j.r_knee.x  - j.l_knee.x;
+        const ankleW = j.r_ankle.x - j.l_ankle.x;
+        return ankleW > 0 && (kneeW / ankleW) < 0.72;
+      },
+    },
+  ],
+
+  sled_pull: [
+    {
+      id: 'asymmetric_pull', label: 'Uneven pull', cue: 'Pull evenly through both legs',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['drive', 'contact'],
+      check(j, angles) { return angles.asymmetry?.knee != null && angles.asymmetry.knee > 18; },
+    },
+    {
+      id: 'knee_valgus', label: 'Knee valgus', cue: 'Knees track over toes',
+      severity: 'MODERATE', isRisk: true,
+      phases: ['drive'],
+      check(j, angles) {
+        if (!j.l_knee || !j.r_knee || !j.l_ankle || !j.r_ankle) return false;
+        const kneeW  = j.r_knee.x  - j.l_knee.x;
+        const ankleW = j.r_ankle.x - j.l_ankle.x;
+        return ankleW > 0 && (kneeW / ankleW) < 0.72;
+      },
+    },
+  ],
+
+  toes_to_bar: [
+    {
+      id: 'excessive_swing', label: 'Excessive kip swing', cue: 'Control the swing before you pull',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['hinge_descent', 'hinge_ascent'],
+      check(j, angles) {
+        const drift = angles?.pelvisDriftX ?? null;
+        return drift != null && Math.abs(drift) > 0.12;
+      },
+    },
+    {
+      id: 'shallow_raise', label: "Toes not reaching the bar", cue: 'Drive toes all the way to the bar',
+      severity: 'LOW', isRisk: false,
+      phases: ['hinge_bottom'],
+      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL > 35; },
+    },
+  ],
+
+  rowing_erg: [
+    {
+      id: 'rounded_back', label: 'Rounded back on the drive', cue: 'Flat back through the drive',
+      severity: 'HIGH', isRisk: true,
+      phases: ['hinge_ascent'],
+      check(j, angles) { return angles.torsoLean != null && angles.torsoLean > 30; },
+    },
+    {
+      id: 'collapsed_finish', label: 'Collapsing at the finish', cue: 'Stay tall at the finish',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['lockout'],
+      check(j, angles) {
+        if (!j.chest || !j.pelvis) return false;
+        return Math.abs(j.chest.x - j.pelvis.x) > 0.12;
+      },
+    },
+  ],
+
+  muscle_up: [
+    {
+      id: 'asymmetric_pull', label: 'Uneven pull', cue: 'Pull evenly through both arms',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['descent', 'pull'],
+      check(j, angles) {
+        if (angles.elbowL == null || angles.elbowR == null) return false;
+        const avg = (angles.elbowL + angles.elbowR) / 2;
+        return avg > 0 && (Math.abs(angles.elbowL - angles.elbowR) / avg) * 100 > 18;
+      },
+    },
+    {
+      id: 'excessive_kip', label: 'Excessive kip before the pull', cue: 'Settle the swing before pulling',
+      severity: 'LOW', isRisk: false,
+      phases: ['hang'],
+      check(j, angles) {
+        const drift = angles?.pelvisDriftX ?? null;
+        return drift != null && Math.abs(drift) > 0.12;
+      },
+    },
+    {
+      id: 'incomplete_lockout', label: 'Incomplete support lockout', cue: 'Press out to full lockout at the top',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['top'],
+      check(j, angles) { return angles.elbowL != null && angles.elbowL < 160; },
+    },
+  ],
+
+  // ─── SELF-DEFENSE / KICKBOXING ──────────────────────────────────────────────
+  // Phase strings match PM_STRIKE_ARM / PM_STRIKE_LEG / PM_KNEE_STRIKE in
+  // MovementLibraryData.jsx: guard/retract/chamber/extend/impact for strikes,
+  // stance/drive/impact/reset/stance for the knee strike.
+  jab: [
+    {
+      id: 'guard_drop', label: 'Guard dropping', cue: 'Rear hand stays up',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['chamber', 'extend', 'impact'],
+      check(j, angles) {
+        if (!j.l_shoulder || !j.neck) return false;
+        return j.neck.y - j.l_shoulder.y < 0.04;
+      },
+    },
+    {
+      id: 'head_exposed', label: 'Chin exposed', cue: 'Chin down behind the shoulder',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['extend', 'impact'],
+      check(j, angles) {
+        if (!j.nose || !j.neck) return false;
+        return j.nose.x - j.neck.x > 0.10;
+      },
+    },
+  ],
+
+  cross: [
+    {
+      id: 'guard_drop', label: 'Guard dropping', cue: 'Lead hand stays up',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['chamber', 'extend', 'impact'],
+      check(j, angles) {
+        if (!j.l_shoulder || !j.neck) return false;
+        return j.neck.y - j.l_shoulder.y < 0.04;
+      },
+    },
+    {
+      id: 'head_exposed', label: 'Chin exposed', cue: 'Head stays level through the rotation',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['extend', 'impact'],
+      check(j, angles) {
+        if (!j.nose || !j.neck) return false;
+        return j.nose.x - j.neck.x > 0.10;
+      },
+    },
+  ],
+
+  hook: [
+    {
+      id: 'guard_drop', label: 'Guard dropping', cue: 'Rear hand stays up',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['chamber', 'extend', 'impact'],
+      check(j, angles) {
+        if (!j.l_shoulder || !j.neck) return false;
+        return j.neck.y - j.l_shoulder.y < 0.04;
+      },
+    },
+    {
+      id: 'head_exposed', label: 'Chin exposed', cue: 'Chin tucked through the arc',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['extend', 'impact'],
+      check(j, angles) {
+        if (!j.nose || !j.neck) return false;
+        return j.nose.x - j.neck.x > 0.10;
+      },
+    },
+  ],
+
+  uppercut: [
+    {
+      id: 'guard_drop', label: 'Guard dropping', cue: 'Lead hand stays up',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['chamber', 'extend', 'impact'],
+      check(j, angles) {
+        if (!j.l_shoulder || !j.neck) return false;
+        return j.neck.y - j.l_shoulder.y < 0.04;
+      },
+    },
+    {
+      id: 'head_exposed', label: 'Chin exposed', cue: 'Drive up through the legs, not just the arm',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['extend', 'impact'],
+      check(j, angles) {
+        if (!j.nose || !j.neck) return false;
+        return j.nose.x - j.neck.x > 0.10;
+      },
+    },
+  ],
+
+  front_kick: [
+    {
+      id: 'loss_of_balance', label: 'Losing balance on the kick', cue: 'Post the base leg firmly',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['extend', 'impact'],
+      check(j, angles) {
+        const drift = angles?.pelvisDriftX ?? null;
+        return drift != null && Math.abs(drift) > 0.12;
+      },
+    },
+    {
+      id: 'head_drop', label: 'Chin dropping off target', cue: 'Eyes on target, chin level',
+      severity: 'LOW', isRisk: false,
+      phases: ['extend', 'impact'],
+      check(j, angles) {
+        if (!j.nose || !j.neck) return false;
+        return j.nose.x - j.neck.x > 0.10;
+      },
+    },
+  ],
+
+  roundhouse_kick: [
+    {
+      id: 'loss_of_balance', label: 'Losing balance on the kick', cue: "Pivot the base foot — don't reach off-balance",
+      severity: 'MODERATE', isRisk: false,
+      phases: ['extend', 'impact'],
+      check(j, angles) {
+        const drift = angles?.pelvisDriftX ?? null;
+        return drift != null && Math.abs(drift) > 0.12;
+      },
+    },
+    {
+      id: 'head_drop', label: 'Chin dropping', cue: 'Keep chin down through the rotation',
+      severity: 'LOW', isRisk: false,
+      phases: ['extend', 'impact'],
+      check(j, angles) {
+        if (!j.nose || !j.neck) return false;
+        return j.nose.x - j.neck.x > 0.10;
+      },
+    },
+  ],
+
+  knee_strike: [
+    {
+      id: 'loss_of_balance', label: 'Losing balance on the strike', cue: 'Stay balanced on the post leg',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['drive', 'impact'],
+      check(j, angles) {
+        const drift = angles?.pelvisDriftX ?? null;
+        return drift != null && Math.abs(drift) > 0.12;
+      },
+    },
+    {
+      id: 'guard_drop', label: 'Guard dropping', cue: 'Pull the target into the knee with your hands',
+      severity: 'LOW', isRisk: false,
+      phases: ['drive', 'impact'],
+      check(j, angles) {
+        if (!j.l_shoulder || !j.neck) return false;
+        return j.neck.y - j.l_shoulder.y < 0.04;
+      },
+    },
+  ],
+
+  // ─── OLYMPIC LIFT ACCESSORIES ───────────────────────────────────────────────
+  // Same phaseMap as deadlift (PM_HIP_HINGE), same real phase ids.
+  clean_pull: [
+    {
+      id: 'rounded_spine', label: 'Rounded spine', cue: 'Keep chest proud',
+      severity: 'HIGH', isRisk: true,
+      phases: ['hinge_ascent', 'hinge_descent'],
+      check(j, angles) { return angles.torsoLean != null && angles.torsoLean > 30; },
+    },
+    {
+      id: 'bar_drift', label: 'Bar drifting forward', cue: 'Keep bar close',
+      severity: 'HIGH', isRisk: false,
+      phases: ['hinge_ascent'],
+      check(j, angles) {
+        if (!j.l_wrist || !j.l_ankle) return false;
+        return Math.abs(j.l_wrist.x - j.l_ankle.x) > 0.10;
+      },
+    },
+    {
+      id: 'incomplete_lockout', label: 'Incomplete extension', cue: 'Finish tall — full hip and knee extension',
+      severity: 'HIGH', isRisk: false,
+      phases: ['lockout'],
+      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
+    },
+  ],
+
+  snatch_pull: [
+    {
+      id: 'rounded_spine', label: 'Rounded spine', cue: 'Keep chest proud',
+      severity: 'HIGH', isRisk: true,
+      phases: ['hinge_ascent', 'hinge_descent'],
+      check(j, angles) { return angles.torsoLean != null && angles.torsoLean > 30; },
+    },
+    {
+      id: 'bar_drift', label: 'Bar drifting forward', cue: 'Keep bar close',
+      severity: 'HIGH', isRisk: false,
+      phases: ['hinge_ascent'],
+      check(j, angles) {
+        if (!j.l_wrist || !j.l_ankle) return false;
+        return Math.abs(j.l_wrist.x - j.l_ankle.x) > 0.10;
+      },
+    },
+    {
+      id: 'incomplete_lockout', label: 'Incomplete extension', cue: 'Finish tall — full hip and knee extension',
+      severity: 'HIGH', isRisk: false,
+      phases: ['lockout'],
+      check(j, angles) { return angles.hipHingeL != null && angles.hipHingeL < 168; },
+    },
+  ],
+
+  high_pull: [
+    {
+      id: 'rounded_spine', label: 'Rounded spine', cue: 'Keep chest proud',
+      severity: 'HIGH', isRisk: true,
+      phases: ['hinge_ascent', 'hinge_descent'],
+      check(j, angles) { return angles.torsoLean != null && angles.torsoLean > 30; },
+    },
+    {
+      id: 'bar_drift', label: 'Bar drifting forward', cue: 'Keep bar close',
+      severity: 'HIGH', isRisk: false,
+      phases: ['hinge_ascent'],
+      check(j, angles) {
+        if (!j.l_wrist || !j.l_ankle) return false;
+        return Math.abs(j.l_wrist.x - j.l_ankle.x) > 0.10;
+      },
+    },
+    {
+      id: 'low_elbow_finish', label: 'Elbows not driving up', cue: 'Lead with the elbows, not the hands',
+      severity: 'MODERATE', isRisk: false,
+      phases: ['lockout'],
+      check(j, angles) { return angles.elbowL != null && angles.elbowL > 140; },
+    },
+  ],
 };
 
 // Alias common variants
 FAULT_MODULES['squat'] = FAULT_MODULES['back_squat'];
-FAULT_MODULES['dumbbell_row'] = FAULT_MODULES['barbell_row'];
-FAULT_MODULES['cable_row'] = FAULT_MODULES['barbell_row'];
+FAULT_MODULES['barbell_row'] = FAULT_MODULES['bent_over_row'];
+FAULT_MODULES['dumbbell_row'] = FAULT_MODULES['bent_over_row'];
+FAULT_MODULES['cable_row'] = FAULT_MODULES['bent_over_row'];
 FAULT_MODULES['decline_bench_press'] = FAULT_MODULES['incline_bench_press'];
 FAULT_MODULES['chin_up'] = FAULT_MODULES['pull_up'];
 FAULT_MODULES['pullup'] = FAULT_MODULES['pull_up'];

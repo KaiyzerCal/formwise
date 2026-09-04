@@ -210,7 +210,10 @@ export class LiveSessionOrchestrator {
         eccentricTimeMs: repEvent.eccentricTime   ?? null,
       });
       this.logger.logRep(repEvent, masteryScore, this.currentFaults);
-      this.onRep?.({ repNumber: repEvent.repNumber, score: masteryScore, masteryScore, tMs });
+      this.onRep?.({
+        repNumber: repEvent.repNumber, score: masteryScore, masteryScore, tMs,
+        meetStandard: repEvent.meetStandard, noLiftReasons: repEvent.noLiftReasons,
+      });
     }
     this.currentFaults     = confirmedFaults.map(f => f.id);
 

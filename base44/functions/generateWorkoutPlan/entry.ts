@@ -35,6 +35,79 @@ Deno.serve(async (req) => {
       difficulty = 'intermediate';
     }
 
+    // ── Powerlifting: percentage-based block, using logged e1RM when available ──
+    // Distinct path — the generic exercise-library logic below has no concept
+    // of %1RM/RPE-based programming, so squat/bench/deadlift get their own branch.
+    if (goal === 'powerlifting') {
+      const PL_LIFTS = [
+        { id: 'back_squat', name: 'Back Squat' },
+        { id: 'bench_press', name: 'Bench Press' },
+        { id: 'deadlift', name: 'Deadlift' },
+      ];
+
+      // Best (highest) logged e1RM per lift, if the user has logged any sets.
+      const e1rmByLift = {};
+      for (const lift of PL_LIFTS) {
+        const rows = await base44.entities.ExerciseTracking.filter(
+          { created_by: user.email, exercise_id: lift.id }, '-logged_date', 20
+        );
+        const withE1rm = (rows ?? []).filter(r => r.estimated_1rm > 0);
+        if (withE1rm.length) e1rmByLift[lift.id] = Math.max(...withE1rm.map(r => r.estimated_1rm));
+      }
+      const hasAnyE1rm = Object.keys(e1rmByLift).length > 0;
+
+      // Simple ramping block: %1RM climbs across the first 3 weeks, then
+      // deloads. Weeks beyond 4 repeat the same 4-week shape.
+      const WEEK_PLAN = [
+        { pct: 70, reps: 5, rpe: 7 },
+        { pct: 75, reps: 5, rpe: 7.5 },
+        { pct: 80, reps: 3, rpe: 8.5 },
+        { pct: 60, reps: 5, rpe: 6 }, // deload
+      ];
+      const week = WEEK_PLAN[Math.min(duration_weeks, 4) - 1] ?? WEEK_PLAN[0];
+
+      const plExercises = PL_LIFTS.map(lift => ({
+        exercise_id: lift.id,
+        exercise_name: lift.name,
+        target_reps: week.reps,
+        target_sets: 5,
+        target_weight_percent: week.pct,
+        target_rpe: week.rpe,
+        focus_areas: [],
+        difficulty_level: difficulty,
+      }));
+
+      const frequency = 3;
+      const workoutPlan = {
+        name: `Powerlifting Plan (${difficulty})`,
+        goal,
+        difficulty,
+        exercises: plExercises,
+        frequency_per_week: frequency,
+        duration_weeks,
+        total_planned_sessions: frequency * duration_weeks,
+        started_at: new Date().toISOString(),
+        status: 'active',
+        generated_from_analysis: true,
+        performance_notes: hasAnyE1rm
+          ? 'Percentages based on your logged squat/bench/deadlift e1RM.'
+          : 'No logged sets yet — percentages are starting-point placeholders. Log a squat/bench/deadlift set (with weight) to personalize future plans.',
+      };
+
+      const createdPlan = await base44.entities.WorkoutPlan.create(workoutPlan);
+
+      return Response.json({
+        success: true,
+        plan: createdPlan,
+        summary: {
+          totalExercises: plExercises.length,
+          frequency: `${frequency}x per week`,
+          duration: `${duration_weeks} weeks`,
+          usedLoggedE1RM: hasAnyE1rm,
+        },
+      });
+    }
+
     // Generate exercise recommendations based on weak areas
     const exerciseLibrary = {
       strength: [

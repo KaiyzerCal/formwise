@@ -114,6 +114,7 @@ export default function PlanGenerator({ onSuccess, onClose }) {
               color: COLORS.textPrimary,
             }}
           >
+            <option value="powerlifting">Powerlifting</option>
             <option value="strength">Strength</option>
             <option value="aesthetics">Aesthetics</option>
             <option value="health">Health</option>

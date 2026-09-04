@@ -19,6 +19,17 @@ const PM_LOCO      = { START:'stance',ECCENTRIC:'drive',        BOTTOM:'flight',
 const PM_JUMP      = { START:'load',  ECCENTRIC:'load',         BOTTOM:'takeoff',      CONCENTRIC:'flight',      LOCKOUT:'land'      };
 const PM_ROTATION  = { START:'setup', ECCENTRIC:'load',         BOTTOM:'stride',       CONCENTRIC:'rotation',    LOCKOUT:'finish'    };
 const PM_UNILAT    = { START:'start', ECCENTRIC:'descent',      BOTTOM:'bottom',       CONCENTRIC:'ascent',      LOCKOUT:'stabilize' };
+// Strikes run backwards to every other family here: the "point" of a punch or
+// kick is full extension (a HIGH primary-angle value), reached by the limb
+// straightening, and "bottom" is the chambered/guard position (LOW angle) it
+// resets to between strikes — the opposite of a squat, where the point (depth)
+// is the low value. BOTTOM/LOCKOUT are relabelled accordingly so a rep is
+// scored complete at the moment of extension, not the moment of retraction.
+const PM_STRIKE_ARM  = { START:'guard',  ECCENTRIC:'retract', BOTTOM:'chamber', CONCENTRIC:'extend', LOCKOUT:'impact'  };
+const PM_STRIKE_LEG  = { START:'guard',  ECCENTRIC:'retract', BOTTOM:'chamber', CONCENTRIC:'extend', LOCKOUT:'impact'  };
+// Knee strikes drive the knee UP (low angle = the point), same directionality
+// as a squat, just relabelled for a standing strike rather than a lift.
+const PM_KNEE_STRIKE = { START:'stance', ECCENTRIC:'drive',   BOTTOM:'impact',  CONCENTRIC:'reset',  LOCKOUT:'stance'  };
 
 // ── SCORING WEIGHTS (reusable) ────────────────────────────────────────────────
 const W_STRENGTH   = { rom:0.35, stability:0.25, symmetry:0.20, tempo:0.20 };
@@ -40,6 +51,7 @@ export const MOVEMENT_LIBRARY = [
     phaseTemplate: PhaseTemplates.BILATERAL_KNEE_DOMINANT, phaseMap: PM_KNEE_SQ,
     primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
     visibilityJoints:['l_hip','r_hip','l_knee','r_knee'],
+    competitionRules:true, depthStandard:'hip_below_knee',
     thresholds:{ descentVel:0.006, ascentVel:0.004, bottomAngle:100, lockoutAngle:170, minDepth:100 },
     faultRules:[F.kneeValgus, F.heelRise, F.trunkCollapse, F.asymmetricPush, F.lumbarFlexion, F.buttWink, F.incompleteHipLockout],
     repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
@@ -145,6 +157,7 @@ export const MOVEMENT_LIBRARY = [
     phaseTemplate: PhaseTemplates.BILATERAL_HIP_DOMINANT, phaseMap: PM_HIP_HINGE,
     primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
     visibilityJoints:['l_hip','r_hip','l_knee'],
+    competitionRules:true,
     thresholds:{ descentVel:0.004, ascentVel:0.003, bottomAngle:75, lockoutAngle:170 },
     faultRules:[F.lumbarFlexion, F.trunkCollapse, F.hipShift, F.pelvicDrift, F.barPathDrift, F.hipRiseBeforeChest, F.incompleteHipLockout],
     repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
@@ -178,6 +191,7 @@ export const MOVEMENT_LIBRARY = [
     phaseTemplate: PhaseTemplates.BILATERAL_HIP_DOMINANT, phaseMap: PM_HIP_HINGE,
     primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
     visibilityJoints:['l_hip','r_hip','l_knee','r_knee'],
+    competitionRules:true,
     thresholds:{ descentVel:0.004, ascentVel:0.003, bottomAngle:80, lockoutAngle:170 },
     faultRules:[F.kneeValgus, F.lumbarFlexion, F.hipShift],
     repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
@@ -238,7 +252,8 @@ export const MOVEMENT_LIBRARY = [
     phaseTemplate: PhaseTemplates.HORIZONTAL_PUSH, phaseMap: PM_H_PUSH,
     primaryAngleKey:'elbowL', secondaryAngleKey:'elbowR',
     visibilityJoints:['l_elbow','r_elbow','l_wrist','r_wrist'],
-    thresholds:{ descentVel:0.005, ascentVel:0.004, bottomAngle:90, lockoutAngle:160 },
+    competitionRules:true,
+    thresholds:{ descentVel:0.005, ascentVel:0.004, bottomAngle:90, lockoutAngle:160, minPauseMs:1000 },
     faultRules:[F.elbowFlare, F.asymmetricPush, F.lowerBackArch, F.forwardHeadPosture],
     repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
     cueMap:{
@@ -1249,11 +1264,275 @@ export const MOVEMENT_LIBRARY = [
     repValidationMode:'rom_return', confidenceWeights: W_REHAB,
     cueMap:{ lowerBackArch:'Reach tall — ribs down', poorShoulderPacking:'Packed shoulders on reach', lateralTrunkShift:'Centred overhead reach' },
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 7. CROSSFIT / HYROX (7)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // No object-detection for the ball/sled/bar — depth, symmetry and lockout
+  // checks come from body landmarks only, same limitation as every other
+  // movement in this library.
+
+  {
+    id:'wall_ball', displayName:'Wall Ball Shot', category:'athletic',
+    movementFamily:'bilateral_knee_dominant', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.BILATERAL_KNEE_DOMINANT, phaseMap: PM_KNEE_SQ,
+    primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
+    visibilityJoints:['l_hip','r_hip','l_knee','r_knee','l_elbow','l_wrist'],
+    thresholds:{ descentVel:0.010, ascentVel:0.014, bottomAngle:95, lockoutAngle:165 },
+    faultRules:[F.kneeValgus, F.heelRise, F.trunkCollapse, F.incompleteOverheadLockout],
+    repValidationMode:'rom_return', confidenceWeights: W_ATHLETIC,
+    cueMap:{
+      kneeValgus:'Knees track over toes on the catch',
+      heelRise:'Heels planted through the squat',
+      trunkCollapse:'Chest up out of the bottom',
+      incompleteOverheadLockout:'Full arm extension on release',
+    },
+  },
+  {
+    id:'thruster', displayName:'Thruster', category:'strength',
+    movementFamily:'bilateral_knee_dominant', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.BILATERAL_KNEE_DOMINANT, phaseMap: PM_KNEE_SQ,
+    primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
+    visibilityJoints:['l_hip','r_hip','l_knee','r_knee','r_elbow','r_wrist'],
+    thresholds:{ descentVel:0.008, ascentVel:0.010, bottomAngle:100, lockoutAngle:168 },
+    faultRules:[F.kneeValgus, F.trunkCollapse, F.lumbarFlexion, F.incompleteOverheadLockout],
+    repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
+    cueMap:{
+      kneeValgus:'Drive knees out of the hole',
+      trunkCollapse:'Chest tall through the squat',
+      lumbarFlexion:'Brace core through the whole rep',
+      incompleteOverheadLockout:'Punch the bar fully overhead — not just to eye level',
+    },
+  },
+  {
+    id:'sled_push', displayName:'Sled Push', category:'strength',
+    movementFamily:'locomotion', trackingMode:'dynamic_linear',
+    phaseTemplate: PhaseTemplates.LOCOMOTION, phaseMap: PM_LOCO,
+    primaryAngleKey:'kneeL', secondaryAngleKey:null,
+    visibilityJoints:['l_shoulder','r_shoulder','l_hip','r_hip','l_knee','r_knee'],
+    thresholds:{ descentVel:0.010, ascentVel:0.008, bottomAngle:100, lockoutAngle:170 },
+    faultRules:[F.asymmetricPush, F.kneeValgus],
+    repValidationMode:'stride_cycle', confidenceWeights: W_LOCO,
+    cueMap:{ asymmetricPush:'Drive evenly through both legs', kneeValgus:'Knees track over toes' },
+  },
+  {
+    id:'sled_pull', displayName:'Sled Pull', category:'strength',
+    movementFamily:'locomotion', trackingMode:'dynamic_linear',
+    phaseTemplate: PhaseTemplates.LOCOMOTION, phaseMap: PM_LOCO,
+    primaryAngleKey:'kneeL', secondaryAngleKey:null,
+    visibilityJoints:['l_shoulder','r_shoulder','l_hip','r_hip','l_knee','r_knee'],
+    thresholds:{ descentVel:0.010, ascentVel:0.008, bottomAngle:100, lockoutAngle:170 },
+    faultRules:[F.asymmetricPush, F.kneeValgus],
+    repValidationMode:'stride_cycle', confidenceWeights: W_LOCO,
+    cueMap:{ asymmetricPush:'Even pace through both legs', kneeValgus:'Knees track over toes' },
+  },
+  {
+    id:'toes_to_bar', displayName:'Toes-to-Bar', category:'calisthenics',
+    movementFamily:'bilateral_hip_dominant', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.BILATERAL_HIP_DOMINANT, phaseMap: PM_HIP_HINGE,
+    primaryAngleKey:'hipHingeL', secondaryAngleKey:null,
+    visibilityJoints:['l_hip','r_hip','l_shoulder','r_shoulder','l_wrist','r_wrist'],
+    thresholds:{ descentVel:0.014, ascentVel:0.016, bottomAngle:20, lockoutAngle:160, minRepMs:500 },
+    faultRules:[F.lossOfBalance, F.asymmetricPush],
+    repValidationMode:'rom_return', confidenceWeights: W_CALI,
+    cueMap:{ lossOfBalance:'Control the swing — minimise the kip', asymmetricPush:'Raise both legs together' },
+  },
+  {
+    id:'rowing_erg', displayName:'Rowing (Erg)', category:'strength',
+    movementFamily:'bilateral_hip_dominant', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.BILATERAL_HIP_DOMINANT, phaseMap: PM_HIP_HINGE,
+    primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
+    visibilityJoints:['l_hip','r_hip','l_knee','r_knee'],
+    thresholds:{ descentVel:0.008, ascentVel:0.010, bottomAngle:90, lockoutAngle:160, minRepMs:600 },
+    faultRules:[F.lumbarFlexion, F.trunkCollapse],
+    repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
+    cueMap:{ lumbarFlexion:'Flat back on the drive', trunkCollapse:'Stay tall at the finish' },
+  },
+  {
+    // Lower fidelity than the rest of this library: a muscle-up's pull→transition→
+    // dip is modelled here as one big pull (like pull_up, with a deeper bottomAngle
+    // and higher lockoutAngle) — the bar/ring transition itself isn't separately
+    // detected or scored.
+    id:'muscle_up', displayName:'Muscle-Up', category:'strength',
+    movementFamily:'vertical_pull', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.VERTICAL_PULL, phaseMap: PM_V_PULL,
+    primaryAngleKey:'elbowL', secondaryAngleKey:'elbowR',
+    visibilityJoints:['l_elbow','r_elbow','l_shoulder','r_shoulder','l_wrist'],
+    thresholds:{ descentVel:0.006, ascentVel:0.005, bottomAngle:70, lockoutAngle:165, minRepMs:1200 },
+    faultRules:[F.asymmetricPush, F.hipShift, F.elbowFlaredOnPull],
+    repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
+    cueMap:{
+      asymmetricPush:'Pull evenly through the transition',
+      hipShift:'Minimise kip swing before the pull',
+      elbowFlaredOnPull:'Drive elbows back and down through the pull',
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 8. SELF-DEFENSE / KICKBOXING (7)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // No object detection for a pad/bag/opponent — everything below is inferred
+  // from the striker's own body landmarks only. Fast strikes are the most
+  // demanding real-time case in this whole library; validate hands-on with a
+  // real camera before relying on rep counts/verdicts here.
+  //
+  // The first strike thrown in a set is not scored — see the PM_STRIKE_ARM/
+  // PM_STRIKE_LEG comment above for why (a rep completes on extension, but the
+  // state machine only starts tracking once the *retraction* to guard is
+  // observed, which happens after the first strike).
+
+  {
+    id:'jab', displayName:'Jab', category:'athletic',
+    movementFamily:'strike_arm', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.HORIZONTAL_PUSH, phaseMap: PM_STRIKE_ARM,
+    primaryAngleKey:'elbowL', secondaryAngleKey:null,
+    visibilityJoints:['l_elbow','l_shoulder','l_wrist'],
+    thresholds:{ descentVel:0.020, ascentVel:0.025, bottomAngle:70, lockoutAngle:160, minRepMs:150 },
+    faultRules:[F.poorShoulderPacking, F.forwardHeadPosture],
+    repValidationMode:'rom_return', confidenceWeights: W_ATHLETIC,
+    cueMap:{ poorShoulderPacking:'Rear hand stays up on the guard', forwardHeadPosture:'Chin down behind the shoulder' },
+  },
+  {
+    id:'cross', displayName:'Cross', category:'athletic',
+    movementFamily:'strike_arm', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.HORIZONTAL_PUSH, phaseMap: PM_STRIKE_ARM,
+    primaryAngleKey:'elbowR', secondaryAngleKey:null,
+    visibilityJoints:['r_elbow','r_shoulder','r_wrist'],
+    thresholds:{ descentVel:0.020, ascentVel:0.025, bottomAngle:70, lockoutAngle:165, minRepMs:180 },
+    faultRules:[F.poorShoulderPacking, F.forwardHeadPosture],
+    repValidationMode:'rom_return', confidenceWeights: W_ATHLETIC,
+    cueMap:{ poorShoulderPacking:'Lead hand stays up on the guard', forwardHeadPosture:'Rotate through the hips — head stays level' },
+  },
+  {
+    id:'hook', displayName:'Hook', category:'athletic',
+    movementFamily:'strike_arm', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.HORIZONTAL_PUSH, phaseMap: PM_STRIKE_ARM,
+    primaryAngleKey:'elbowL', secondaryAngleKey:null,
+    visibilityJoints:['l_elbow','l_shoulder','l_wrist'],
+    // Lower lockoutAngle than jab/cross — a hook's power comes from hip/shoulder
+    // rotation, not a straight-arm extension, so the elbow never fully opens.
+    thresholds:{ descentVel:0.018, ascentVel:0.022, bottomAngle:55, lockoutAngle:115, minRepMs:180 },
+    faultRules:[F.poorShoulderPacking, F.forwardHeadPosture],
+    repValidationMode:'rom_return', confidenceWeights: W_ATHLETIC,
+    cueMap:{ poorShoulderPacking:'Rear hand stays up on the guard', forwardHeadPosture:'Keep chin tucked through the arc' },
+  },
+  {
+    id:'uppercut', displayName:'Uppercut', category:'athletic',
+    movementFamily:'strike_arm', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.HORIZONTAL_PUSH, phaseMap: PM_STRIKE_ARM,
+    primaryAngleKey:'elbowR', secondaryAngleKey:null,
+    visibilityJoints:['r_elbow','r_shoulder','r_wrist'],
+    thresholds:{ descentVel:0.018, ascentVel:0.022, bottomAngle:45, lockoutAngle:145, minRepMs:180 },
+    faultRules:[F.poorShoulderPacking, F.forwardHeadPosture],
+    repValidationMode:'rom_return', confidenceWeights: W_ATHLETIC,
+    cueMap:{ poorShoulderPacking:'Lead hand stays up on the guard', forwardHeadPosture:'Drive up through the legs, not just the arm' },
+  },
+  {
+    id:'front_kick', displayName:'Front Kick', category:'athletic',
+    movementFamily:'strike_leg', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.UNILATERAL_KNEE, phaseMap: PM_STRIKE_LEG,
+    primaryAngleKey:'kneeL', secondaryAngleKey:null,
+    visibilityJoints:['l_hip','l_knee','l_ankle'],
+    thresholds:{ descentVel:0.016, ascentVel:0.020, bottomAngle:75, lockoutAngle:165, minRepMs:250 },
+    faultRules:[F.lossOfBalance, F.forwardHeadPosture],
+    repValidationMode:'rom_return', confidenceWeights: W_ATHLETIC,
+    cueMap:{ lossOfBalance:'Post the base leg firmly before you kick', forwardHeadPosture:'Eyes on target, chin level' },
+  },
+  {
+    id:'roundhouse_kick', displayName:'Roundhouse Kick', category:'athletic',
+    movementFamily:'strike_leg', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.UNILATERAL_KNEE, phaseMap: PM_STRIKE_LEG,
+    primaryAngleKey:'kneeL', secondaryAngleKey:null,
+    visibilityJoints:['l_hip','l_knee','l_ankle'],
+    thresholds:{ descentVel:0.016, ascentVel:0.020, bottomAngle:70, lockoutAngle:155, minRepMs:250 },
+    faultRules:[F.lossOfBalance, F.forwardHeadPosture],
+    repValidationMode:'rom_return', confidenceWeights: W_ATHLETIC,
+    cueMap:{ lossOfBalance:'Pivot the base foot — don’t reach off-balance', forwardHeadPosture:'Keep chin down through the rotation' },
+  },
+  {
+    id:'knee_strike', displayName:'Knee Strike', category:'athletic',
+    movementFamily:'unilateral_knee', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.UNILATERAL_KNEE, phaseMap: PM_KNEE_STRIKE,
+    primaryAngleKey:'kneeL', secondaryAngleKey:null,
+    visibilityJoints:['l_hip','l_knee','l_ankle'],
+    thresholds:{ descentVel:0.018, ascentVel:0.016, bottomAngle:50, lockoutAngle:165, minRepMs:200 },
+    faultRules:[F.lossOfBalance, F.poorShoulderPacking],
+    repValidationMode:'rom_return', confidenceWeights: W_ATHLETIC,
+    cueMap:{ lossOfBalance:'Stay balanced on the post leg', poorShoulderPacking:'Pull the target into the knee with your hands' },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 9. OLYMPIC LIFT ACCESSORIES (3)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Deliberately NOT full snatch/clean/jerk — those need a pull *and* a squat
+  // catch scored as one rep, which this engine's single 5-state cycle can't
+  // represent (would either double-count as two reps or silently skip the
+  // catch, the technically hardest part). These three are the accessory pulls
+  // real programs already use — floor to full extension, no catch — which map
+  // cleanly onto the same pattern as deadlift.
+
+  {
+    id:'clean_pull', displayName:'Clean Pull', category:'strength',
+    movementFamily:'bilateral_hip_dominant', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.BILATERAL_HIP_DOMINANT, phaseMap: PM_HIP_HINGE,
+    primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
+    visibilityJoints:['l_hip','r_hip','l_knee'],
+    thresholds:{ descentVel:0.006, ascentVel:0.018, bottomAngle:78, lockoutAngle:174 },
+    faultRules:[F.lumbarFlexion, F.trunkCollapse, F.hipShift, F.pelvicDrift, F.barPathDrift, F.hipRiseBeforeChest, F.incompleteHipLockout],
+    repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
+    cueMap:{
+      lumbarFlexion:'Chest proud off the floor',
+      trunkCollapse:'Lats engaged — bar stays close',
+      barPathDrift:'Bar brushes the thighs on the way up',
+      hipRiseBeforeChest:'Legs and back rise together off the floor',
+      incompleteHipLockout:'Finish tall — full hip and knee extension',
+    },
+  },
+  {
+    id:'snatch_pull', displayName:'Snatch Pull', category:'strength',
+    movementFamily:'bilateral_hip_dominant', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.BILATERAL_HIP_DOMINANT, phaseMap: PM_HIP_HINGE,
+    primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
+    visibilityJoints:['l_hip','r_hip','l_knee'],
+    thresholds:{ descentVel:0.006, ascentVel:0.018, bottomAngle:70, lockoutAngle:175 },
+    faultRules:[F.lumbarFlexion, F.trunkCollapse, F.hipShift, F.pelvicDrift, F.barPathDrift, F.hipRiseBeforeChest, F.incompleteHipLockout],
+    repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
+    cueMap:{
+      lumbarFlexion:'Chest proud — wide grip, same neutral spine',
+      trunkCollapse:'Lats engaged — bar stays close',
+      barPathDrift:'Bar brushes the thighs on the way up',
+      hipRiseBeforeChest:'Legs and back rise together off the floor',
+      incompleteHipLockout:'Finish tall — full hip and knee extension',
+    },
+  },
+  {
+    id:'high_pull', displayName:'High Pull', category:'strength',
+    movementFamily:'bilateral_hip_dominant', trackingMode:'stationary',
+    phaseTemplate: PhaseTemplates.BILATERAL_HIP_DOMINANT, phaseMap: PM_HIP_HINGE,
+    primaryAngleKey:'hipHingeL', secondaryAngleKey:'kneeL',
+    visibilityJoints:['l_hip','r_hip','l_knee'],
+    thresholds:{ descentVel:0.006, ascentVel:0.018, bottomAngle:78, lockoutAngle:174 },
+    faultRules:[F.lumbarFlexion, F.trunkCollapse, F.hipShift, F.barPathDrift, F.hipRiseBeforeChest, F.lowElbowFinish],
+    repValidationMode:'rom_return', confidenceWeights: W_STRENGTH,
+    cueMap:{
+      lumbarFlexion:'Chest proud off the floor',
+      trunkCollapse:'Lats engaged — bar stays close',
+      barPathDrift:'Bar brushes the thighs on the way up',
+      hipRiseBeforeChest:'Legs and back rise together off the floor',
+      lowElbowFinish:'Drive elbows up and out — lead with the elbows, not the hands',
+    },
+  },
 ];
 
 /** Quick lookup by id */
 export function getMovement(id) {
-  return MOVEMENT_LIBRARY.find(m => m.id === id) ?? MOVEMENT_LIBRARY[0];
+  const found = MOVEMENT_LIBRARY.find(m => m.id === id);
+  if (found) return found;
+  // No library entry for this id — silently substituting back_squat would mask
+  // that the id has no real profile. Warn so it's debuggable; MovementResolver
+  // still needs *some* fallback here to avoid crashing an in-progress session.
+  console.warn(`[MovementLibraryData] No entry for "${id}" — falling back to "${MOVEMENT_LIBRARY[0].id}"`);
+  return MOVEMENT_LIBRARY[0];
 }
 
 /** List all movement ids */
