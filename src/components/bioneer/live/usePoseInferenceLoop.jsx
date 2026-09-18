@@ -55,6 +55,11 @@ export function usePoseInferenceLoop({ videoRef, landmarkerRef, poseState, activ
           onResultRef.current?.({
             poseLandmarks:      result.landmarks?.[0]      ?? null,
             poseWorldLandmarks: result.worldLandmarks?.[0] ?? null,
+            // The frame's own timestamp, not the moment a consumer happens to
+            // read it. Anything differentiating position needs the time the
+            // sample was taken, and `now` was already being handed to
+            // detectForVideo and then dropped.
+            tMs:                now,
             _fps:               govRef.current.fps,
             _frameMs:           frameMs,
           });

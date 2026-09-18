@@ -17,6 +17,7 @@ import { SubjectLockEngine }        from './pipeline/SubjectLockEngine';
 import { MotionReadinessManager }   from './pipeline/MotionReadinessManager';
 import { StabilizationEngine }      from './pipeline/StabilizationEngine';
 import { KinematicsEngine }     from './pipeline/KinematicsEngine';
+import { BarVelocityEngine }   from './pipeline/BarVelocityEngine';
 import { MovementResolver }     from './pipeline/MovementResolver';
 import { RepDetector }          from './pipeline/RepDetector';
 import { PhaseClassifier }      from './pipeline/PhaseClassifier';
@@ -43,6 +44,8 @@ export class LiveSessionOrchestrator {
     this.readiness     = new MotionReadinessManager();
     this.stabilizer    = new StabilizationEngine();
     this.kinematics    = new KinematicsEngine();
+    // Metric bar speed, off the same GHUM world joints kinematics uses.
+    this.barVelocity   = new BarVelocityEngine('hips');
     this.repDetector   = new RepDetector(profile);
     this.phaseClass    = new PhaseClassifier(profile);
     this.faultDetector = new FaultDetector(exerciseId);
@@ -160,6 +163,12 @@ export class LiveSessionOrchestrator {
       this.kinematics.compute(smoothedJoints, smoothedVelocities, worldJoints);
     const kinAngles = { ...angles, asymmetry };
 
+    // ── LAYER 4a: Bar velocity (metres per second) ─────────────────────────
+    // Distinct from `velocities` above, which is normalized image units per
+    // frame — the right signal for smoothing and outlier rejection, and not a
+    // speed anyone can read. This one is metric and time-based.
+    const barVel = worldJoints ? this.barVelocity.update(worldJoints, tMs) : null;
+
     // ── LAYER 4b: Movement Context Engine ─────────────────────────────────────
     // Runs after kinematics; produces trajectory, velocity, stability, symmetry,
     // phase-continuity confidence and control score for downstream layers.
@@ -269,6 +278,11 @@ export class LiveSessionOrchestrator {
       activeCue:  this.scheduler.getActiveCue(),
       movementContext: movCtx,       // multi-frame context signals
       feedbackState: feedbackResult.status,   // 'green'|'yellow'|'red'
+      // Metric bar speed. `barVelocity.up` is m/s, positive upward; null on
+      // frames with no world landmarks or an unusable gap between samples.
+      barVelocity: barVel,
+      // Per-rep mean/peak and loss from the best rep of the set so far.
+      velocitySet: this.barVelocity.getSet(),
     });
   }
 
@@ -300,6 +314,10 @@ export class LiveSessionOrchestrator {
     this.readiness.reset();
     this.stabilizer.reset();
     this.kinematics.reset();
+    // Velocity loss is measured within a set, so the rep history must not
+    // survive a reset — carrying a previous set's best rep forward would
+    // report a loss the lifter never had.
+    this.barVelocity.reset();
     this.repDetector.reset();
     this.phaseClass.reset();
     this.faultBuffer.reset();
