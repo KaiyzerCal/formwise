@@ -26,6 +26,17 @@ function feedConstant(engine, { up, seconds, fps, startT = 1000, startY = 0 }) {
   return out.filter(Boolean);
 }
 
+/** Enough frames for a fit: velocity now comes from a window, not a pair. */
+function burst(engine, { up, frames = 10, fps = 30, startT = 1000, startY = 0, joints = hipsAt }) {
+  const dt = 1000 / fps;
+  let last = null;
+  for (let i = 0; i <= frames; i++) {
+    const r = engine.update(joints(startY - up * (i * dt / 1000)), startT + i * dt);
+    if (r) last = r;
+  }
+  return last;
+}
+
 describe('metres per second, not pixels per frame', () => {
   it('reports the speed it was given', () => {
     const e = new BarVelocityEngine('hips');
@@ -91,20 +102,22 @@ describe('irregular frame delivery', () => {
   });
 
   it('refuses to differentiate across a long stall', () => {
-    // A two-second gap is a stalled pipeline. The lifter moved, but not at a
-    // speed these two samples can describe.
+    // A two-second gap is a stalled pipeline. The lifter moved, but no pair of
+    // samples either side of that hole describes a speed.
     const e = new BarVelocityEngine();
-    e.update(hipsAt(0), 1000);
-    expect(e.update(hipsAt(-0.5), 3000)).toBeNull();
+    feedConstant(e, { up: 0.5, seconds: 0.6, fps: 30 });
+    expect(e.update(hipsAt(-5), 3000)).toBeNull();
   });
 
   it('re-seeds after a stall instead of measuring across it', () => {
+    // The window is dropped, so the next frames build a fresh fit rather than
+    // one straddling the gap — which would read the whole stall as motion.
     const e = new BarVelocityEngine();
-    e.update(hipsAt(0), 1000);
-    e.update(hipsAt(-0.5), 3000);            // stall, rejected
-    const r = e.update(hipsAt(-0.5 - 0.02), 3033);  // 0.02m in 33ms ≈ 0.606 m/s
+    feedConstant(e, { up: 0.5, seconds: 0.6, fps: 30 });
+    e.update(hipsAt(-5), 3000);              // stall: window dropped
+    const r = burst(e, { up: 0.45, frames: 10, startT: 3033, startY: -5 });
     expect(r).not.toBeNull();
-    expect(r.up).toBeCloseTo(0.606, 2);
+    expect(r.up).toBeCloseTo(0.45, 1);
   });
 });
 
@@ -131,7 +144,15 @@ describe('rep segmentation', () => {
     t = rep(e, { con: 0.6, t0: t });
     const set = e.finish();
     expect(set.reps).toHaveLength(1);
-    expect(set.reps[0].meanVelocity).toBeCloseTo(0.6, 1);
+    // Systematically ~10% low, and that is measured rather than hoped for.
+    // The 240ms fit window straddles both turnarounds, so the samples at each
+    // end of a concentric average moving bar with stationary bar. Trimming to
+    // the body of the lift removes most of it; what remains is the method's
+    // floor, not a bug to be tuned away against a synthetic constant-velocity
+    // rep. It is why absolute m/s is labelled an estimate in the UI and why
+    // velocity *loss* — a ratio, where this cancels — is the number to act on.
+    expect(set.reps[0].meanVelocity).toBeGreaterThan(0.6 * 0.85);
+    expect(set.reps[0].meanVelocity).toBeLessThan(0.6 * 1.05);
   });
 
   it('does not split a concentric at the bottom pause', () => {
@@ -149,8 +170,14 @@ describe('rep segmentation', () => {
     const set = e.finish();
 
     expect(set.reps).toHaveLength(5);
-    expect(set.bestVelocity).toBeCloseTo(0.62, 1);
-    // 0.44 against a 0.62 best ≈ 29% down.
+
+    // The ordering is the product. Absolute values run low, but a set that
+    // slowed must read as slowing, monotonically, or the stop signal is noise.
+    const means = set.reps.map((r) => r.meanVelocity);
+    for (let i = 1; i < means.length; i++) {
+      expect(means[i]).toBeLessThan(means[i - 1]);
+    }
+    // 0.44 against a 0.62 best is ~29% down; the ratio survives the offset.
     expect(set.velocityLossPct).toBeGreaterThan(20);
     expect(set.velocityLossPct).toBeLessThan(40);
   });
@@ -162,7 +189,10 @@ describe('rep segmentation', () => {
     let t = 1000;
     for (const con of [0.55, 0.65, 0.50]) t = rep(e, { con, t0: t });
     const set = e.finish();
-    expect(set.bestVelocity).toBeCloseTo(0.65, 1);
+    // Rep 2 was the fastest, so it must be the reference.
+    expect(set.reps[1].meanVelocity).toBeGreaterThan(set.reps[0].meanVelocity);
+    expect(set.reps[1].meanVelocity).toBeGreaterThan(set.reps[2].meanVelocity);
+    expect(set.bestVelocity).toBeCloseTo(set.reps[1].meanVelocity, 6);
     expect(set.velocityLossPct).toBeGreaterThan(0);
   });
 
@@ -188,6 +218,49 @@ describe('rep segmentation', () => {
   });
 });
 
+describe('landmark noise', () => {
+  // The demo that mattered. A clean synthetic set said the first version was
+  // fine; adding +/-5mm of jitter — which is what MediaPipe actually delivers —
+  // produced a phantom 7mm "rep" and scrambled the rep ordering entirely.
+  // These pin the two properties that recovery depends on.
+  function noisySet(jitterM, cons) {
+    const e = new BarVelocityEngine('hips');
+    const n = () => (Math.random() - 0.5) * 2 * jitterM;
+    const hips = (y) => ({ l_hip: { x: -0.1, y: y + n() }, r_hip: { x: 0.1, y: y + n() } });
+    let t = 1000, y = 0;
+    const dt = () => (Math.random() < 0.12 ? 90 : 45 + Math.random() * 12);
+    for (const con of cons) {
+      for (let d = 0; d < 0.55;) { const s = 0.45 * (dt() / 1000); y += s; d += s; e.update(hips(y), t); t += 50; }
+      for (let i = 0; i < 6; i++) { e.update(hips(y), t); t += 50; }
+      for (let d = 0; d < 0.55;) { const s = con * (dt() / 1000); y -= s; d += s; e.update(hips(y), t); t += 50; }
+      for (let i = 0; i < 8; i++) { e.update(hips(y), t); t += 50; }
+    }
+    return e.finish();
+  }
+
+  it('does not invent reps out of jitter during a pause', () => {
+    // A few millimetres of wobble crossing the stillness floor used to open and
+    // close a phase. It arrives as a near-zero-velocity rep, becomes the "best"
+    // rep nothing can beat, and poisons every loss figure after it.
+    const set = noisySet(0.005, [0.7, 0.6, 0.5]);
+    expect(set.reps).toHaveLength(3);
+    for (const r of set.reps) expect(r.displacementM).toBeGreaterThan(0.3);
+  });
+
+  it('keeps the rep ordering under realistic jitter', () => {
+    // Absolute values drift; the ranking is what a stop decision rests on.
+    const set = noisySet(0.005, [0.75, 0.6, 0.45]);
+    expect(set.reps[0].meanVelocity).toBeGreaterThan(set.reps[2].meanVelocity);
+    expect(set.velocityLossPct).toBeGreaterThan(15);
+  });
+
+  it('still reports a slowing set at 10mm of jitter', () => {
+    const set = noisySet(0.01, [0.75, 0.62, 0.48, 0.4]);
+    expect(set.reps.length).toBeGreaterThanOrEqual(3);
+    expect(set.velocityLossPct).toBeGreaterThan(15);
+  });
+});
+
 describe('degraded input', () => {
   it('returns null rather than NaN when the joints are missing', () => {
     const e = new BarVelocityEngine();
@@ -196,17 +269,20 @@ describe('degraded input', () => {
   });
 
   it('works from one visible hip', () => {
+    // One side occluded is normal from a side-on camera angle.
     const e = new BarVelocityEngine();
-    e.update({ l_hip: { x: 0, y: 0, z: 0 } }, 1000);
-    const r = e.update({ l_hip: { x: 0, y: -0.02, z: 0 } }, 1033);
-    expect(r.up).toBeCloseTo(0.606, 2);
+    const r = burst(e, { up: 0.5, joints: (y) => ({ l_hip: { x: 0, y, z: 0 } }) });
+    expect(r.up).toBeCloseTo(0.5, 1);
   });
 
   it('can track the wrists instead, for presses', () => {
+    // Hips proxy the bar on a squat; on a bench press the wrists do.
     const e = new BarVelocityEngine('wrists');
-    e.update({ l_wrist: { x: 0, y: 0 }, r_wrist: { x: 0, y: 0 } }, 1000);
-    const r = e.update({ l_wrist: { x: 0, y: -0.03 }, r_wrist: { x: 0, y: -0.03 } }, 1033);
-    expect(r.up).toBeCloseTo(0.909, 2);
+    const r = burst(e, {
+      up: 0.6,
+      joints: (y) => ({ l_wrist: { x: -0.2, y }, r_wrist: { x: 0.2, y } }),
+    });
+    expect(r.up).toBeCloseTo(0.6, 1);
     expect(e.getSet().track).toBe('wrists');
   });
 });

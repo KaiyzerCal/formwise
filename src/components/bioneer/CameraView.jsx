@@ -15,6 +15,7 @@ import LiveSessionHUD            from './live/LiveSessionHUD';
 import PoseErrorCard             from './live/PoseErrorCard';
 import CameraToggle              from './CameraToggle';
 import { useLiveAnalysis }       from './live/useLiveAnalysis';
+import VelocityReadout           from './ui/VelocityReadout';
 import { clearCanvas, drawSkeleton, drawGhostSkeleton, generateGhostPose } from './canvasRenderer';
 import { smoothLandmarks, computeJointAngles, computeFormScore, setPoseCategory } from './poseEngine';
 import { initAudio, destroyAudio, beep, speak } from './audioEngine';
@@ -141,8 +142,14 @@ export default function CameraView({ exercise, onStop }) {
   // ── Inference loop ────────────────────────────────────────────────────────
   const handleResult = useCallback((result) => {
     setPoseResults(result);
-    // FIX: Use performance.now() to match MediaPipe's timestamp domain
-    processFrame(result, performance.now());
+    // The frame's own capture time when the loop provides it, which it now
+    // does. performance.now() here is the moment this callback *ran*, and the
+    // gap between capture and callback is exactly the inference time — tens of
+    // milliseconds, varying frame to frame. That jitter lands straight in the
+    // denominator of anything differentiating position, so velocity read it as
+    // speed changes the lifter never made. Same clock either way: the loop
+    // takes its timestamp from requestAnimationFrame.
+    processFrame(result, result?.tMs ?? performance.now());
     // Capture pose frame for IndexedDB replay
     if (isRecording && result.poseLandmarks) {
       const angles = computeJointAngles(
@@ -694,6 +701,19 @@ export default function CameraView({ exercise, onStop }) {
             : <Volume2 className="w-4 h-4 text-white" aria-hidden="true" />}
         </button>
       </div>
+
+      {/* ── Bar velocity ─────────────────────────────────────────────────
+           Bottom-left, out of the path of the skeleton overlay and reachable
+           by a coach's thumb without covering the lifter. */}
+      {sessionActive && frameState?.velocitySet?.reps?.length > 0 && (
+        <div className="absolute bottom-28 left-4 z-50 w-44 pointer-events-none">
+          <VelocityReadout
+            velocitySet={frameState.velocitySet}
+            barVelocity={frameState.barVelocity}
+            threshold={20}
+          />
+        </div>
+      )}
 
       {/* ── Rep Mastery Badge ────────────────────────────────────────────── */}
       {sessionActive && lastRepMastery && (() => {
